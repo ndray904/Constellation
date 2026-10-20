@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Pulsar, Binary and Singularity: browser ribbon synths modelled from the public monotron, monotron DUO and monotron DELAY schematics, in Faust and WebAssembly, plus Nebula, Airwindows reverbs compiled to WebAssembly.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "build": "node build.mjs",
     "test": "node test/render.cjs && node test/render-duo.cjs && node test/render-delay.cjs && node test/airwindows-parity.cjs && node test/nebula-declick.cjs && node test/browser.cjs"

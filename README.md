@@ -51,7 +51,7 @@ node test/browser.cjs     # optional arg: a folder for screenshots
 - **`@grame/faustwasm`** (LGPL-3.0) is a build-time dev dependency only. It is not shipped, because the page uses its own runtime (`web/faust-runtime.js`).
 - **Airwindows** (`airwindows/src`, Galactic3 / Infinity / StarChild2 by Chris Johnson): MIT. The license is in
   `airwindows/LICENSE` and shown on the page under Nebula.
-- Everything else in this repo is new code. Choose a license for it before publishing.
+- Everything else in this repo is new code, released under the MIT license (`LICENSE`).
 - "KORG" and "monotron" are trademarks of KORG Inc. The product name and look are deliberately different.
 
 ## Known gaps / next steps
@@ -64,3 +64,7 @@ node test/browser.cjs     # optional arg: a folder for screenshots
 6. Routing: "To Binary" / "To Singularity" patch an instrument into another's line in (Pulsar -> Binary or Singularity, Binary -> Singularity; chains allowed, no loops) (like a cable from the headphone jack: direct output and speaker path bypassed). The line-in level (`line in` = 1, gain 2 into the VCF mixer) is an estimate. Hold latches the gate on Pulsar and Binary (space bar toggles it); it is a software addition, not on the hardware.
 7. MIDI keyboard input (Web MIDI) works in the standalone file in Chrome, Edge and Firefox; the Claude viewer blocks device access, and Safari has no Web MIDI. Recording captures the master bus as 16-bit stereo WAV; in the viewer it is saved inside a .zip (WAV is not an allowed download type there), standalone as a plain .wav.
 8. VST3/AU/CLAP: the same `.dsp` builds with `faust2juce` or the Faust iPlug2/DPF architectures.
+
+## License
+
+MIT, see [`LICENSE`](LICENSE). The Airwindows reverbs in `airwindows/src` keep their own MIT license (`airwindows/LICENSE`, Copyright (c) 2018 Chris Johnson).
