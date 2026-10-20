@@ -1,0 +1,1183 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+<title>Ribbon 35</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=Michroma&display=swap">
+<style>
+/* Layout: three instruments stacked on a workbench. Each device is a fixed
+   physical object with its scope screen set into the panel; the bench around
+   them (output, notes) follows the viewer's theme. */
+:root {
+  --page: #e6eae7;
+  --ink: #1b2320;
+  --muted: #56625c;
+  --rule: #c5cdc8;
+  --card: #f4f6f4;
+  --accent: #2c6a5f;
+  --accent-ink: #f4f6f4;
+  --rec: #c8372d;
+
+  /* the device itself keeps one look in both themes */
+  --body: #2e4a44;
+  --body-hi: #3b5d56;
+  --body-edge: #1b2d29;
+  --silk: #efe6d2;
+  --silk-dim: #b9b29f;
+  --ribbon: #101413;
+  --ribbon-key: #262d2b;
+  --ribbon-mark: #3a4441;
+  --led: #ff3d2e;
+  --metal-hi: #f2f3f1;
+  --metal-lo: #8d9592;
+  --scope-bg: #0d1412;
+  --scope-grid: #1d2a26;
+  --scope-trace: #8ff0c9;
+  --duo-body: #5b3a33;
+  --duo-body-hi: #6f4a40;
+  --duo-body-edge: #331f1b;
+  --delay-body: #2e3a52;
+  --delay-body-hi: #3d4b66;
+  --delay-body-edge: #1a2132;
+
+  --font-display: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --font-label: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #121715; --ink: #e2e8e5; --muted: #93a09a; --rule: #29322f;
+    --card: #19201e; --accent: #7cc4b4; --accent-ink: #0f1614; --rec: #ff6b5e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #121715; --ink: #e2e8e5; --muted: #93a09a; --rule: #29322f;
+  --card: #19201e; --accent: #7cc4b4; --accent-ink: #0f1614; --rec: #ff6b5e; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px;
+}
+.wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 28px; }
+
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+header h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(22px, 4vw, 30px); letter-spacing: 0.04em; margin: 0; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 60ch; }
+.status { font-family: var(--font-label); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border: 1px solid var(--rule); border-radius: 999px; color: var(--muted); white-space: nowrap; }
+.status.on { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- device ---------- */
+.device {
+  background: linear-gradient(180deg, var(--body-hi), var(--body) 18%, var(--body) 82%, var(--body-edge));
+  border-radius: 18px;
+  padding: 22px clamp(14px, 3vw, 28px) 18px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 -2px 0 rgba(0,0,0,0.3) inset, 0 18px 40px -18px rgba(0,0,0,0.55);
+  color: var(--silk);
+  display: grid;
+  gap: 18px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.devices { display: grid; gap: 28px; }
+.device.duo { --body: var(--duo-body); --body-hi: var(--duo-body-hi); --body-edge: var(--duo-body-edge); }
+.device.delay { --body: var(--delay-body); --body-hi: var(--delay-body-hi); --body-edge: var(--delay-body-edge); }
+.controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px clamp(14px, 3vw, 30px); }
+.group { display: grid; gap: 8px; }
+.group-title { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--silk-dim); border-bottom: 1px solid rgba(239,230,210,0.35); padding-bottom: 3px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* scope screen set into the panel: fills whatever width the knobs leave */
+.scope-group { flex: 1 1 220px; min-width: 0; display: grid; gap: 8px; grid-template-rows: auto 1fr; align-self: stretch; }
+.scope-bezel {
+  position: relative; min-height: 100px; border-radius: 8px; padding: 5px;
+  background: var(--body-edge);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.1);
+}
+.scope-bezel canvas { display: block; width: 100%; height: 100%; min-height: 90px; border-radius: 5px; background: var(--scope-bg); }
+.scope-bezel::after { /* faint scanlines and glass glare over the trace */
+  content: ""; position: absolute; inset: 5px; border-radius: 5px; pointer-events: none;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.07), transparent 40%),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px);
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.7);
+}
+.group-row { display: flex; gap: clamp(10px, 2.4vw, 22px); align-items: flex-start; }
+
+.knob { display: grid; justify-items: center; gap: 6px; width: 64px; }
+.knob-dial {
+  width: 52px; height: 52px; border-radius: 50%; position: relative; cursor: ns-resize; outline: none;
+  /* 11 scale ticks over the 270 degree sweep; the top layer hides the bottom gap */
+  background:
+    conic-gradient(from -135deg, transparent 0 271deg, var(--body) 271deg 360deg),
+    repeating-conic-gradient(from -135.7deg, rgba(239,230,210,0.55) 0deg 1.4deg, transparent 1.4deg 27deg);
+}
+.knob-cap {
+  position: absolute; inset: 6px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--metal-hi), var(--metal-lo) 75%);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.35);
+  transform: rotate(var(--angle, 0deg));
+}
+.knob-cap::after { content: ""; position: absolute; left: 50%; top: 4px; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px; background: var(--body-edge); }
+.knob-dial:focus-visible { box-shadow: 0 0 0 2px var(--silk); }
+.knob-label { font-family: var(--font-label); font-weight: 600; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk); text-align: center; }
+.knob-value { font-family: var(--font-mono); font-size: 11px; color: var(--silk-dim); font-variant-numeric: tabular-nums; min-height: 1.4em; }
+/* a knob whose effect is switched off by another control (LFO knobs at Int. 0) */
+.knob.idle .knob-dial { opacity: 0.55; }
+.knob.idle .knob-label, .knob.idle .knob-value { opacity: 0.5; }
+
+.led { width: 10px; height: 10px; border-radius: 50%; background: var(--led); opacity: 0.12; box-shadow: 0 0 10px 2px rgba(255,61,46,0.0); transition: none; }
+
+/* three-position slide switch */
+.switch { display: grid; grid-template-columns: auto auto; gap: 0 10px; align-items: stretch; }
+.switch-track { position: relative; width: 22px; height: 96px; border-radius: 6px; background: var(--body-edge); box-shadow: 0 1px 0 rgba(255,255,255,0.1), inset 0 2px 4px rgba(0,0,0,0.6); grid-row: 1; cursor: pointer; }
+.switch-thumb { position: absolute; left: 2px; right: 2px; height: 28px; border-radius: 4px; background: linear-gradient(180deg, var(--metal-hi), var(--metal-lo)); box-shadow: 0 2px 3px rgba(0,0,0,0.5); transition: top 90ms ease-out; }
+.switch-labels { display: grid; grid-template-rows: repeat(3, 1fr); height: 96px; }
+.switch-labels button {
+  all: unset; cursor: pointer; font-family: var(--font-label); font-weight: 600; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk-dim); display: flex; align-items: center;
+}
+.switch-labels button[aria-checked="true"] { color: var(--silk); }
+.switch-labels button:focus-visible { outline: 1px solid var(--silk); outline-offset: 2px; }
+
+/* ribbon */
+.ribbon-wrap { display: grid; gap: 6px; }
+.ribbon {
+  position: relative; height: 74px; border-radius: 6px; background: var(--ribbon); cursor: pointer; overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.08);
+  display: grid; grid-template-columns: repeat(var(--slots), 1fr); padding: 6px 4px;
+}
+.slot { position: relative; }
+.slot::after { content: ""; position: absolute; inset: 0 1px; border-radius: 2px; background: var(--ribbon-key); }
+.slot.sharp::after { inset: 0 1px 40% 1px; background: var(--ribbon-mark); }
+.slot.sharp::before { content: ""; position: absolute; inset: 60% 1px 0 1px; background: var(--ribbon-key); border-radius: 2px; }
+.finger { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--silk); opacity: 0; box-shadow: 0 0 12px 2px rgba(239,230,210,0.45); pointer-events: none; }
+.finger.on { opacity: 0.9; }
+.slot.off-scale::after, .slot.off-scale::before { opacity: 0.28; }
+.ribbon-scale { display: grid; grid-template-columns: repeat(var(--slots), 1fr); padding: 0 4px; font-family: var(--font-mono); font-size: 10px; color: var(--silk-dim); text-align: center; }
+
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px; }
+.brand { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.22em; color: var(--silk); }
+.brand small { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.16em; color: var(--silk-dim); margin-left: 10px; text-transform: uppercase; }
+.readout { font-family: var(--font-mono); font-size: 13px; color: var(--silk); font-variant-numeric: tabular-nums; }
+.foot-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.keys-badge { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--silk); border: 1px solid rgba(239,230,210,0.45); border-radius: 999px; padding: 1px 8px; }
+/* hidden but still taking its space, so moving the keys never shifts the footer
+   under a pointer that is mid-click */
+.keys-badge.off { visibility: hidden; }
+
+/* scale button + indicator LEDs (Binary) */
+.scale { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.scale-btn {
+  all: unset; width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+  background: radial-gradient(circle at 35% 30%, var(--metal-hi), var(--metal-lo) 75%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 0 3px var(--body-edge);
+}
+.scale-btn:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 0 0 3px var(--body-edge); }
+.scale-btn:focus-visible { outline: 2px solid var(--silk); outline-offset: 4px; }
+.scale-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--font-label); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk-dim); }
+.scale-list li { display: flex; align-items: center; gap: 6px; }
+.scale-list .led { width: 7px; height: 7px; }
+.scale-list li.on { color: var(--silk); }
+.scale-list li.on .led { opacity: 1; box-shadow: 0 0 8px 1px rgba(255,61,46,0.6); }
+
+/* latching push buttons: Hold, To Singularity */
+.toggles { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.toggle { all: unset; cursor: pointer; display: flex; align-items: center; gap: 7px; font-family: var(--font-label); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk-dim); }
+.toggle .cap { width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--metal-hi), var(--metal-lo) 75%); box-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 0 3px var(--body-edge); }
+.toggle:active .cap { transform: translateY(1px); }
+.toggle .led { width: 7px; height: 7px; }
+.toggle[aria-pressed="true"] { color: var(--silk); }
+.toggle[aria-pressed="true"] .led { opacity: 1; box-shadow: 0 0 8px 1px rgba(255,61,46,0.6); }
+.toggle:focus-visible { outline: 2px solid var(--silk); outline-offset: 4px; border-radius: 4px; }
+.finger.latched { opacity: 0.55; }
+.line-in { font-family: var(--font-label); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk); display: flex; align-items: center; gap: 7px; }
+.line-in .led { width: 7px; height: 7px; opacity: 1; box-shadow: 0 0 8px 1px rgba(255,61,46,0.6); }
+.line-in.off { color: var(--silk-dim); }
+.line-in.off .led { opacity: 0.25; box-shadow: none; }
+
+/* ---------- bench ---------- */
+.panel { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.panel h2 { font-family: var(--font-label); font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 28px; }
+
+.field { display: grid; gap: 6px; }
+.field > span { font-size: 13px; color: var(--muted); }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; width: fit-content; max-width: 100%; }
+.seg button { all: unset; cursor: pointer; padding: 6px 12px; font-size: 14px; color: var(--ink); }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.range { display: flex; align-items: center; gap: 10px; }
+.range input { flex: 1; accent-color: var(--accent); min-width: 0; }
+.range output { font-family: var(--font-mono); font-size: 13px; width: 3.5ch; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--rule); font-size: 14px; }
+.presets button:hover { border-color: var(--accent); color: var(--accent); }
+.presets button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hint { font-size: 13px; color: var(--muted); margin: 0; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.btn { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 8px; font-size: 14px; color: var(--ink); }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rec-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--rec); }
+.btn.rec[aria-pressed="true"] { border-color: var(--rec); color: var(--rec); }
+.btn.rec[aria-pressed="true"] .rec-dot { animation: rec-blink 1s steps(2, start) infinite; }
+@keyframes rec-blink { to { opacity: 0.2; } }
+.rec-time { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4ch; }
+.note { font-size: 13px; color: var(--muted); }
+kbd { font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+
+/* ---------- notes ---------- */
+.notes { display: grid; gap: 12px; }
+.notes h2 { font-family: var(--font-label); font-weight: 600; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.notes p { margin: 0; max-width: 70ch; }
+.table-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+th { font-family: var(--font-label); font-weight: 600; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--card); }
+td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+.tag { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
+.tag.sch { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 640px) {
+  .table-scroll { overflow-x: visible; }
+  table, tbody { display: block; min-width: 0; }
+  thead { display: none; }
+  tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px; border-bottom: 1px solid var(--rule); }
+  tr:last-child { border-bottom: none; }
+  td { border: none; padding: 0; }
+  td:first-child { font-weight: 500; }
+  td:nth-child(4) { grid-column: 2; grid-row: 1; }
+  td.part, td:nth-child(3) { grid-column: 1 / -1; }
+  td.part { white-space: normal; color: var(--muted); }
+}
+@media (prefers-reduced-motion: reduce) { .switch-thumb { transition: none; } .btn.rec[aria-pressed="true"] .rec-dot { animation: none; } }
+</style>
+
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Ribbon 35</h1>
+      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library.</p>
+    </div>
+    <span class="status" id="status">Sound off · touch a ribbon</span>
+  </header>
+
+  <div class="devices" id="devices"></div>
+
+  <section class="panel">
+    <h2>Output</h2>
+    <div class="fields">
+      <div class="field">
+        <span>Volume</span>
+        <div class="range"><input type="range" id="volume" min="0" max="1" step="0.01" value="0.7"><output id="volume-out" for="volume">70</output></div>
+      </div>
+      <div class="field">
+        <span>Listening through</span>
+        <div class="seg" id="seg-speaker">
+          <button id="out-phones" data-value="0" aria-pressed="true">Headphone jack</button>
+          <button id="out-speaker" data-value="1" aria-pressed="false">Built-in speaker</button>
+        </div>
+      </div>
+      <div class="field">
+        <span>Filter model</span>
+        <div class="seg" id="seg-filter">
+          <button id="flt-diode" data-value="0" aria-pressed="true">Diodes in loop</button>
+          <button id="flt-stdlib" data-value="1" aria-pressed="false">Faust korg35LPF</button>
+        </div>
+      </div>
+      <div class="field">
+        <span>MIDI keyboard</span>
+        <div class="row"><button class="btn" id="midi-connect">Connect MIDI</button></div>
+        <span class="note" id="midi-status" aria-live="polite">Plays the instrument marked "Keys". Sustain pedal holds, mod wheel sets LFO Int. (X-Mod on Binary).</span>
+      </div>
+      <div class="field">
+        <span>Recording</span>
+        <div class="row">
+          <button class="btn rec" id="rec-btn" aria-pressed="false"><span class="rec-dot"></span><span id="rec-label">Record</span></button>
+          <span class="rec-time" id="rec-time">0:00</span>
+          <button class="btn" id="rec-save" disabled>Save WAV</button>
+        </div>
+        <span class="note" id="rec-status" aria-live="polite">Records everything you hear, as a 16-bit stereo WAV.</span>
+      </div>
+      <div class="field">
+        <span>Pulsar starting points</span>
+        <div class="presets" id="ribbon35-presets"></div>
+      </div>
+      <div class="field">
+        <span>Binary starting points</span>
+        <div class="presets" id="duo-presets"></div>
+      </div>
+      <div class="field">
+        <span>Singularity starting points</span>
+        <div class="presets" id="delay-presets"></div>
+      </div>
+    </div>
+    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down; double-click one to reset it. At full Peak a filter whistles on its own, without touching the ribbon.</p>
+  </section>
+
+  <section class="notes">
+    <h2>Pulsar: where the numbers come from</h2>
+    <p>Each stage follows the parts on the monotron schematic. Values tagged <span class="tag sch">schematic</span> are read or derived from it. <span class="tag sch">hardware</span> values come from the real unit's specification. Values tagged <span class="tag">estimate</span> need a real unit to calibrate.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td>Ribbon span</td><td class="part">Q1 IMX9, note at VR1</td><td>"Whole ribbon Vbe offset 26.29 mV @ 20 °C" with Vt = 25.26 mV gives a 2.83× span: 18 semitones across the ribbon.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>VCO shape</td><td class="part">C11, F2, IC3C/B</td><td>Falling sawtooth (waveform icon at TP8), band-limited with <code>os.sawtooth</code>.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Gate</td><td class="part">IC2C, R51, C16, R52</td><td>Touch detection drives the VCO/VCF gate: 0.1 ms attack (1k × 0.1 µF), 1 ms release (10k × 0.1 µF).</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>LFO shape</td><td class="part">C10, Q3, IC3E/D</td><td>Falling ramp (icon at R64), restarted on every touch through the C9/R24 "LFO reset" pulse. The snap back up is band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Filter key tracking</td><td class="part">R42 330k, R50 68k, R75</td><td>The ribbon voltage also feeds the cutoff. Relative to the cutoff knob's 0–0.6 VCC span it adds 0.34 of the knob's range.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Filter + resonance</td><td class="part">Q12–14, C20, C21, IC4C, D1/D2</td><td>Two-pole Korg 35 low-pass. The 1SS355 diodes in IC4C's feedback sit inside the resonance loop, so self-oscillation is soft-limited.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Speaker path</td><td class="part">C26, R80, R77, C27, R81, C30</td><td>High-pass at 231 Hz and 72 Hz, low-pass at 5.9 kHz: the thin, bright sound of the built-in speaker.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Headphone path</td><td class="part">C25, R79, R82, C32</td><td>High-pass at 2.3 Hz, otherwise flat.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Pitch knob range</td><td class="part">VR3A, R18, R20, R21</td><td>1 V/octave over 0–10 V: 5 V centre, ±5 octaves. With 0 V = C0 assumed, the bottom of the ribbon runs from 16.4 Hz to 16.7 kHz, with C5 at the centre.</td><td><span class="tag sch">hardware</span></td></tr>
+          <tr><td>LFO rate range</td><td class="part">VR4A, R28, Q4/Q6</td><td>From 14 seconds per cycle (0.07 Hz) up to about 900 Hz, swept exponentially. The top of the range is well into audio rate. Below 1 Hz the knob shows seconds per cycle.</td><td><span class="tag sch">hardware</span></td></tr>
+          <tr><td>LFO depth</td><td class="part">R4 2.2k, R44 10k, VR5A</td><td>Up to 4 octaves of pitch, or most of the cutoff range.</td><td><span class="tag">estimate</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Binary: where the numbers come from</h2>
+    <p>From the monotron DUO schematic. Its ribbon goes through an MSP430 microcontroller whose firmware isn't public, so the ribbon's range and scale snapping follow KORG's published feature list.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td>Oscillators switch</td><td class="part">SW1A, R67 470k, R58 820k</td><td>Standby, VCO1, or VCO1+2. VCO2 joins the mixer through 820k against VCO1's 470k, so it sits at 0.57 of VCO1's level.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>VCO shape</td><td class="part">C13/C21, IC4, Q5–Q8</td><td>Each core runs at twice the pitch and toggles a transistor flip-flop, giving 50% squares at SQR1 and SQR2. Band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>VCO2 pitch</td><td class="part">VR4A, R76, R62, R77</td><td>0–130 mV on Q3's base (VCC = 5 V, set by R4/R8): from unison up to +7.3 octaves above VCO1.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>X-Mod</td><td class="part">R54, R59, VR3A, R55, R60</td><td>SQR2 lifts VCO1's pitch while it is high: up to 3.1 octaves at full X-Mod Int. This is square-wave cross modulation.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Filter tracking</td><td class="part">R70 (NU)</td><td>The ribbon-to-cutoff resistor is marked not fitted, so on Binary the cutoff doesn't follow the ribbon.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Filter, gate, amp</td><td class="part">Q11–13, D7/D8, Q10, IC6</td><td>Same parts and values as the monotron, so both models share one filter, gate and amp.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Scale button</td><td class="part">SW2A, IC2</td><td>Cycles Chromatic, Major, Minor and Off. The bottom of the ribbon is the key note.</td><td><span class="tag sch">hardware</span></td></tr>
+          <tr><td>Scale snapping</td><td class="part">IC2 firmware</td><td>Snaps to the nearest note of the scale (natural minor for Minor).</td><td><span class="tag">estimate</span></td></tr>
+          <tr><td>Ribbon range</td><td class="part">IC2 firmware</td><td>Two octaves across the ribbon.</td><td><span class="tag">estimate</span></td></tr>
+          <tr><td>VCO1 pitch knob</td><td class="part">VR2A, R22</td><td>Same 1 V/octave law as the monotron's Pitch knob.</td><td><span class="tag">estimate</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Singularity: where the numbers come from</h2>
+    <p>From the monotron DELAY schematic. The echo is a PT2399 delay chip, so its timing comes from the chip's datasheet. <span class="tag sch">datasheet</span> values come from there.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td>Echo routing</td><td class="part">VR7A, C20, R58 10k, IC4D</td><td>The echo never goes straight to the amp. It returns through the Feedback knob into the filter's input mixer, at 10× the VCO's gain (R58 10k vs R55 100k). So Feedback sets both echo level and repeats, and every repeat goes back through the filter.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Delay time</td><td class="part">IC5 PT2399, R80 1k, VR6A 100k</td><td>Electric Druid's fit to the datasheet, ms = 11.46 × R(kΩ) + 29.7, gives 41 ms to 1.19 s. The time glides when you turn the knob, so echoes bend in pitch like tape.</td><td><span class="tag sch">datasheet</span></td></tr>
+          <tr><td>Echo tone</td><td class="part">R74–R77, R82, C24, C25, C29, C31</td><td>Two-pole filters at about 8.5 kHz either side of the chip.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Echo darkening</td><td class="part">PT2399 clock</td><td>Longer delays run the chip's clock slower, so long echoes get darker: about 15 kHz at the shortest time, falling to 400 Hz at the longest.</td><td><span class="tag">estimate</span></td></tr>
+          <tr><td>Feedback amount</td><td class="part">VR7A</td><td>Loop gain 1.5 × Feedback: repeats build into runaway past about two-thirds of the knob. The filter's diodes keep it bounded.</td><td><span class="tag">estimate</span></td></tr>
+          <tr><td>No filter gate</td><td class="part">Q10, R50 (NU)</td><td>Not fitted, so the filter stays open between notes and echoes ring on after you let go.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Fixed resonance</td><td class="part">R78 3.3k, R73 5.6k</td><td>No Peak knob. Against the monotron's Peak pot plus R78 2.2k, this is 0.88 of full Peak's loop gain, where full Peak is the point of self-oscillation: strongly resonant, but it won't whistle on its own.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Cutoff knob</td><td class="part">VR5A, R72 0 Ω, R48 68k</td><td>The knob spans 0–VCC instead of the monotron's 0–0.6 VCC into the same circuit, so it covers 1.67× more range. The filter is wide open from about 60% up. The ribbon adds 0.21 of the knob's span through R45 330k.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>LFO</td><td class="part">C9, F1, IC3D/E, SW1A</td><td>Triangle or square, sent to pitch only, free-running.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>LFO shape</td><td class="part">VR1 500k (rear trimmer)</td><td>Skews the triangle or sets the square's width.</td><td><span class="tag sch">hardware</span></td></tr>
+          <tr><td>Ribbon range</td><td class="part">R6 470k, R10 47k, R11, R15</td><td>Four octaves, per KORG's spec. If the ribbon swung the full 5 V as on the monotron, these resistors would give about 11.6 octaves.</td><td><span class="tag sch">hardware</span></td></tr>
+          <tr><td>Bottom of ribbon</td><td class="part">R22, R23, R24 (no pitch knob)</td><td>55 Hz, so the ribbon runs from A1 to A5.</td><td><span class="tag">estimate</span></td></tr>
+          <tr><td>LFO rate and depth</td><td class="part">VR3A, VR4A, R7 47k</td><td>0.08–80 Hz, up to 3 octaves of pitch.</td><td><span class="tag">estimate</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const ASSETS = {"synths":{"ribbon35":{"wasm":"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nAFBAEP6fqo+OAK4AUEAQ5qZmT44AuQBQQBDMzMzPzgC1AILkICAgAAAIAAgAUgEfyABBSAACw8LkICAgAAAIAAgAUgEfyAABSABCw8LjICAgAAAIAAgAWogAjgCAAsLxKyAgAABAEEAC70seyJuYW1lIjogIm1vbm90cm9uLXByb3RvIiwiZmlsZW5hbWUiOiAibW9ub3Ryb24iLCJ2ZXJzaW9uIjogIjIuOTAuMCIsImNvbXBpbGVfb3B0aW9ucyI6ICItbGFuZyB3YXNtLWkgLWZwZ2EtbWVtLXRoIDQgLWN0IDEgLWVzIDEgLW1jZCAxNiAtbWRkIDEwMjQgLW1keSAzMyAtc2luZ2xlIC1mdHogMiIsImxpYnJhcnlfbGlzdCI6IFsiL3Vzci9zaGFyZS9mYXVzdC9zdGRmYXVzdC5saWIiLCIvdXNyL3NoYXJlL2ZhdXN0L29zY2lsbGF0b3JzLmxpYiIsIi9mYXVzdC91c2VyL2luYzAvbW9ub3Ryb24tY29tbW9uLmxpYiIsIi91c3Ivc2hhcmUvZmF1c3Qvc2lnbmFscy5saWIiLCIvdXNyL3NoYXJlL2ZhdXN0L21hdGhzLmxpYiIsIi91c3Ivc2hhcmUvZmF1c3QvcGxhdGZvcm0ubGliIiwiL3Vzci9zaGFyZS9mYXVzdC9iYXNpY3MubGliIiwiL3Vzci9zaGFyZS9mYXVzdC9ub2lzZXMubGliIiwiL3Vzci9zaGFyZS9mYXVzdC92YWVmZmVjdHMubGliIiwiL3Vzci9zaGFyZS9mYXVzdC9maWx0ZXJzLmxpYiJdLCJpbmNsdWRlX3BhdGhuYW1lcyI6IFsiL2ZhdXN0L3VzZXIvaW5jMCIsIi9zaGFyZS9mYXVzdCIsIi9zaGFyZS9mYXVzdCIsIi91c3IvbG9jYWwvc2hhcmUvZmF1c3QiLCIvdXNyL3NoYXJlL2ZhdXN0IiwiLiJdLCJzaXplIjogMzUyLCJpbnB1dHMiOiAxLCJvdXRwdXRzIjogMSwibWV0YSI6IFsgeyAiYmFzaWNzLmxpYi9uYW1lIjogIkZhdXN0IEJhc2ljIEVsZW1lbnQgTGlicmFyeSIgfSx7ICJiYXNpY3MubGliL3ZlcnNpb24iOiAiMS4yMy4xIiB9LHsgImNvbXBpbGVfb3B0aW9ucyI6ICItbGFuZyB3YXNtLWkgLWZwZ2EtbWVtLXRoIDQgLWN0IDEgLWVzIDEgLW1jZCAxNiAtbWRkIDEwMjQgLW1keSAzMyAtc2luZ2xlIC1mdHogMiIgfSx7ICJkZXNjcmlwdGlvbiI6ICJNb25vdHJvbi1zdHlsZSByaWJib24gc3ludGggbW9kZWxsZWQgZnJvbSB0aGUgcHVibGljIHNjaGVtYXRpYyIgfSx7ICJmaWxlbmFtZSI6ICJtb25vdHJvbiIgfSx7ICJmaWx0ZXJzLmxpYi9oaWdocGFzczphdXRob3IiOiAiSnVsaXVzIE8uIFNtaXRoIElJSSIgfSx7ICJmaWx0ZXJzLmxpYi9oaWdocGFzczpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvaGlnaHBhc3M6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAiZmlsdGVycy5saWIvbG93cGFzczBfaGlnaHBhc3MxOmF1dGhvciI6ICJKdWxpdXMgTy4gU21pdGggSUlJIiB9LHsgImZpbHRlcnMubGliL2xvd3Bhc3MwX2hpZ2hwYXNzMTpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvbG93cGFzczBfaGlnaHBhc3MxOmxpY2Vuc2UiOiAiTGljZW5zZVJlZi1TVEstNC4zIiB9LHsgImZpbHRlcnMubGliL2xvd3Bhc3M6YXV0aG9yIjogIkp1bGl1cyBPLiBTbWl0aCBJSUkiIH0seyAiZmlsdGVycy5saWIvbG93cGFzczpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvbG93cGFzczpsaWNlbnNlIjogIkxpY2Vuc2VSZWYtU1RLLTQuMyIgfSx7ICJmaWx0ZXJzLmxpYi9uYW1lIjogIkZhdXN0IEZpbHRlcnMgTGlicmFyeSIgfSx7ICJmaWx0ZXJzLmxpYi90ZjE6YXV0aG9yIjogIkp1bGl1cyBPLiBTbWl0aCBJSUkiIH0seyAiZmlsdGVycy5saWIvdGYxOmNvcHlyaWdodCI6ICJDb3B5cmlnaHQgKEMpIDIwMDMtMjAxOSBieSBKdWxpdXMgTy4gU21pdGggSUlJIDxqb3NAY2NybWEuc3RhbmZvcmQuZWR1PiIgfSx7ICJmaWx0ZXJzLmxpYi90ZjE6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAiZmlsdGVycy5saWIvdGYxczphdXRob3IiOiAiSnVsaXVzIE8uIFNtaXRoIElJSSIgfSx7ICJmaWx0ZXJzLmxpYi90ZjFzOmNvcHlyaWdodCI6ICJDb3B5cmlnaHQgKEMpIDIwMDMtMjAxOSBieSBKdWxpdXMgTy4gU21pdGggSUlJIDxqb3NAY2NybWEuc3RhbmZvcmQuZWR1PiIgfSx7ICJmaWx0ZXJzLmxpYi90ZjFzOmxpY2Vuc2UiOiAiTGljZW5zZVJlZi1TVEstNC4zIiB9LHsgImZpbHRlcnMubGliL3ZlcnNpb24iOiAiMS45LjAiIH0seyAibWF0aHMubGliL2F1dGhvciI6ICJHUkFNRSIgfSx7ICJtYXRocy5saWIvY29weXJpZ2h0IjogIkdSQU1FIiB9LHsgIm1hdGhzLmxpYi9saWNlbnNlIjogIkxpY2Vuc2VSZWYtTEdQTC0yLjEtb3ItbGF0ZXItd2l0aC1GYXVzdC1leGNlcHRpb24iIH0seyAibWF0aHMubGliL25hbWUiOiAiRmF1c3QgTWF0aCBMaWJyYXJ5IiB9LHsgIm1hdGhzLmxpYi92ZXJzaW9uIjogIjIuOS4wIiB9LHsgIm5hbWUiOiAibW9ub3Ryb24tcHJvdG8iIH0seyAibm9pc2VzLmxpYi9uYW1lIjogIkZhdXN0IE5vaXNlIEdlbmVyYXRvciBMaWJyYXJ5IiB9LHsgIm5vaXNlcy5saWIvdmVyc2lvbiI6ICIxLjYuMCIgfSx7ICJvc2NpbGxhdG9ycy5saWIvbmFtZSI6ICJGYXVzdCBPc2NpbGxhdG9yIExpYnJhcnkiIH0seyAib3NjaWxsYXRvcnMubGliL3NhdzJwdHI6YXV0aG9yIjogIkp1bGl1cyBPLiBTbWl0aCBJSUkiIH0seyAib3NjaWxsYXRvcnMubGliL3NhdzJwdHI6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAib3NjaWxsYXRvcnMubGliL3ZlcnNpb24iOiAiMS44LjAiIH0seyAicGxhdGZvcm0ubGliL25hbWUiOiAiR2VuZXJpYyBQbGF0Zm9ybSBMaWJyYXJ5IiB9LHsgInBsYXRmb3JtLmxpYi92ZXJzaW9uIjogIjEuMy4wIiB9LHsgInNpZ25hbHMubGliL25hbWUiOiAiRmF1c3QgUm91dGluZyBMaWJyYXJ5IiB9LHsgInNpZ25hbHMubGliL3ZlcnNpb24iOiAiMS43LjAiIH0seyAidmFlZmZlY3RzLmxpYi9rb3JnMzVMUEY6YXV0aG9yIjogIkVyaWMgVGFyciIgfSx7ICJ2YWVmZmVjdHMubGliL2tvcmczNUxQRjpsaWNlbnNlIjogIkxpY2Vuc2VSZWYtU1RLLTQuMyIgfSx7ICJ2YWVmZmVjdHMubGliL25hbWUiOiAiRmF1c3QgVmlydHVhbCBBbmFsb2cgRmlsdGVyIEVmZmVjdCBMaWJyYXJ5IiB9LHsgInZhZWZmZWN0cy5saWIvdmVyc2lvbiI6ICIxLjYuMCIgfV0sInVpIjogWyB7InR5cGUiOiAidmdyb3VwIiwibGFiZWwiOiAibW9ub3Ryb24tcHJvdG8iLCJpdGVtcyI6IFsgeyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJyaWJib24iLCJ2YXJuYW1lIjogImZIc2xpZGVyMiIsInNob3J0bmFtZSI6ICJyaWJib24iLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9yaWJib24iLCJpbmRleCI6IDEzMiwibWV0YSI6IFt7ICIwIjogIiIgfV0sImluaXQiOiAwLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiY2hlY2tib3giLCJsYWJlbCI6ICJzcGVha2VyIiwidmFybmFtZSI6ICJmQ2hlY2tib3gwIiwic2hvcnRuYW1lIjogInNwZWFrZXIiLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9zcGVha2VyIiwiaW5kZXgiOiA2NCwibWV0YSI6IFt7ICIxMCI6ICIiIH1dfSx7InR5cGUiOiAiY2hlY2tib3giLCJsYWJlbCI6ICJzdGRsaWIgZmlsdGVyIiwidmFybmFtZSI6ICJmQ2hlY2tib3gxIiwic2hvcnRuYW1lIjogInN0ZGxpYl9maWx0ZXIiLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9zdGRsaWJfZmlsdGVyIiwiaW5kZXgiOiAxMDQsIm1ldGEiOiBbeyAiMTEiOiAiIiB9XX0seyJ0eXBlIjogImhiYXJncmFwaCIsImxhYmVsIjogImxmbyBsZWQiLCJ2YXJuYW1lIjogImZIYmFyZ3JhcGgwIiwic2hvcnRuYW1lIjogImxmb19sZWQiLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9sZm9fbGVkIiwiaW5kZXgiOiA2MCwibWV0YSI6IFt7ICIxMiI6ICIiIH1dLCJtaW4iOiAwLCJtYXgiOiAxfSx7InR5cGUiOiAiYnV0dG9uIiwibGFiZWwiOiAiZ2F0ZSIsInZhcm5hbWUiOiAiZkJ1dHRvbjAiLCJzaG9ydG5hbWUiOiAiZ2F0ZSIsImFkZHJlc3MiOiAiL21vbm90cm9uLXByb3RvL2dhdGUiLCJpbmRleCI6IDAsIm1ldGEiOiBbeyAiMSI6ICIiIH1dfSx7InR5cGUiOiAibmVudHJ5IiwibGFiZWwiOiAibW9kZSIsInZhcm5hbWUiOiAiZkVudHJ5MCIsInNob3J0bmFtZSI6ICJtb2RlIiwiYWRkcmVzcyI6ICIvbW9ub3Ryb24tcHJvdG8vbW9kZSIsImluZGV4IjogMTIsIm1ldGEiOiBbeyAiMiI6ICIiIH0seyAic3R5bGUiOiAicmFkaW97J3N0YW5kYnknOjA7J3BpdGNoJzoxOydjdXRvZmYnOjJ9IiB9XSwiaW5pdCI6IDEsIm1pbiI6IDAsIm1heCI6IDIsInN0ZXAiOiAxfSx7InR5cGUiOiAiaHNsaWRlciIsImxhYmVsIjogInBpdGNoIiwidmFybmFtZSI6ICJmSHNsaWRlcjUiLCJzaG9ydG5hbWUiOiAicGl0Y2giLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9waXRjaCIsImluZGV4IjogMTg0LCJtZXRhIjogW3sgIjMiOiAiIiB9XSwiaW5pdCI6IDAuMzMzLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiaHNsaWRlciIsImxhYmVsIjogImxmbyByYXRlIiwidmFybmFtZSI6ICJmSHNsaWRlcjAiLCJzaG9ydG5hbWUiOiAibGZvX3JhdGUiLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9sZm9fcmF0ZSIsImluZGV4IjogMzIsIm1ldGEiOiBbeyAiNCI6ICIiIH1dLCJpbml0IjogMC4zOTksIm1pbiI6IDAsIm1heCI6IDEsInN0ZXAiOiAwLjAwMDF9LHsidHlwZSI6ICJoc2xpZGVyIiwibGFiZWwiOiAibGZvIGludCIsInZhcm5hbWUiOiAiZkhzbGlkZXIzIiwic2hvcnRuYW1lIjogImxmb19pbnQiLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9sZm9faW50IiwiaW5kZXgiOiAxNDQsIm1ldGEiOiBbeyAiNSI6ICIiIH1dLCJpbml0IjogMCwibWluIjogMCwibWF4IjogMSwic3RlcCI6IDAuMDAwMX0seyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJjdXRvZmYiLCJ2YXJuYW1lIjogImZIc2xpZGVyMSIsInNob3J0bmFtZSI6ICJjdXRvZmYiLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9jdXRvZmYiLCJpbmRleCI6IDExMiwibWV0YSI6IFt7ICI2IjogIiIgfV0sImluaXQiOiAwLjYsIm1pbiI6IDAsIm1heCI6IDEsInN0ZXAiOiAwLjAwMDF9LHsidHlwZSI6ICJoc2xpZGVyIiwibGFiZWwiOiAicGVhayIsInZhcm5hbWUiOiAiZkhzbGlkZXI2Iiwic2hvcnRuYW1lIjogInBlYWsiLCJhZGRyZXNzIjogIi9tb25vdHJvbi1wcm90by9wZWFrIiwiaW5kZXgiOiAyMjgsIm1ldGEiOiBbeyAiNyI6ICIiIH1dLCJpbml0IjogMC4zLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiaHNsaWRlciIsImxhYmVsIjogInZvbHVtZSIsInZhcm5hbWUiOiAiZkhzbGlkZXI3Iiwic2hvcnRuYW1lIjogInZvbHVtZSIsImFkZHJlc3MiOiAiL21vbm90cm9uLXByb3RvL3ZvbHVtZSIsImluZGV4IjogMzQwLCJtZXRhIjogW3sgIjgiOiAiIiB9XSwiaW5pdCI6IDAuNywibWluIjogMCwibWF4IjogMSwic3RlcCI6IDAuMDAwMX0seyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJsaW5lIGluIiwidmFybmFtZSI6ICJmSHNsaWRlcjQiLCJzaG9ydG5hbWUiOiAibGluZV9pbiIsImFkZHJlc3MiOiAiL21vbm90cm9uLXByb3RvL2xpbmVfaW4iLCJpbmRleCI6IDE1NiwibWV0YSI6IFt7ICI5IjogIiIgfV0sImluaXQiOiAwLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfV19XX0=","meta":{"size":352,"inputs":1,"outputs":1,"ui":[{"type":"vgroup","label":"monotron-proto","items":[{"type":"hslider","label":"ribbon","varname":"fHslider2","shortname":"ribbon","address":"/monotron-proto/ribbon","index":132,"meta":[{"0":""}],"init":0,"min":0,"max":1,"step":0.0001},{"type":"checkbox","label":"speaker","varname":"fCheckbox0","shortname":"speaker","address":"/monotron-proto/speaker","index":64,"meta":[{"10":""}]},{"type":"checkbox","label":"stdlib filter","varname":"fCheckbox1","shortname":"stdlib_filter","address":"/monotron-proto/stdlib_filter","index":104,"meta":[{"11":""}]},{"type":"hbargraph","label":"lfo led","varname":"fHbargraph0","shortname":"lfo_led","address":"/monotron-proto/lfo_led","index":60,"meta":[{"12":""}],"min":0,"max":1},{"type":"button","label":"gate","varname":"fButton0","shortname":"gate","address":"/monotron-proto/gate","index":0,"meta":[{"1":""}]},{"type":"nentry","label":"mode","varname":"fEntry0","shortname":"mode","address":"/monotron-proto/mode","index":12,"meta":[{"2":""},{"style":"radio{-standby-:0;-pitch-:1;-cutoff-:2}"}],"init":1,"min":0,"max":2,"step":1},{"type":"hslider","label":"pitch","varname":"fHslider5","shortname":"pitch","address":"/monotron-proto/pitch","index":184,"meta":[{"3":""}],"init":0.333,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"lfo rate","varname":"fHslider0","shortname":"lfo_rate","address":"/monotron-proto/lfo_rate","index":32,"meta":[{"4":""}],"init":0.399,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"lfo int","varname":"fHslider3","shortname":"lfo_int","address":"/monotron-proto/lfo_int","index":144,"meta":[{"5":""}],"init":0,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"cutoff","varname":"fHslider1","shortname":"cutoff","address":"/monotron-proto/cutoff","index":112,"meta":[{"6":""}],"init":0.6,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"peak","varname":"fHslider6","shortname":"peak","address":"/monotron-proto/peak","index":228,"meta":[{"7":""}],"init":0.3,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"volume","varname":"fHslider7","shortname":"volume","address":"/monotron-proto/volume","index":340,"meta":[{"8":""}],"init":0.7,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"line in","varname":"fHslider4","shortname":"line_in","address":"/monotron-proto/line_in","index":156,"meta":[{"9":""}],"init":0,"min":0,"max":1,"step":0.0001}]}]}},"duo":{"wasm":"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L3NoYXJlL2ZhdXN0IiwiL3Vzci9zaGFyZS9mYXVzdCIsIi4iXSwic2l6ZSI6IDM1NiwiaW5wdXRzIjogMSwib3V0cHV0cyI6IDEsIm1ldGEiOiBbIHsgImJhc2ljcy5saWIvbmFtZSI6ICJGYXVzdCBCYXNpYyBFbGVtZW50IExpYnJhcnkiIH0seyAiYmFzaWNzLmxpYi92ZXJzaW9uIjogIjEuMjMuMSIgfSx7ICJjb21waWxlX29wdGlvbnMiOiAiLWxhbmcgd2FzbS1pIC1mcGdhLW1lbS10aCA0IC1jdCAxIC1lcyAxIC1tY2QgMTYgLW1kZCAxMDI0IC1tZHkgMzMgLXNpbmdsZSAtZnR6IDIiIH0seyAiZGVzY3JpcHRpb24iOiAibW9ub3Ryb24gRFVPLXN0eWxlIHJpYmJvbiBzeW50aCBtb2RlbGxlZCBmcm9tIHRoZSBwdWJsaWMgc2NoZW1hdGljIiB9LHsgImZpbGVuYW1lIjogImR1byIgfSx7ICJmaWx0ZXJzLmxpYi9oaWdocGFzczphdXRob3IiOiAiSnVsaXVzIE8uIFNtaXRoIElJSSIgfSx7ICJmaWx0ZXJzLmxpYi9oaWdocGFzczpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvaGlnaHBhc3M6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAiZmlsdGVycy5saWIvbG93cGFzczBfaGlnaHBhc3MxOmF1dGhvciI6ICJKdWxpdXMgTy4gU21pdGggSUlJIiB9LHsgImZpbHRlcnMubGliL2xvd3Bhc3MwX2hpZ2hwYXNzMTpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvbG93cGFzczBfaGlnaHBhc3MxOmxpY2Vuc2UiOiAiTGljZW5zZVJlZi1TVEstNC4zIiB9LHsgImZpbHRlcnMubGliL2xvd3Bhc3M6YXV0aG9yIjogIkp1bGl1cyBPLiBTbWl0aCBJSUkiIH0seyAiZmlsdGVycy5saWIvbG93cGFzczpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvbG93cGFzczpsaWNlbnNlIjogIkxpY2Vuc2VSZWYtU1RLLTQuMyIgfSx7ICJmaWx0ZXJzLmxpYi9uYW1lIjogIkZhdXN0IEZpbHRlcnMgTGlicmFyeSIgfSx7ICJmaWx0ZXJzLmxpYi90ZjE6YXV0aG9yIjogIkp1bGl1cyBPLiBTbWl0aCBJSUkiIH0seyAiZmlsdGVycy5saWIvdGYxOmNvcHlyaWdodCI6ICJDb3B5cmlnaHQgKEMpIDIwMDMtMjAxOSBieSBKdWxpdXMgTy4gU21pdGggSUlJIDxqb3NAY2NybWEuc3RhbmZvcmQuZWR1PiIgfSx7ICJmaWx0ZXJzLmxpYi90ZjE6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAiZmlsdGVycy5saWIvdGYxczphdXRob3IiOiAiSnVsaXVzIE8uIFNtaXRoIElJSSIgfSx7ICJmaWx0ZXJzLmxpYi90ZjFzOmNvcHlyaWdodCI6ICJDb3B5cmlnaHQgKEMpIDIwMDMtMjAxOSBieSBKdWxpdXMgTy4gU21pdGggSUlJIDxqb3NAY2NybWEuc3RhbmZvcmQuZWR1PiIgfSx7ICJmaWx0ZXJzLmxpYi90ZjFzOmxpY2Vuc2UiOiAiTGljZW5zZVJlZi1TVEstNC4zIiB9LHsgImZpbHRlcnMubGliL3ZlcnNpb24iOiAiMS45LjAiIH0seyAibWF0aHMubGliL2F1dGhvciI6ICJHUkFNRSIgfSx7ICJtYXRocy5saWIvY29weXJpZ2h0IjogIkdSQU1FIiB9LHsgIm1hdGhzLmxpYi9saWNlbnNlIjogIkxpY2Vuc2VSZWYtTEdQTC0yLjEtb3ItbGF0ZXItd2l0aC1GYXVzdC1leGNlcHRpb24iIH0seyAibWF0aHMubGliL25hbWUiOiAiRmF1c3QgTWF0aCBMaWJyYXJ5IiB9LHsgIm1hdGhzLmxpYi92ZXJzaW9uIjogIjIuOS4wIiB9LHsgIm5hbWUiOiAiZHVvLXByb3RvIiB9LHsgIm5vaXNlcy5saWIvbmFtZSI6ICJGYXVzdCBOb2lzZSBHZW5lcmF0b3IgTGlicmFyeSIgfSx7ICJub2lzZXMubGliL3ZlcnNpb24iOiAiMS42LjAiIH0seyAicGxhdGZvcm0ubGliL25hbWUiOiAiR2VuZXJpYyBQbGF0Zm9ybSBMaWJyYXJ5IiB9LHsgInBsYXRmb3JtLmxpYi92ZXJzaW9uIjogIjEuMy4wIiB9LHsgInNpZ25hbHMubGliL25hbWUiOiAiRmF1c3QgUm91dGluZyBMaWJyYXJ5IiB9LHsgInNpZ25hbHMubGliL3ZlcnNpb24iOiAiMS43LjAiIH0seyAidmFlZmZlY3RzLmxpYi9rb3JnMzVMUEY6YXV0aG9yIjogIkVyaWMgVGFyciIgfSx7ICJ2YWVmZmVjdHMubGliL2tvcmczNUxQRjpsaWNlbnNlIjogIkxpY2Vuc2VSZWYtU1RLLTQuMyIgfSx7ICJ2YWVmZmVjdHMubGliL25hbWUiOiAiRmF1c3QgVmlydHVhbCBBbmFsb2cgRmlsdGVyIEVmZmVjdCBMaWJyYXJ5IiB9LHsgInZhZWZmZWN0cy5saWIvdmVyc2lvbiI6ICIxLjYuMCIgfV0sInVpIjogWyB7InR5cGUiOiAidmdyb3VwIiwibGFiZWwiOiAiZHVvLXByb3RvIiwiaXRlbXMiOiBbIHsidHlwZSI6ICJoc2xpZGVyIiwibGFiZWwiOiAicmliYm9uIiwidmFybmFtZSI6ICJmSHNsaWRlcjIiLCJzaG9ydG5hbWUiOiAicmliYm9uIiwiYWRkcmVzcyI6ICIvZHVvLXByb3RvL3JpYmJvbiIsImluZGV4IjogMTMyLCJtZXRhIjogW3sgIjAiOiAiIiB9XSwiaW5pdCI6IDAsIm1pbiI6IDAsIm1heCI6IDEsInN0ZXAiOiAwLjAwMDF9LHsidHlwZSI6ICJoc2xpZGVyIiwibGFiZWwiOiAibGluZSBpbiIsInZhcm5hbWUiOiAiZkhzbGlkZXI1Iiwic2hvcnRuYW1lIjogImxpbmVfaW4iLCJhZGRyZXNzIjogIi9kdW8tcHJvdG8vbGluZV9pbiIsImluZGV4IjogMjA0LCJtZXRhIjogW3sgIjEwIjogIiIgfV0sImluaXQiOiAwLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiY2hlY2tib3giLCJsYWJlbCI6ICJzcGVha2VyIiwidmFybmFtZSI6ICJmQ2hlY2tib3gwIiwic2hvcnRuYW1lIjogInNwZWFrZXIiLCJhZGRyZXNzIjogIi9kdW8tcHJvdG8vc3BlYWtlciIsImluZGV4IjogNCwibWV0YSI6IFt7ICIxMSI6ICIiIH1dfSx7InR5cGUiOiAiY2hlY2tib3giLCJsYWJlbCI6ICJzdGRsaWIgZmlsdGVyIiwidmFybmFtZSI6ICJmQ2hlY2tib3gxIiwic2hvcnRuYW1lIjogInN0ZGxpYl9maWx0ZXIiLCJhZGRyZXNzIjogIi9kdW8tcHJvdG8vc3RkbGliX2ZpbHRlciIsImluZGV4IjogNTIsIm1ldGEiOiBbeyAiMTIiOiAiIiB9XX0seyJ0eXBlIjogImJ1dHRvbiIsImxhYmVsIjogImdhdGUiLCJ2YXJuYW1lIjogImZCdXR0b24wIiwic2hvcnRuYW1lIjogImdhdGUiLCJhZGRyZXNzIjogIi9kdW8tcHJvdG8vZ2F0ZSIsImluZGV4IjogODAsIm1ldGEiOiBbeyAiMSI6ICIiIH1dfSx7InR5cGUiOiAibmVudHJ5IiwibGFiZWwiOiAibW9kZSIsInZhcm5hbWUiOiAiZkVudHJ5MCIsInNob3J0bmFtZSI6ICJtb2RlIiwiYWRkcmVzcyI6ICIvZHVvLXByb3RvL21vZGUiLCJpbmRleCI6IDAsIm1ldGEiOiBbeyAiMiI6ICIiIH0seyAic3R5bGUiOiAicmFkaW97J3N0YW5kYnknOjA7J3ZjbzEnOjE7J3ZjbzErMic6Mn0iIH1dLCJpbml0IjogMiwibWluIjogMCwibWF4IjogMiwic3RlcCI6IDF9LHsidHlwZSI6ICJuZW50cnkiLCJsYWJlbCI6ICJzY2FsZSIsInZhcm5hbWUiOiAiZkVudHJ5MSIsInNob3J0bmFtZSI6ICJzY2FsZSIsImFkZHJlc3MiOiAiL2R1by1wcm90by9zY2FsZSIsImluZGV4IjogMTIwLCJtZXRhIjogW3sgIjMiOiAiIiB9LHsgInN0eWxlIjogInJhZGlveydjaHJvbWF0aWMnOjA7J21ham9yJzoxOydtaW5vcic6Mjsnb2ZmJzozfSIgfV0sImluaXQiOiAwLCJtaW4iOiAwLCJtYXgiOiAzLCJzdGVwIjogMX0seyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJwaXRjaCIsInZhcm5hbWUiOiAiZkhzbGlkZXIxIiwic2hvcnRuYW1lIjogInBpdGNoIiwiYWRkcmVzcyI6ICIvZHVvLXByb3RvL3BpdGNoIiwiaW5kZXgiOiAxMDAsIm1ldGEiOiBbeyAiNCI6ICIiIH1dLCJpbml0IjogMC4zMzMsIm1pbiI6IDAsIm1heCI6IDEsInN0ZXAiOiAwLjAwMDF9LHsidHlwZSI6ICJoc2xpZGVyIiwibGFiZWwiOiAieG1vZCBpbnQiLCJ2YXJuYW1lIjogImZIc2xpZGVyMyIsInNob3J0bmFtZSI6ICJ4bW9kX2ludCIsImFkZHJlc3MiOiAiL2R1by1wcm90by94bW9kX2ludCIsImluZGV4IjogMTUyLCJtZXRhIjogW3sgIjUiOiAiIiB9XSwiaW5pdCI6IDAsIm1pbiI6IDAsIm1heCI6IDEsInN0ZXAiOiAwLjAwMDF9LHsidHlwZSI6ICJoc2xpZGVyIiwibGFiZWwiOiAidmNvMiBwaXRjaCIsInZhcm5hbWUiOiAiZkhzbGlkZXI0Iiwic2hvcnRuYW1lIjogInZjbzJfcGl0Y2giLCJhZGRyZXNzIjogIi9kdW8tcHJvdG8vdmNvMl9waXRjaCIsImluZGV4IjogMTY0LCJtZXRhIjogW3sgIjYiOiAiIiB9XSwiaW5pdCI6IDAuMTM3LCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiaHNsaWRlciIsImxhYmVsIjogImN1dG9mZiIsInZhcm5hbWUiOiAiZkhzbGlkZXIwIiwic2hvcnRuYW1lIjogImN1dG9mZiIsImFkZHJlc3MiOiAiL2R1by1wcm90by9jdXRvZmYiLCJpbmRleCI6IDY0LCJtZXRhIjogW3sgIjciOiAiIiB9XSwiaW5pdCI6IDAuNiwibWluIjogMCwibWF4IjogMSwic3RlcCI6IDAuMDAwMX0seyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJwZWFrIiwidmFybmFtZSI6ICJmSHNsaWRlcjYiLCJzaG9ydG5hbWUiOiAicGVhayIsImFkZHJlc3MiOiAiL2R1by1wcm90by9wZWFrIiwiaW5kZXgiOiAyMzIsIm1ldGEiOiBbeyAiOCI6ICIiIH1dLCJpbml0IjogMC4zLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiaHNsaWRlciIsImxhYmVsIjogInZvbHVtZSIsInZhcm5hbWUiOiAiZkhzbGlkZXI3Iiwic2hvcnRuYW1lIjogInZvbHVtZSIsImFkZHJlc3MiOiAiL2R1by1wcm90by92b2x1bWUiLCJpbmRleCI6IDM0NCwibWV0YSI6IFt7ICI5IjogIiIgfV0sImluaXQiOiAwLjcsIm1pbiI6IDAsIm1heCI6IDEsInN0ZXAiOiAwLjAwMDF9XX1dfQ==","meta":{"size":356,"inputs":1,"outputs":1,"ui":[{"type":"vgroup","label":"duo-proto","items":[{"type":"hslider","label":"ribbon","varname":"fHslider2","shortname":"ribbon","address":"/duo-proto/ribbon","index":132,"meta":[{"0":""}],"init":0,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"line in","varname":"fHslider5","shortname":"line_in","address":"/duo-proto/line_in","index":204,"meta":[{"10":""}],"init":0,"min":0,"max":1,"step":0.0001},{"type":"checkbox","label":"speaker","varname":"fCheckbox0","shortname":"speaker","address":"/duo-proto/speaker","index":4,"meta":[{"11":""}]},{"type":"checkbox","label":"stdlib filter","varname":"fCheckbox1","shortname":"stdlib_filter","address":"/duo-proto/stdlib_filter","index":52,"meta":[{"12":""}]},{"type":"button","label":"gate","varname":"fButton0","shortname":"gate","address":"/duo-proto/gate","index":80,"meta":[{"1":""}]},{"type":"nentry","label":"mode","varname":"fEntry0","shortname":"mode","address":"/duo-proto/mode","index":0,"meta":[{"2":""},{"style":"radio{-standby-:0;-vco1-:1;-vco1+2-:2}"}],"init":2,"min":0,"max":2,"step":1},{"type":"nentry","label":"scale","varname":"fEntry1","shortname":"scale","address":"/duo-proto/scale","index":120,"meta":[{"3":""},{"style":"radio{-chromatic-:0;-major-:1;-minor-:2;-off-:3}"}],"init":0,"min":0,"max":3,"step":1},{"type":"hslider","label":"pitch","varname":"fHslider1","shortname":"pitch","address":"/duo-proto/pitch","index":100,"meta":[{"4":""}],"init":0.333,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"xmod int","varname":"fHslider3","shortname":"xmod_int","address":"/duo-proto/xmod_int","index":152,"meta":[{"5":""}],"init":0,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"vco2 pitch","varname":"fHslider4","shortname":"vco2_pitch","address":"/duo-proto/vco2_pitch","index":164,"meta":[{"6":""}],"init":0.137,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"cutoff","varname":"fHslider0","shortname":"cutoff","address":"/duo-proto/cutoff","index":64,"meta":[{"7":""}],"init":0.6,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"peak","varname":"fHslider6","shortname":"peak","address":"/duo-proto/peak","index":232,"meta":[{"8":""}],"init":0.3,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"volume","varname":"fHslider7","shortname":"volume","address":"/duo-proto/volume","index":344,"meta":[{"9":""}],"init":0.7,"min":0,"max":1,"step":0.0001}]}]}},"delay":{"wasm":"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bGVfb3B0aW9ucyI6ICItbGFuZyB3YXNtLWkgLWZwZ2EtbWVtLXRoIDQgLWN0IDEgLWVzIDEgLW1jZCAxNiAtbWRkIDEwMjQgLW1keSAzMyAtc2luZ2xlIC1mdHogMiIsImxpYnJhcnlfbGlzdCI6IFsiL3Vzci9zaGFyZS9mYXVzdC9zdGRmYXVzdC5saWIiLCIvdXNyL3NoYXJlL2ZhdXN0L29zY2lsbGF0b3JzLmxpYiIsIi91c3Ivc2hhcmUvZmF1c3Qvc2lnbmFscy5saWIiLCIvdXNyL3NoYXJlL2ZhdXN0L2Jhc2ljcy5saWIiLCIvdXNyL3NoYXJlL2ZhdXN0L21hdGhzLmxpYiIsIi91c3Ivc2hhcmUvZmF1c3QvcGxhdGZvcm0ubGliIiwiL2ZhdXN0L3VzZXIvaW5jMC9tb25vdHJvbi1jb21tb24ubGliIiwiL3Vzci9zaGFyZS9mYXVzdC9ub2lzZXMubGliIiwiL3Vzci9zaGFyZS9mYXVzdC92YWVmZmVjdHMubGliIiwiL3Vzci9zaGFyZS9mYXVzdC9maWx0ZXJzLmxpYiIsIi91c3Ivc2hhcmUvZmF1c3QvZGVsYXlzLmxpYiJdLCJpbmNsdWRlX3BhdGhuYW1lcyI6IFsiL2ZhdXN0L3VzZXIvaW5jMCIsIi9zaGFyZS9mYXVzdCIsIi9zaGFyZS9mYXVzdCIsIi91c3IvbG9jYWwvc2hhcmUvZmF1c3QiLCIvdXNyL3NoYXJlL2ZhdXN0IiwiLiJdLCJzaXplIjogMTA0OTAxNiwiaW5wdXRzIjogMSwib3V0cHV0cyI6IDEsIm1ldGEiOiBbIHsgImJhc2ljcy5saWIvbmFtZSI6ICJGYXVzdCBCYXNpYyBFbGVtZW50IExpYnJhcnkiIH0seyAiYmFzaWNzLmxpYi92ZXJzaW9uIjogIjEuMjMuMSIgfSx7ICJjb21waWxlX29wdGlvbnMiOiAiLWxhbmcgd2FzbS1pIC1mcGdhLW1lbS10aCA0IC1jdCAxIC1lcyAxIC1tY2QgMTYgLW1kZCAxMDI0IC1tZHkgMzMgLXNpbmdsZSAtZnR6IDIiIH0seyAiZGVsYXlzLmxpYi9uYW1lIjogIkZhdXN0IERlbGF5IExpYnJhcnkiIH0seyAiZGVsYXlzLmxpYi92ZXJzaW9uIjogIjEuMi4wIiB9LHsgImRlc2NyaXB0aW9uIjogIm1vbm90cm9uIERFTEFZLXN0eWxlIHJpYmJvbiBzeW50aCB3aXRoIFBUMjM5OSBlY2hvLCBtb2RlbGxlZCBmcm9tIHRoZSBwdWJsaWMgc2NoZW1hdGljIiB9LHsgImZpbGVuYW1lIjogImRlbGF5IiB9LHsgImZpbHRlcnMubGliL2ZpcjphdXRob3IiOiAiSnVsaXVzIE8uIFNtaXRoIElJSSIgfSx7ICJmaWx0ZXJzLmxpYi9maXI6Y29weXJpZ2h0IjogIkNvcHlyaWdodCAoQykgMjAwMy0yMDE5IGJ5IEp1bGl1cyBPLiBTbWl0aCBJSUkgPGpvc0BjY3JtYS5zdGFuZm9yZC5lZHU+IiB9LHsgImZpbHRlcnMubGliL2ZpcjpsaWNlbnNlIjogIkxpY2Vuc2VSZWYtU1RLLTQuMyIgfSx7ICJmaWx0ZXJzLmxpYi9oaWdocGFzczphdXRob3IiOiAiSnVsaXVzIE8uIFNtaXRoIElJSSIgfSx7ICJmaWx0ZXJzLmxpYi9oaWdocGFzczpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvaGlnaHBhc3M6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAiZmlsdGVycy5saWIvaWlyOmF1dGhvciI6ICJKdWxpdXMgTy4gU21pdGggSUlJIiB9LHsgImZpbHRlcnMubGliL2lpcjpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvaWlyOmxpY2Vuc2UiOiAiTGljZW5zZVJlZi1TVEstNC4zIiB9LHsgImZpbHRlcnMubGliL2xvd3Bhc3MwX2hpZ2hwYXNzMTphdXRob3IiOiAiSnVsaXVzIE8uIFNtaXRoIElJSSIgfSx7ICJmaWx0ZXJzLmxpYi9sb3dwYXNzMF9oaWdocGFzczE6Y29weXJpZ2h0IjogIkNvcHlyaWdodCAoQykgMjAwMy0yMDE5IGJ5IEp1bGl1cyBPLiBTbWl0aCBJSUkgPGpvc0BjY3JtYS5zdGFuZm9yZC5lZHU+IiB9LHsgImZpbHRlcnMubGliL2xvd3Bhc3MwX2hpZ2hwYXNzMTpsaWNlbnNlIjogIkxpY2Vuc2VSZWYtU1RLLTQuMyIgfSx7ICJmaWx0ZXJzLmxpYi9sb3dwYXNzOmF1dGhvciI6ICJKdWxpdXMgTy4gU21pdGggSUlJIiB9LHsgImZpbHRlcnMubGliL2xvd3Bhc3M6Y29weXJpZ2h0IjogIkNvcHlyaWdodCAoQykgMjAwMy0yMDE5IGJ5IEp1bGl1cyBPLiBTbWl0aCBJSUkgPGpvc0BjY3JtYS5zdGFuZm9yZC5lZHU+IiB9LHsgImZpbHRlcnMubGliL2xvd3Bhc3M6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAiZmlsdGVycy5saWIvbmFtZSI6ICJGYXVzdCBGaWx0ZXJzIExpYnJhcnkiIH0seyAiZmlsdGVycy5saWIvdGYxOmF1dGhvciI6ICJKdWxpdXMgTy4gU21pdGggSUlJIiB9LHsgImZpbHRlcnMubGliL3RmMTpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvdGYxOmxpY2Vuc2UiOiAiTGljZW5zZVJlZi1TVEstNC4zIiB9LHsgImZpbHRlcnMubGliL3RmMXM6YXV0aG9yIjogIkp1bGl1cyBPLiBTbWl0aCBJSUkiIH0seyAiZmlsdGVycy5saWIvdGYxczpjb3B5cmlnaHQiOiAiQ29weXJpZ2h0IChDKSAyMDAzLTIwMTkgYnkgSnVsaXVzIE8uIFNtaXRoIElJSSA8am9zQGNjcm1hLnN0YW5mb3JkLmVkdT4iIH0seyAiZmlsdGVycy5saWIvdGYxczpsaWNlbnNlIjogIkxpY2Vuc2VSZWYtU1RLLTQuMyIgfSx7ICJmaWx0ZXJzLmxpYi90ZjI6YXV0aG9yIjogIkp1bGl1cyBPLiBTbWl0aCBJSUkiIH0seyAiZmlsdGVycy5saWIvdGYyOmNvcHlyaWdodCI6ICJDb3B5cmlnaHQgKEMpIDIwMDMtMjAxOSBieSBKdWxpdXMgTy4gU21pdGggSUlJIDxqb3NAY2NybWEuc3RhbmZvcmQuZWR1PiIgfSx7ICJmaWx0ZXJzLmxpYi90ZjI6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAiZmlsdGVycy5saWIvdGYyczphdXRob3IiOiAiSnVsaXVzIE8uIFNtaXRoIElJSSIgfSx7ICJmaWx0ZXJzLmxpYi90ZjJzOmNvcHlyaWdodCI6ICJDb3B5cmlnaHQgKEMpIDIwMDMtMjAxOSBieSBKdWxpdXMgTy4gU21pdGggSUlJIDxqb3NAY2NybWEuc3RhbmZvcmQuZWR1PiIgfSx7ICJmaWx0ZXJzLmxpYi90ZjJzOmxpY2Vuc2UiOiAiTGljZW5zZVJlZi1TVEstNC4zIiB9LHsgImZpbHRlcnMubGliL3ZlcnNpb24iOiAiMS45LjAiIH0seyAibWF0aHMubGliL2F1dGhvciI6ICJHUkFNRSIgfSx7ICJtYXRocy5saWIvY29weXJpZ2h0IjogIkdSQU1FIiB9LHsgIm1hdGhzLmxpYi9saWNlbnNlIjogIkxpY2Vuc2VSZWYtTEdQTC0yLjEtb3ItbGF0ZXItd2l0aC1GYXVzdC1leGNlcHRpb24iIH0seyAibWF0aHMubGliL25hbWUiOiAiRmF1c3QgTWF0aCBMaWJyYXJ5IiB9LHsgIm1hdGhzLmxpYi92ZXJzaW9uIjogIjIuOS4wIiB9LHsgIm5hbWUiOiAiZGVsYXktcHJvdG8iIH0seyAibm9pc2VzLmxpYi9uYW1lIjogIkZhdXN0IE5vaXNlIEdlbmVyYXRvciBMaWJyYXJ5IiB9LHsgIm5vaXNlcy5saWIvdmVyc2lvbiI6ICIxLjYuMCIgfSx7ICJvc2NpbGxhdG9ycy5saWIvbmFtZSI6ICJGYXVzdCBPc2NpbGxhdG9yIExpYnJhcnkiIH0seyAib3NjaWxsYXRvcnMubGliL3NhdzJwdHI6YXV0aG9yIjogIkp1bGl1cyBPLiBTbWl0aCBJSUkiIH0seyAib3NjaWxsYXRvcnMubGliL3NhdzJwdHI6bGljZW5zZSI6ICJMaWNlbnNlUmVmLVNUSy00LjMiIH0seyAib3NjaWxsYXRvcnMubGliL3ZlcnNpb24iOiAiMS44LjAiIH0seyAicGxhdGZvcm0ubGliL25hbWUiOiAiR2VuZXJpYyBQbGF0Zm9ybSBMaWJyYXJ5IiB9LHsgInBsYXRmb3JtLmxpYi92ZXJzaW9uIjogIjEuMy4wIiB9LHsgInNpZ25hbHMubGliL25hbWUiOiAiRmF1c3QgUm91dGluZyBMaWJyYXJ5IiB9LHsgInNpZ25hbHMubGliL3ZlcnNpb24iOiAiMS43LjAiIH0seyAidmFlZmZlY3RzLmxpYi9rb3JnMzVMUEY6YXV0aG9yIjogIkVyaWMgVGFyciIgfSx7ICJ2YWVmZmVjdHMubGliL2tvcmczNUxQRjpsaWNlbnNlIjogIkxpY2Vuc2VSZWYtU1RLLTQuMyIgfSx7ICJ2YWVmZmVjdHMubGliL25hbWUiOiAiRmF1c3QgVmlydHVhbCBBbmFsb2cgRmlsdGVyIEVmZmVjdCBMaWJyYXJ5IiB9LHsgInZhZWZmZWN0cy5saWIvdmVyc2lvbiI6ICIxLjYuMCIgfV0sInVpIjogWyB7InR5cGUiOiAidmdyb3VwIiwibGFiZWwiOiAiZGVsYXktcHJvdG8iLCJpdGVtcyI6IFsgeyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJyaWJib24iLCJ2YXJuYW1lIjogImZIc2xpZGVyMyIsInNob3J0bmFtZSI6ICJyaWJib24iLCJhZGRyZXNzIjogIi9kZWxheS1wcm90by9yaWJib24iLCJpbmRleCI6IDEzMiwibWV0YSI6IFt7ICIwIjogIiIgfV0sImluaXQiOiAwLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiaHNsaWRlciIsImxhYmVsIjogImxpbmUgaW4iLCJ2YXJuYW1lIjogImZIc2xpZGVyNSIsInNob3J0bmFtZSI6ICJsaW5lX2luIiwiYWRkcmVzcyI6ICIvZGVsYXktcHJvdG8vbGluZV9pbiIsImluZGV4IjogMTY0LCJtZXRhIjogW3sgIjEwIjogIiIgfV0sImluaXQiOiAwLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiY2hlY2tib3giLCJsYWJlbCI6ICJzcGVha2VyIiwidmFybmFtZSI6ICJmQ2hlY2tib3gwIiwic2hvcnRuYW1lIjogInNwZWFrZXIiLCJhZGRyZXNzIjogIi9kZWxheS1wcm90by9zcGVha2VyIiwiaW5kZXgiOiA2NCwibWV0YSI6IFt7ICIxMSI6ICIiIH1dfSx7InR5cGUiOiAiY2hlY2tib3giLCJsYWJlbCI6ICJzdGRsaWIgZmlsdGVyIiwidmFybmFtZSI6ICJmQ2hlY2tib3gxIiwic2hvcnRuYW1lIjogInN0ZGxpYl9maWx0ZXIiLCJhZGRyZXNzIjogIi9kZWxheS1wcm90by9zdGRsaWJfZmlsdGVyIiwiaW5kZXgiOiAxMDQsIm1ldGEiOiBbeyAiMTIiOiAiIiB9XX0seyJ0eXBlIjogImhiYXJncmFwaCIsImxhYmVsIjogImxmbyBsZWQiLCJ2YXJuYW1lIjogImZIYmFyZ3JhcGgwIiwic2hvcnRuYW1lIjogImxmb19sZWQiLCJhZGRyZXNzIjogIi9kZWxheS1wcm90by9sZm9fbGVkIiwiaW5kZXgiOiA2MCwibWV0YSI6IFt7ICIxMyI6ICIiIH1dLCJtaW4iOiAwLCJtYXgiOiAxfSx7InR5cGUiOiAiYnV0dG9uIiwibGFiZWwiOiAiZ2F0ZSIsInZhcm5hbWUiOiAiZkJ1dHRvbjAiLCJzaG9ydG5hbWUiOiAiZ2F0ZSIsImFkZHJlc3MiOiAiL2RlbGF5LXByb3RvL2dhdGUiLCJpbmRleCI6IDIwNCwibWV0YSI6IFt7ICIxIjogIiIgfV19LHsidHlwZSI6ICJuZW50cnkiLCJsYWJlbCI6ICJtb2RlIiwidmFybmFtZSI6ICJmRW50cnkwIiwic2hvcnRuYW1lIjogIm1vZGUiLCJhZGRyZXNzIjogIi9kZWxheS1wcm90by9tb2RlIiwiaW5kZXgiOiAwLCJtZXRhIjogW3sgIjIiOiAiIiB9LHsgInN0eWxlIjogInJhZGlveydzdGFuZGJ5JzowOyd0cmlhbmdsZSc6MTsnc3F1YXJlJzoyfSIgfV0sImluaXQiOiAxLCJtaW4iOiAwLCJtYXgiOiAyLCJzdGVwIjogMX0seyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJsZm8gcmF0ZSIsInZhcm5hbWUiOiAiZkhzbGlkZXIwIiwic2hvcnRuYW1lIjogImxmb19yYXRlIiwiYWRkcmVzcyI6ICIvZGVsYXktcHJvdG8vbGZvX3JhdGUiLCJpbmRleCI6IDIwLCJtZXRhIjogW3sgIjMiOiAiIiB9XSwiaW5pdCI6IDAuNCwibWluIjogMCwibWF4IjogMSwic3RlcCI6IDAuMDAwMX0seyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJsZm8gaW50IiwidmFybmFtZSI6ICJmSHNsaWRlcjYiLCJzaG9ydG5hbWUiOiAibGZvX2ludCIsImFkZHJlc3MiOiAiL2RlbGF5LXByb3RvL2xmb19pbnQiLCJpbmRleCI6IDE4NCwibWV0YSI6IFt7ICI0IjogIiIgfV0sImluaXQiOiAwLCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiaHNsaWRlciIsImxhYmVsIjogImxmbyBzaGFwZSIsInZhcm5hbWUiOiAiZkhzbGlkZXIxIiwic2hvcnRuYW1lIjogImxmb19zaGFwZSIsImFkZHJlc3MiOiAiL2RlbGF5LXByb3RvL2xmb19zaGFwZSIsImluZGV4IjogNDQsIm1ldGEiOiBbeyAiNSI6ICIiIH1dLCJpbml0IjogMC41LCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfSx7InR5cGUiOiAiaHNsaWRlciIsImxhYmVsIjogImN1dG9mZiIsInZhcm5hbWUiOiAiZkhzbGlkZXIyIiwic2hvcnRuYW1lIjogImN1dG9mZiIsImFkZHJlc3MiOiAiL2RlbGF5LXByb3RvL2N1dG9mZiIsImluZGV4IjogMTEyLCJtZXRhIjogW3sgIjYiOiAiIiB9XSwiaW5pdCI6IDAuNDUsIm1pbiI6IDAsIm1heCI6IDEsInN0ZXAiOiAwLjAwMDF9LHsidHlwZSI6ICJoc2xpZGVyIiwibGFiZWwiOiAidGltZSIsInZhcm5hbWUiOiAiZkhzbGlkZXI3Iiwic2hvcnRuYW1lIjogInRpbWUiLCJhZGRyZXNzIjogIi9kZWxheS1wcm90by90aW1lIiwiaW5kZXgiOiAxMDQ4OTEyLCJtZXRhIjogW3sgIjciOiAiIiB9XSwiaW5pdCI6IDAuMjUsIm1pbiI6IDAsIm1heCI6IDEsInN0ZXAiOiAwLjAwMDF9LHsidHlwZSI6ICJoc2xpZGVyIiwibGFiZWwiOiAiZmVlZGJhY2siLCJ2YXJuYW1lIjogImZIc2xpZGVyNCIsInNob3J0bmFtZSI6ICJmZWVkYmFjayIsImFkZHJlc3MiOiAiL2RlbGF5LXByb3RvL2ZlZWRiYWNrIiwiaW5kZXgiOiAxNTIsIm1ldGEiOiBbeyAiOCI6ICIiIH1dLCJpbml0IjogMC4zNSwibWluIjogMCwibWF4IjogMSwic3RlcCI6IDAuMDAwMX0seyJ0eXBlIjogImhzbGlkZXIiLCJsYWJlbCI6ICJ2b2x1bWUiLCJ2YXJuYW1lIjogImZIc2xpZGVyOCIsInNob3J0bmFtZSI6ICJ2b2x1bWUiLCJhZGRyZXNzIjogIi9kZWxheS1wcm90by92b2x1bWUiLCJpbmRleCI6IDEwNDkwMDQsIm1ldGEiOiBbeyAiOSI6ICIiIH1dLCJpbml0IjogMC43LCJtaW4iOiAwLCJtYXgiOiAxLCJzdGVwIjogMC4wMDAxfV19XX0=","meta":{"size":1049016,"inputs":1,"outputs":1,"ui":[{"type":"vgroup","label":"delay-proto","items":[{"type":"hslider","label":"ribbon","varname":"fHslider3","shortname":"ribbon","address":"/delay-proto/ribbon","index":132,"meta":[{"0":""}],"init":0,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"line in","varname":"fHslider5","shortname":"line_in","address":"/delay-proto/line_in","index":164,"meta":[{"10":""}],"init":0,"min":0,"max":1,"step":0.0001},{"type":"checkbox","label":"speaker","varname":"fCheckbox0","shortname":"speaker","address":"/delay-proto/speaker","index":64,"meta":[{"11":""}]},{"type":"checkbox","label":"stdlib filter","varname":"fCheckbox1","shortname":"stdlib_filter","address":"/delay-proto/stdlib_filter","index":104,"meta":[{"12":""}]},{"type":"hbargraph","label":"lfo led","varname":"fHbargraph0","shortname":"lfo_led","address":"/delay-proto/lfo_led","index":60,"meta":[{"13":""}],"min":0,"max":1},{"type":"button","label":"gate","varname":"fButton0","shortname":"gate","address":"/delay-proto/gate","index":204,"meta":[{"1":""}]},{"type":"nentry","label":"mode","varname":"fEntry0","shortname":"mode","address":"/delay-proto/mode","index":0,"meta":[{"2":""},{"style":"radio{-standby-:0;-triangle-:1;-square-:2}"}],"init":1,"min":0,"max":2,"step":1},{"type":"hslider","label":"lfo rate","varname":"fHslider0","shortname":"lfo_rate","address":"/delay-proto/lfo_rate","index":20,"meta":[{"3":""}],"init":0.4,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"lfo int","varname":"fHslider6","shortname":"lfo_int","address":"/delay-proto/lfo_int","index":184,"meta":[{"4":""}],"init":0,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"lfo shape","varname":"fHslider1","shortname":"lfo_shape","address":"/delay-proto/lfo_shape","index":44,"meta":[{"5":""}],"init":0.5,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"cutoff","varname":"fHslider2","shortname":"cutoff","address":"/delay-proto/cutoff","index":112,"meta":[{"6":""}],"init":0.45,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"time","varname":"fHslider7","shortname":"time","address":"/delay-proto/time","index":1048912,"meta":[{"7":""}],"init":0.25,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"feedback","varname":"fHslider4","shortname":"feedback","address":"/delay-proto/feedback","index":152,"meta":[{"8":""}],"init":0.35,"min":0,"max":1,"step":0.0001},{"type":"hslider","label":"volume","varname":"fHslider8","shortname":"volume","address":"/delay-proto/volume","index":1049004,"meta":[{"9":""}],"init":0.7,"min":0,"max":1,"step":0.0001}]}]}}},"worklet":"// Minimal host for a mono Faust DSP compiled to WebAssembly (faust -lang wasm).\n// Works inside an AudioWorkletGlobalScope and in Node (for offline tests).\n// Memory layout: [ dsp struct | input ptr table | output ptr table | buffers ].\n\nconst BLOCK = 128;\n\nclass FaustMono {\n  constructor(wasmBytes, meta, sampleRate, blockSize = BLOCK) {\n    const module = new WebAssembly.Module(wasmBytes);\n    this.instance = new WebAssembly.Instance(module, {\n      env: { _expf: Math.exp, _powf: Math.pow, _tanf: Math.tan, _tanhf: Math.tanh },\n    });\n    this.exports = this.instance.exports;\n    this.memory = this.exports.memory;\n    this.numIn = meta.inputs;\n    this.numOut = meta.outputs;\n    this.block = blockSize;\n\n    // Collect controls by their short name (\"lfo_rate\" for \"/monotron-proto/lfo_rate\").\n    this.params = {};\n    const walk = (items) => items.forEach((it) => {\n      if (it.items) walk(it.items);\n      else if (it.address) this.params[it.address.split(\"/\").pop()] = it.index;\n    });\n    walk(meta.ui);\n\n    const align = (n) => (n + 15) & ~15;\n    const inTable = align(meta.size);\n    const outTable = inTable + 4 * Math.max(1, this.numIn);\n    let cursor = align(outTable + 4 * Math.max(1, this.numOut));\n    const bytesNeeded = cursor + 4 * blockSize * (this.numIn + this.numOut);\n    const missing = bytesNeeded - this.memory.buffer.byteLength;\n    if (missing > 0) this.memory.grow(Math.ceil(missing / 65536));\n\n    const heap32 = new Uint32Array(this.memory.buffer);\n    this.inputs = [];\n    this.outputs = [];\n    for (let i = 0; i < this.numIn; i++, cursor += 4 * blockSize) {\n      heap32[(inTable >> 2) + i] = cursor;\n      this.inputs.push(new Float32Array(this.memory.buffer, cursor, blockSize));\n    }\n    for (let i = 0; i < this.numOut; i++, cursor += 4 * blockSize) {\n      heap32[(outTable >> 2) + i] = cursor;\n      this.outputs.push(new Float32Array(this.memory.buffer, cursor, blockSize));\n    }\n    this.inTable = inTable;\n    this.outTable = outTable;\n    this.exports.init(0, sampleRate);\n  }\n\n  set(name, value) {\n    const index = this.params[name];\n    if (index !== undefined) this.exports.setParamValue(0, index, value);\n  }\n\n  get(name) {\n    const index = this.params[name];\n    return index === undefined ? 0 : this.exports.getParamValue(0, index);\n  }\n\n  // Runs one block. Fill this.inputs[] before calling; read this.outputs[] after.\n  compute(frames = this.block) {\n    this.exports.compute(0, frames, this.inTable, this.outTable);\n  }\n}\n\nif (typeof module !== \"undefined\") module.exports = { FaustMono };\n\n// AudioWorklet processor. Concatenated after faust-runtime.js at build time.\n// processorOptions: { wasm: ArrayBuffer, meta: object }\n// Messages in:  { name, value }   Messages out: { lfo }  (~60 per second, when the DSP has an \"lfo led\")\n\nclass FaustMonoProcessor extends AudioWorkletProcessor {\n  constructor(options) {\n    super();\n    const { wasm, meta } = options.processorOptions;\n    this.dsp = new FaustMono(wasm, meta, sampleRate);\n    // Messages are applied at the start of each block. A gate change ends the\n    // batch, so a tap shorter than one block still sounds for one block.\n    this.queue = [];\n    this.port.onmessage = (e) => this.queue.push(e.data);\n    this.hasLed = \"lfo_led\" in this.dsp.params;\n    this.ledEvery = Math.max(1, Math.round(sampleRate / 60 / BLOCK));\n    this.blockCount = 0;\n  }\n\n  process(inputs, outputs) {\n    let gateSeen = false;\n    while (this.queue.length) {\n      const { name, value } = this.queue[0];\n      if (name === \"gate\") { if (gateSeen) break; gateSeen = true; }\n      this.dsp.set(name, value);\n      this.queue.shift();\n    }\n    const input = inputs[0] && inputs[0][0];\n    if (input) this.dsp.inputs[0].set(input);\n    else this.dsp.inputs[0].fill(0);\n    this.dsp.compute();\n    for (const channel of outputs[0]) channel.set(this.dsp.outputs[0]);\n    if (this.hasLed && ++this.blockCount >= this.ledEvery) {\n      this.blockCount = 0;\n      this.port.postMessage({ lfo: this.dsp.get(\"lfo_led\") });\n    }\n    return true;\n  }\n}\n\nregisterProcessor(\"faust-mono\", FaustMonoProcessor);\n\n// Records its (stereo) input while armed and posts it to the page in batches\n// of ~4096 frames as [left, right] Float32Arrays. Messages in: { record: bool }.\nclass RecorderProcessor extends AudioWorkletProcessor {\n  constructor() {\n    super();\n    this.on = false;\n    this.left = [];\n    this.right = [];\n    this.frames = 0;\n    this.port.onmessage = (e) => {\n      const wasOn = this.on;\n      this.on = e.data.record;\n      if (wasOn && !this.on) this.flush(true);   // last batch, marked done\n    };\n  }\n\n  flush(done = false) {\n    if (!this.frames) { if (done) this.port.postMessage({ done: true }); return; }\n    const join = (parts) => { const out = new Float32Array(this.frames); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out; };\n    const l = join(this.left), r = join(this.right);\n    this.port.postMessage({ left: l, right: r, done }, [l.buffer, r.buffer]);\n    this.left = []; this.right = []; this.frames = 0;\n  }\n\n  process(inputs) {\n    const input = inputs[0];\n    if (this.on && input && input.length) {\n      this.left.push(input[0].slice(0));\n      this.right.push((input[1] || input[0]).slice(0));\n      this.frames += input[0].length;\n      if (this.frames >= 4096) this.flush();\n    }\n    return true;\n  }\n}\n\nregisterProcessor(\"recorder\", RecorderProcessor);\n"};
+
+const NOTE_NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+const SCALE_NAMES = ["Chromatic", "Major", "Minor", "Off"];
+const SCALE_DEGREES = [null, [0, 2, 4, 5, 7, 9, 11], [0, 2, 3, 5, 7, 8, 10], null];
+const KEYS = ["a", "w", "s", "e", "d", "f", "t", "g", "y", "h", "u", "j", "k", "o", "l", "p", ";", "'", "]"];
+
+const pitchHz = (k) => 16.3516 * 2 ** (k * 10);
+const fmt = {
+  pct: (v) => Math.round(v * 100) + "",
+  volts: (v) => (v * 10).toFixed(2) + " V",
+  cutoff: (v) => { const hz = 2 * 10 ** (3 * (0.05 + 0.9 * v) + 1); return hz < 1000 ? Math.round(hz) + " Hz" : (hz / 1000).toFixed(1) + " k"; },
+  lfoRate: (v) => { const hz = (1 / 14) * (900 * 14) ** v; return hz < 1 ? (1 / hz).toFixed(1) + " s" : hz < 10 ? hz.toFixed(2) + " Hz" : Math.round(hz) + " Hz"; },
+  octaves: (v) => "+" + (v * 7.3).toFixed(2) + " oct",
+  // the triangle's rising share of each cycle, or the square's width (dsp: skew = 0.05 + 0.9 * shape)
+  lfoShape: (v, p) => (p.mode === 2 ? "width " : "rise ") + Math.round((0.05 + 0.9 * v) * 100) + "%",
+  delayRate: (v) => { const hz = 0.08 * 1000 ** v; return hz < 1 ? (1 / hz).toFixed(1) + " s" : hz < 10 ? hz.toFixed(2) + " Hz" : Math.round(hz) + " Hz"; },
+  delayTime: (v) => { const ms = 11.46 * (1 + 100 * v) + 29.7; return ms < 1000 ? Math.round(ms) + " ms" : (ms / 1000).toFixed(2) + " s"; },
+  delayCutoff: (v) => { const n = Math.min(0.97, 0.05 + 1.5 * v), hz = 2 * 10 ** (3 * n + 1); return hz < 1000 ? Math.round(hz) + " Hz" : (hz / 1000).toFixed(1) + " k"; },
+};
+
+// Mirrors snapTo() in dsp/duo.dsp: nearest scale note, ties to the lower one.
+function quantize(semis, scale) {
+  if (scale === 3) return semis;
+  if (scale === 0) return Math.round(semis);
+  const oct = Math.floor(semis / 12), w = semis - oct * 12;
+  let best = 0;
+  for (const d of [...SCALE_DEGREES[scale].slice(1), 12]) if (Math.abs(w - d) < Math.abs(w - best)) best = d;
+  return oct * 12 + best;
+}
+
+const SPECS = {
+  ribbon35: {
+    brand: "PULSAR", short: "Pulsar", sub: "analogue ribbon synth model", theme: "", hold: true, sendTo: ["duo", "delay"],
+    semis: 18, modeTitle: "LFO target", modes: ["Standby", "Pitch", "Cutoff"], mode: 1,
+    groups: [
+      { title: "VCO", knobs: ["pitch"] },
+      { title: "LFO", knobs: ["lfo_rate", "lfo_int"], led: true },
+      { title: "VCF", knobs: ["cutoff", "peak"] },
+    ],
+    knobs: {
+      pitch:    { label: "Pitch",  value: 0.333, fmt: fmt.volts },
+      lfo_rate: { label: "Rate",   value: 0.399, fmt: fmt.lfoRate, needs: "lfo_int" },
+      lfo_int:  { label: "Int.",   value: 0,     fmt: fmt.pct },
+      cutoff:   { label: "Cutoff", value: 0.6,   fmt: fmt.cutoff },
+      peak:     { label: "Peak",   value: 0.3,   fmt: fmt.pct },
+    },
+    hz: (p) => pitchHz(p.pitch) * 2 ** (p.ribbon * 18 / 12),
+    baseHz: (p) => pitchHz(p.pitch), modWheel: "lfo_int",
+    presets: [
+      { name: "Init",      mode: 1, pitch: 0.333, lfo_rate: 0.399, lfo_int: 0,    cutoff: 0.6,  peak: 0.3 },
+      { name: "Dive bomb", mode: 1, pitch: 0.368, lfo_rate: 0.278, lfo_int: 0.75, cutoff: 0.75, peak: 0.45 },
+      { name: "Wobble",    mode: 2, pitch: 0.298, lfo_rate: 0.375, lfo_int: 0.7,  cutoff: 0.35, peak: 0.75 },
+      { name: "Whistle",   mode: 2, pitch: 0.333, lfo_rate: 0.213, lfo_int: 0.3,  cutoff: 0.55, peak: 1 },
+      { name: "Buzz FM",   mode: 1, pitch: 0.354, lfo_rate: 0.787, lfo_int: 0.2,  cutoff: 0.7,  peak: 0.5 },
+    ],
+  },
+  duo: {
+    brand: "BINARY", short: "Binary", sub: "two-oscillator ribbon synth model", theme: "duo", hold: true, sendTo: ["delay"], lineIn: true,
+    semis: 24, modeTitle: "Oscillators", modes: ["Standby", "VCO1", "VCO1+2"], mode: 2, scale: true,
+    groups: [
+      { title: "VCO1", knobs: ["pitch"] },
+      { title: "VCO2", knobs: ["xmod_int", "vco2_pitch"] },
+      { title: "VCF", knobs: ["cutoff", "peak"] },
+    ],
+    knobs: {
+      pitch:      { label: "Pitch",  value: 0.333, fmt: fmt.volts },
+      xmod_int:   { label: "X-Mod",  value: 0,     fmt: fmt.pct },
+      vco2_pitch: { label: "Pitch",  value: 0.137, fmt: fmt.octaves },
+      cutoff:     { label: "Cutoff", value: 0.6,   fmt: fmt.cutoff },
+      peak:       { label: "Peak",   value: 0.3,   fmt: fmt.pct },
+    },
+    hz: (p) => pitchHz(p.pitch) * 2 ** (quantize(p.ribbon * 24, p.scale) / 12),
+    baseHz: (p) => pitchHz(p.pitch), modWheel: "xmod_int",
+    presets: [
+      { name: "Init",       mode: 2, scale: 0, pitch: 0.333, xmod_int: 0,    vco2_pitch: 0.137,  cutoff: 0.6,  peak: 0.3 },
+      { name: "Fifths",     mode: 2, scale: 1, pitch: 0.3,   xmod_int: 0,    vco2_pitch: 0.0799, cutoff: 0.55, peak: 0.45 },
+      { name: "Cross-mod",  mode: 2, scale: 0, pitch: 0.32,  xmod_int: 0.55, vco2_pitch: 0.42,   cutoff: 0.7,  peak: 0.35 },
+      { name: "Growl",      mode: 1, scale: 2, pitch: 0.28,  xmod_int: 0.8,  vco2_pitch: 0.18,   cutoff: 0.45, peak: 0.6 },
+      { name: "Detune",     mode: 2, scale: 3, pitch: 0.333, xmod_int: 0,    vco2_pitch: 0.0023, cutoff: 0.5,  peak: 0.5 },
+    ],
+  },
+  delay: {
+    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", lineIn: true,
+    semis: 48, modeTitle: "LFO wave", modes: ["Standby", "Triangle", "Square"], mode: 1,
+    groups: [
+      { title: "LFO", knobs: ["lfo_rate", "lfo_int", "lfo_shape"], led: true },
+      { title: "VCF", knobs: ["cutoff"] },
+      { title: "Delay", knobs: ["time", "feedback"] },
+    ],
+    knobs: {
+      lfo_rate:  { label: "Rate",     value: 0.4,  fmt: fmt.delayRate, needs: "lfo_int" },
+      lfo_int:   { label: "Int.",     value: 0,    fmt: fmt.pct },
+      lfo_shape: { label: "Shape",    value: 0.5,  fmt: fmt.lfoShape, needs: "lfo_int" },
+      cutoff:    { label: "Cutoff",   value: 0.45, fmt: fmt.delayCutoff },
+      time:      { label: "Time",     value: 0.25, fmt: fmt.delayTime },
+      feedback:  { label: "Feedback", value: 0.35, fmt: fmt.pct },
+    },
+    hz: (p) => 55 * 2 ** (p.ribbon * 4),
+    baseHz: () => 55, modWheel: "lfo_int",
+    presets: [
+      { name: "Init",        mode: 1, lfo_rate: 0.4,  lfo_int: 0,    lfo_shape: 0.5, cutoff: 0.45, time: 0.25, feedback: 0.35 },
+      { name: "Space echo",  mode: 1, lfo_rate: 0.3,  lfo_int: 0.06, lfo_shape: 0.5, cutoff: 0.4,  time: 0.3,  feedback: 0.35 },
+      { name: "Slapback",    mode: 1, lfo_rate: 0.4,  lfo_int: 0,    lfo_shape: 0.5, cutoff: 0.5,  time: 0.05, feedback: 0.2 },
+      { name: "Laser",       mode: 2, lfo_rate: 0.55, lfo_int: 0.6,  lfo_shape: 0.2, cutoff: 0.55, time: 0.12, feedback: 0.5 },
+      { name: "Runaway",     mode: 1, lfo_rate: 0.2,  lfo_int: 0.1,  lfo_shape: 0.5, cutoff: 0.5,  time: 0.15, feedback: 0.85 },
+    ],
+  },
+};
+
+// Settings on the Output panel go to every instrument.
+const shared = { volume: 0.7, speaker: 0, stdlib_filter: 0, line_in: 0 };
+
+let ctx = null, starting = null, keyTarget = null, master = null, masterAnalyser = null;
+const statusEl = document.getElementById("status");
+const css = getComputedStyle(document.documentElement);
+const scopeColors = { bg: css.getPropertyValue("--scope-bg").trim(), grid: css.getPropertyValue("--scope-grid").trim(), trace: css.getPropertyValue("--scope-trace").trim() };
+
+function base64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+
+class Synth {
+  constructor(key, spec, container) {
+    this.key = key;
+    this.spec = spec;
+    this.node = null;
+    this.analyser = null;
+    this.lfo = 0;
+    this.params = { ribbon: 0, gate: 0, mode: spec.mode, scale: 0 };
+    for (const [id, k] of Object.entries(spec.knobs)) this.params[id] = k.value;
+    this.touches = new Map();
+    this.hold = false;       // Hold button: notes keep sounding after release
+    this.latched = false;    // a note is being held by Hold
+    this.routedTo = null;    // key of the instrument whose line in this one is patched into
+    this.wave = new Float32Array(4096);
+    this.render(container);
+  }
+
+  set(name, value) {
+    this.params[name] = value;
+    if (this.node) this.node.port.postMessage({ name, value });
+    if (name === "ribbon" || name === "pitch" || name === "scale") this.updateReadout();
+    if (name === "mode" || name === "lfo_int") this.refreshKnobs();
+  }
+
+  // Knob readouts can depend on other controls (Shape reads "rise" or "width"
+  // by LFO wave), and LFO knobs dim while Int. is at 0 because they do nothing.
+  refreshKnobs() {
+    for (const [id, el] of Object.entries(this.knobEls || {})) {
+      const k = this.spec.knobs[id], text = k.fmt(this.params[id], this.params);
+      el.value.textContent = text;
+      el.dial.setAttribute("aria-valuetext", text);
+      if (!k.needs) continue;
+      const idle = this.params[k.needs] < 0.005;
+      el.wrap.classList.toggle("idle", idle);
+      el.wrap.title = idle ? `Turn up ${this.spec.knobs[k.needs].label} to hear this` : "";
+    }
+  }
+
+  async connect() {
+    const { wasm, meta } = ASSETS.synths[this.key];
+    this.node = new AudioWorkletNode(ctx, "faust-mono", {
+      numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
+      processorOptions: { wasm: base64ToBytes(wasm), meta },
+    });
+    for (const [name, value] of Object.entries({ ...this.params, ...shared })) this.node.port.postMessage({ name, value });
+    this.node.port.onmessage = (e) => { this.lfo = e.data.lfo; };
+    this.analyser = ctx.createAnalyser();
+    this.analyser.fftSize = 4096;
+    this.node.connect(this.analyser);
+    this.out = ctx.createGain();             // direct to the master bus
+    this.sends = {};                         // patch cables to other instruments' line ins
+    for (const target of this.spec.sendTo || []) {
+      this.sends[target] = ctx.createGain();
+      this.sends[target].gain.value = 0;
+    }
+    this.analyser.connect(this.out);
+    for (const g of Object.values(this.sends)) this.analyser.connect(g);
+    this.out.connect(master);
+  }
+
+  render(container) {
+    const s = this.spec, k = this.key;
+    const el = document.createElement("section");
+    el.className = "device " + s.theme;
+    el.id = k;
+    el.setAttribute("aria-label", s.brand);
+    el.style.setProperty("--slots", s.semis + 1);
+    el.innerHTML = `
+      <div class="controls">
+        <div class="group">
+          <div class="group-title">${s.modeTitle}</div>
+          <div class="switch">
+            <div class="switch-track" data-role="switch-track"><div class="switch-thumb" data-role="switch-thumb"></div></div>
+            <div class="switch-labels" role="radiogroup" aria-label="${s.modeTitle}">
+              ${s.modes.map((m, i) => `<button role="radio" id="${k}-mode-${i}" data-mode="${i}">${m}</button>`).join("")}
+            </div>
+          </div>
+        </div>
+        ${s.groups.map((g) => `<div class="group">
+          <div class="group-title">${g.title}${g.led ? ' <span class="led" data-role="led" aria-hidden="true"></span>' : ""}</div>
+          <div class="group-row" data-knobs="${g.knobs.join(" ")}"></div>
+        </div>`).join("")}
+        <div class="group scope-group">
+          <div class="group-title">Scope</div>
+          <div class="scope-bezel"><canvas data-role="scope" aria-label="Oscilloscope view of the ${s.brand} output"></canvas></div>
+        </div>
+      </div>
+      <div class="ribbon-wrap">
+        <div class="ribbon" id="${k}-ribbon" role="slider" tabindex="0" aria-label="${s.brand} ribbon keyboard" aria-valuemin="0" aria-valuemax="${s.semis}" aria-valuenow="0">
+          <div class="finger" data-role="finger"></div>
+        </div>
+        <div class="ribbon-scale" data-role="ribbon-scale" aria-hidden="true"></div>
+      </div>
+      <div class="foot">
+        <div class="brand">${s.brand}<small>${s.sub}</small></div>
+        ${s.scale ? `<div class="scale">
+          <button class="scale-btn" id="${k}-scale" aria-label="Scale: Chromatic. Press to change"></button>
+          <ul class="scale-list" aria-hidden="true">${SCALE_NAMES.map((n) => `<li><span class="led"></span>${n}</li>`).join("")}</ul>
+        </div>` : ""}
+        ${s.hold || s.sendTo ? `<div class="toggles">
+          ${s.hold ? `<button class="toggle" id="${k}-hold" aria-pressed="false"><span class="cap"></span><span class="led"></span>Hold</button>` : ""}
+          ${(s.sendTo || []).map((t) => `<button class="toggle" id="${k}-send-${t}" data-send="${t}" aria-pressed="false"><span class="cap"></span><span class="led"></span>To ${SPECS[t].short}</button>`).join("")}
+        </div>` : ""}
+        ${s.lineIn ? `<span class="line-in" data-role="line-in" hidden><span class="led"></span><span data-role="line-in-text"></span></span>` : ""}
+        <div class="foot-right">
+          <div class="readout" id="${k}-readout">— Hz</div>
+          <span class="keys-badge off" data-role="keys">Keys</span>
+        </div>
+      </div>`;
+    container.appendChild(el);
+    this.el = el;
+    const q = (role) => el.querySelector(`[data-role="${role}"]`);
+    this.readout = el.querySelector(".readout");
+    this.led = q("led");
+    this.keysBadge = q("keys");
+    this.finger = q("finger");
+    this.ribbon = el.querySelector(".ribbon");
+    this.canvas = q("scope");
+    this.g = this.canvas.getContext("2d");
+
+    // knobs
+    this.knobEls = {};
+    el.querySelectorAll("[data-knobs]").forEach((row) => {
+      row.dataset.knobs.split(" ").forEach((id) => { row.appendChild(this.renderKnob(id)); this.setKnob(id, this.params[id]); });
+    });
+
+    // mode switch
+    this.thumb = q("switch-thumb");
+    el.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => this.setMode(Number(b.dataset.mode))));
+    q("switch-track").addEventListener("click", (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      this.setMode(Math.min(2, Math.max(0, Math.floor(((e.clientY - r.top) / r.height) * 3))));
+    });
+    this.setMode(this.params.mode);
+
+    // ribbon slots and octave labels
+    this.slots = [];
+    const scaleEl = q("ribbon-scale");
+    for (let n = 0; n <= s.semis; n++) {
+      const slot = document.createElement("div");
+      slot.className = "slot" + (NOTE_NAMES[n % 12].includes("♯") ? " sharp" : "");
+      this.ribbon.appendChild(slot);
+      this.slots.push(slot);
+      const label = document.createElement("span");
+      label.textContent = n % 12 === 0 ? "C" : "";
+      scaleEl.appendChild(label);
+    }
+    this.ribbon.addEventListener("pointerdown", (e) => {
+      this.ribbon.setPointerCapture(e.pointerId);
+      this.touches.set(e.pointerId, this.ribbonFromX(e.clientX));
+      this.ribbonUpdate();
+      e.preventDefault();
+    });
+    this.ribbon.addEventListener("pointermove", (e) => {
+      if (!this.touches.has(e.pointerId)) return;
+      this.touches.set(e.pointerId, this.ribbonFromX(e.clientX));
+      this.ribbonUpdate();
+    });
+    const lift = (e) => { this.touches.delete(e.pointerId); this.ribbonUpdate(); };
+    this.ribbon.addEventListener("pointerup", lift);
+    this.ribbon.addEventListener("pointercancel", lift);
+
+    // scale button
+    if (s.scale) {
+      this.scaleBtn = el.querySelector(".scale-btn");
+      this.scaleItems = [...el.querySelectorAll(".scale-list li")];
+      this.scaleBtn.addEventListener("click", () => this.setScale((this.params.scale + 1) % 4));
+      this.setScale(this.params.scale);
+    }
+
+    if (s.hold) {
+      this.holdBtn = el.querySelector(`#${k}-hold`);
+      this.holdBtn.addEventListener("click", () => this.setHold(!this.hold));
+    }
+    this.sendBtns = [...el.querySelectorAll("[data-send]")];
+    for (const b of this.sendBtns) b.addEventListener("click", () => setRoute(this, this.routedTo === b.dataset.send ? null : b.dataset.send));
+    if (s.lineIn) { this.lineIn = q("line-in"); this.lineInText = q("line-in-text"); }
+
+    el.addEventListener("pointerdown", () => setKeyTarget(this));
+
+    // scope canvas follows its box at device resolution
+    const fit = () => {
+      const dpr = window.devicePixelRatio || 1;
+      this.canvas.width = Math.max(1, Math.round(this.canvas.clientWidth * dpr));
+      this.canvas.height = Math.max(1, Math.round(this.canvas.clientHeight * dpr));
+    };
+    new ResizeObserver(fit).observe(this.canvas);
+    fit();
+    this.updateReadout();
+  }
+
+  renderKnob(id) {
+    const k = this.spec.knobs[id];
+    const wrap = document.createElement("div");
+    wrap.className = "knob";
+    wrap.innerHTML = `<div class="knob-dial" id="${this.key}-knob-${id}" role="slider" tabindex="0" aria-label="${k.label}" aria-valuemin="0" aria-valuemax="100"><div class="knob-cap"></div></div>
+      <div class="knob-label">${k.label}</div><div class="knob-value"></div>`;
+    const dial = wrap.querySelector(".knob-dial");
+    this.knobEls[id] = { wrap, dial, cap: wrap.querySelector(".knob-cap"), value: wrap.querySelector(".knob-value") };
+
+    let startY = 0, startX = 0, startV = 0;
+    dial.addEventListener("pointerdown", (e) => {
+      dial.setPointerCapture(e.pointerId);
+      startY = e.clientY; startX = e.clientX; startV = this.params[id];
+      e.preventDefault();
+    });
+    dial.addEventListener("pointermove", (e) => {
+      if (!dial.hasPointerCapture(e.pointerId)) return;
+      const scale = e.shiftKey ? 600 : 180;
+      this.setKnob(id, startV + ((startY - e.clientY) + (e.clientX - startX)) / scale);
+    });
+    dial.addEventListener("dblclick", () => this.setKnob(id, k.value));
+    dial.addEventListener("wheel", (e) => { e.preventDefault(); this.setKnob(id, this.params[id] - Math.sign(e.deltaY) * 0.02); }, { passive: false });
+    dial.addEventListener("keydown", (e) => {
+      const step = e.shiftKey ? 0.1 : 0.01;
+      if (e.key === "ArrowUp" || e.key === "ArrowRight") { this.setKnob(id, this.params[id] + step); e.preventDefault(); }
+      if (e.key === "ArrowDown" || e.key === "ArrowLeft") { this.setKnob(id, this.params[id] - step); e.preventDefault(); }
+      if (e.key === "Home") this.setKnob(id, 0);
+      if (e.key === "End") this.setKnob(id, 1);
+    });
+    return wrap;
+  }
+
+  setKnob(id, v) {
+    v = Math.min(1, Math.max(0, v));
+    this.set(id, v);
+    const el = this.knobEls[id];
+    el.cap.style.setProperty("--angle", (-135 + 270 * v) + "deg");
+    el.dial.setAttribute("aria-valuenow", Math.round(v * 100));
+    this.refreshKnobs();
+  }
+
+  setMode(m) {
+    this.set("mode", m);
+    this.thumb.style.top = (2 + m * 32) + "px";
+    for (let i = 0; i < 3; i++) document.getElementById(`${this.key}-mode-${i}`).setAttribute("aria-checked", String(i === m));
+    if (this.lineIn) updateLineIn();
+  }
+
+  // Hold latches the gate: the last note keeps sounding after release, and new
+  // touches change its pitch without retriggering. Turning Hold off releases it.
+  setHold(on) {
+    this.hold = on;
+    this.holdBtn.setAttribute("aria-pressed", String(on));
+    this.latched = on && this.params.gate === 1;
+    this.ribbonUpdate(keyTarget === this && held.length ? held[held.length - 1] : undefined);
+  }
+
+  setScale(n) {
+    this.set("scale", n);
+    this.scaleItems.forEach((li, i) => li.classList.toggle("on", i === n));
+    this.scaleBtn.setAttribute("aria-label", `Scale: ${SCALE_NAMES[n]}. Press to change`);
+    const degrees = SCALE_DEGREES[n];
+    this.slots.forEach((slot, i) => slot.classList.toggle("off-scale", !!degrees && !degrees.includes(i % 12)));
+  }
+
+  applyPreset(p) {
+    this.setMode(p.mode);
+    if (this.spec.scale) this.setScale(p.scale);
+    for (const id of Object.keys(this.spec.knobs)) this.setKnob(id, p[id]);
+  }
+
+  ribbonFromX(clientX) {
+    const r = this.ribbon.getBoundingClientRect(), n = this.spec.semis;
+    return Math.min(n, Math.max(0, ((clientX - r.left) / r.width) * (n + 1) - 0.5)) / n;
+  }
+
+  showFinger(v, on, latched = false) {
+    const n = this.spec.semis;
+    this.finger.style.left = ((v * n + 0.5) / (n + 1) * 100) + "%";
+    this.finger.classList.toggle("on", on);
+    this.finger.classList.toggle("latched", latched);
+    this.ribbon.setAttribute("aria-valuenow", Math.round(v * n));
+  }
+
+  // newest finger wins, like the hardware's last-touched point
+  ribbonUpdate(keyNote) {
+    const touch = this.touches.size ? [...this.touches.values()].pop() : null;
+    const v = keyNote !== undefined && keyNote !== null ? keyNote / this.spec.semis : touch;
+    if (v === null || v === undefined) {
+      if (this.latched) { this.showFinger(this.params.ribbon, true, true); return; }
+      this.set("gate", 0); this.showFinger(this.params.ribbon, false); return;
+    }
+    this.set("ribbon", v);
+    this.set("gate", 1);
+    if (this.hold) this.latched = true;
+    this.showFinger(v, true);
+  }
+
+  updateReadout() {
+    const hz = this.spec.hz(this.params);
+    const midi = 69 + 12 * Math.log2(hz / 440);
+    const n = Math.round(midi), cents = Math.round((midi - n) * 100);
+    this.readout.textContent = `${hz.toFixed(1)} Hz · ${NOTE_NAMES[((n % 12) + 12) % 12]}${Math.floor(n / 12) - 1} ${cents >= 0 ? "+" : "−"}${Math.abs(cents)}¢`;
+  }
+
+  draw() {
+    const c = this.canvas, g = this.g, w = c.width, h = c.height, dpr = window.devicePixelRatio || 1;
+    g.fillStyle = scopeColors.bg; g.fillRect(0, 0, w, h);
+    g.strokeStyle = scopeColors.grid; g.lineWidth = 1;
+    for (let x = 0; x <= 8; x++) { g.beginPath(); g.moveTo(x * w / 8, 0); g.lineTo(x * w / 8, h); g.stroke(); }
+    for (let y = 0; y <= 4; y++) { g.beginPath(); g.moveTo(0, y * h / 4); g.lineTo(w, y * h / 4); g.stroke(); }
+    if (this.analyser) {
+      const wave = this.wave;
+      this.analyser.getFloatTimeDomainData(wave);
+      let start = 0;
+      for (let i = 1; i < 2048; i++) if (wave[i - 1] < 0 && wave[i] >= 0) { start = i; break; }
+      const span = 1536;
+      g.strokeStyle = scopeColors.trace; g.lineWidth = 1.75 * dpr; g.lineJoin = "round";
+      g.shadowColor = scopeColors.trace; g.shadowBlur = 8 * dpr; g.beginPath();
+      for (let i = 0; i < span; i++) {
+        const x = (i / (span - 1)) * w, y = h / 2 - wave[start + i] * h * 0.45;
+        i ? g.lineTo(x, y) : g.moveTo(x, y);
+      }
+      g.stroke();
+      g.shadowBlur = 0;
+    }
+    if (this.led) {
+      const lit = this.params.mode > 0 && this.node ? this.lfo : 0;
+      this.led.style.opacity = (0.12 + 0.88 * lit).toFixed(3);
+      this.led.style.boxShadow = `0 0 ${4 + 10 * lit}px ${2 * lit}px rgba(255,61,46,${(0.7 * lit).toFixed(2)})`;
+    }
+  }
+}
+
+const devicesEl = document.getElementById("devices");
+const synths = {};
+for (const [key, spec] of Object.entries(SPECS)) synths[key] = new Synth(key, spec, devicesEl);
+window.synths = synths;
+
+/* ---------- audio ---------- */
+function startAudio() {
+  if (starting) return starting;
+  starting = (async () => {
+    ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
+    const url = URL.createObjectURL(new Blob([ASSETS.worklet], { type: "text/javascript" }));
+    await ctx.audioWorklet.addModule(url);
+    master = ctx.createGain();
+    masterAnalyser = ctx.createAnalyser();
+    masterAnalyser.fftSize = 4096;
+    master.connect(masterAnalyser);
+    masterAnalyser.connect(ctx.destination);
+    recNode = new AudioWorkletNode(ctx, "recorder", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 2, channelCountMode: "explicit" });
+    recNode.port.onmessage = onRecorded;
+    master.connect(recNode);
+    recNode.connect(ctx.destination);                 // silent; keeps the recorder running
+    window.masterAnalyser = masterAnalyser;
+    for (const s of Object.values(synths)) await s.connect();
+    for (const s of Object.values(synths)) for (const [t, g] of Object.entries(s.sends)) g.connect(synths[t].node);
+    applyRouting();
+    await ctx.resume();
+    statusEl.textContent = "Sound on · " + ctx.sampleRate / 1000 + " kHz";
+    statusEl.classList.add("on");
+  })().catch((err) => {
+    statusEl.textContent = "Audio could not start: " + err.message;
+    starting = null;
+  });
+  return starting;
+}
+document.addEventListener("pointerdown", () => { startAudio(); if (ctx && ctx.state !== "running") ctx.resume(); }, { capture: true });
+document.addEventListener("keydown", () => startAudio(), { capture: true });
+
+/* ---------- routing: patch cables between instruments ---------- */
+// Like a cable from one instrument's headphone jack to another's LINE IN. Binary
+// (CN2 -> R53/R52 10k -> IC5D) and Singularity (CN2 -> R41/R42 10k -> IC4D) both
+// feed the jack into the VCF input mixer, so the sound goes through the
+// receiver's filter (and Singularity's echo) and amp. The sender's own output and
+// speaker path are bypassed. One jack, so one destination at a time; nothing
+// patches back into Pulsar, so chains (Pulsar -> Binary -> Singularity) can't loop.
+function setRoute(synth, target) {
+  synth.routedTo = target;
+  for (const b of synth.sendBtns) b.setAttribute("aria-pressed", String(b.dataset.send === target));
+  applyRouting();
+}
+function applyRouting() {
+  const now = ctx ? ctx.currentTime : 0;
+  for (const s of Object.values(synths)) {
+    if (!s.spec.sendTo) continue;
+    s.set("speaker", s.routedTo ? 0 : shared.speaker);   // a plugged jack mutes the speaker
+    for (const [t, g] of Object.entries(s.sends || {})) g.gain.setTargetAtTime(s.routedTo === t ? 1 : 0, now, 0.01);
+    if (s.out) s.out.gain.setTargetAtTime(s.routedTo ? 0 : 1, now, 0.01);
+  }
+  updateLineIn();
+}
+function updateLineIn() {
+  for (const dest of Object.values(synths)) {
+    if (!dest.lineIn) continue;
+    const sources = Object.values(synths).filter((s) => s.routedTo === dest.key);
+    dest.set("line_in", sources.length ? 1 : 0);
+    dest.lineIn.hidden = sources.length === 0;
+    const standby = dest.params.mode === 0;
+    dest.lineIn.classList.toggle("off", standby);
+    dest.lineInText.textContent = "Line in ◂ " + sources.map((s) => s.spec.short).join(" + ")
+      + (standby ? " · switch on to hear" : "");
+  }
+}
+
+/* ---------- computer keyboard: 19 keys from the bottom of the ribbon ---------- */
+const held = [];
+const midiHeld = [];
+function setKeyTarget(synth) {
+  if (keyTarget === synth) return;
+  if (keyTarget) { held.length = 0; midiHeld.length = 0; keyTarget.ribbonUpdate(); keyTarget.keysBadge.classList.add("off"); }
+  keyTarget = synth;
+  synth.keysBadge.classList.remove("off");
+}
+setKeyTarget(synths.ribbon35);
+window.addEventListener("keydown", (e) => {
+  if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target instanceof HTMLInputElement) return;
+  if (e.code === "Space" && keyTarget.spec.hold) { keyTarget.setHold(!keyTarget.hold); e.preventDefault(); return; }
+  const n = KEYS.indexOf(e.key.toLowerCase());
+  if (n < 0) return;
+  held.push(n); keyTarget.ribbonUpdate(n); e.preventDefault();
+});
+window.addEventListener("keyup", (e) => {
+  const i = held.indexOf(KEYS.indexOf(e.key.toLowerCase()));
+  if (i < 0) return;
+  held.splice(i, 1);
+  if (!held.length && midiHeld.length) midiPlay();
+  else keyTarget.ribbonUpdate(held.length ? held[held.length - 1] : null);
+});
+window.addEventListener("blur", () => {
+  held.length = 0;
+  for (const s of Object.values(synths)) { s.touches.clear(); s.ribbonUpdate(); }
+});
+
+/* ---------- MIDI keyboard ---------- */
+// Notes play the instrument marked "Keys", in tune: each note becomes the ribbon
+// position for that pitch above the bottom of the ribbon (set by the Pitch knob),
+// folded by octaves into the ribbon's range. Last-note priority, like the mono
+// hardware. Pitch bend +/-2 semitones, sustain pedal = Hold, mod wheel = LFO Int.
+// (X-Mod on Binary). Binary's scale still snaps the result.
+const midiStatus = document.getElementById("midi-status");
+const midiBtn = document.getElementById("midi-connect");
+const inFrame = window.self !== window.top;
+let midiBend = 0;
+function midiSemis(synth, note) {
+  const n = synth.spec.semis;
+  let semis = 12 * Math.log2(440 * 2 ** ((note - 69) / 12) / synth.spec.baseHz(synth.params));
+  while (semis < -0.5) semis += 12;
+  while (semis > n + 0.5) semis -= 12;
+  return Math.min(n, Math.max(0, semis + midiBend));
+}
+function midiPlay() {
+  if (midiHeld.length) keyTarget.ribbonUpdate(midiSemis(keyTarget, midiHeld[midiHeld.length - 1]));
+  else keyTarget.ribbonUpdate(held.length ? held[held.length - 1] : null);
+}
+function handleMidi(data) {
+  const [status, d1 = 0, d2 = 0] = data, type = status & 0xf0;
+  if (type === 0x90 && d2 > 0) {
+    const i = midiHeld.indexOf(d1); if (i >= 0) midiHeld.splice(i, 1);
+    midiHeld.push(d1); midiPlay();
+  } else if (type === 0x80 || type === 0x90) {
+    const i = midiHeld.indexOf(d1);
+    if (i >= 0) { midiHeld.splice(i, 1); midiPlay(); }
+  } else if (type === 0xe0) {
+    midiBend = ((d2 << 7 | d1) - 8192) / 8192 * 2;
+    if (midiHeld.length) midiPlay();
+  } else if (type === 0xb0 && d1 === 64) {
+    if (keyTarget.spec.hold && (d2 >= 64) !== keyTarget.hold) keyTarget.setHold(d2 >= 64);
+  } else if (type === 0xb0 && d1 === 1) {
+    keyTarget.setKnob(keyTarget.spec.modWheel, d2 / 127);
+  } else if (type === 0xb0 && (d1 === 120 || d1 === 123)) {
+    midiHeld.length = 0; midiPlay();
+  }
+}
+window.handleMidi = handleMidi;
+midiBtn.addEventListener("click", async () => {
+  startAudio();
+  if (!navigator.requestMIDIAccess) {
+    midiStatus.textContent = "This browser has no Web MIDI. Use Chrome, Edge or Firefox.";
+    return;
+  }
+  try {
+    const access = await navigator.requestMIDIAccess();
+    const hook = () => {
+      const inputs = [...access.inputs.values()];
+      for (const input of inputs) input.onmidimessage = (e) => handleMidi(e.data);
+      midiStatus.textContent = inputs.length
+        ? "Listening to " + inputs.map((i) => i.name).join(", ") + ". Plays the instrument marked \"Keys\"."
+        : "No MIDI keyboard found. Plug one in and it connects automatically.";
+    };
+    access.onstatechange = hook;
+    hook();
+    midiBtn.textContent = "MIDI connected";
+    midiBtn.disabled = true;
+  } catch (err) {
+    midiStatus.textContent = inFrame
+      ? "MIDI is blocked inside this viewer. Open the page as a standalone file in Chrome, Edge or Firefox to use a keyboard."
+      : "MIDI access was refused (" + err.message + ").";
+  }
+});
+
+/* ---------- recording ---------- */
+// The recorder sits on the master bus, so it captures exactly what you hear.
+// In the Claude viewer only some file types can be saved, and WAV isn't one,
+// so there the WAV goes inside a .zip (stored, so it comes out bit-exact).
+const REC_MAX_SECONDS = 20 * 60;
+const recBtn = document.getElementById("rec-btn"), recLabel = document.getElementById("rec-label");
+const recTime = document.getElementById("rec-time"), recSave = document.getElementById("rec-save");
+const recStatus = document.getElementById("rec-status");
+let recNode = null, recording = false, recChunks = [], recFrames = 0, recTake = null, recTicker = null;
+let downloads = null;
+if (window.claude && typeof window.claude.use === "function") {
+  window.claude.use("downloads").then((d) => { downloads = d; updateSaveLabel(); }).catch(() => {});
+}
+function updateSaveLabel() { recSave.textContent = downloads ? "Save (.zip with WAV)" : "Save WAV"; }
+const fmtTime = (s) => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+function onRecorded(e) {
+  const { left, right, done } = e.data;
+  if (left) {
+    const out = new Int16Array(left.length * 2);
+    for (let i = 0; i < left.length; i++) {
+      out[2 * i] = Math.max(-1, Math.min(1, left[i])) * 32767;
+      out[2 * i + 1] = Math.max(-1, Math.min(1, right[i])) * 32767;
+    }
+    recChunks.push(out);
+    recFrames += left.length;
+    if (recording && recFrames >= REC_MAX_SECONDS * ctx.sampleRate) stopRecording("Stopped at the 20-minute limit.");
+  }
+  if (done) finishTake();
+}
+async function startRecording() {
+  await startAudio();
+  if (!recNode) return;
+  recChunks = []; recFrames = 0; recTake = null;
+  recNode.port.postMessage({ record: true });
+  recording = true;
+  recBtn.setAttribute("aria-pressed", "true"); recLabel.textContent = "Stop";
+  recSave.disabled = true;
+  recStatus.textContent = "Recording…";
+  recTicker = setInterval(() => { recTime.textContent = fmtTime(recFrames / ctx.sampleRate); }, 250);
+}
+function stopRecording(message) {
+  recording = false;
+  recNode.port.postMessage({ record: false });
+  clearInterval(recTicker);
+  recBtn.setAttribute("aria-pressed", "false"); recLabel.textContent = "Record";
+  if (message) recStatus.textContent = message;
+}
+function finishTake() {
+  recTake = { chunks: recChunks, frames: recFrames, sampleRate: ctx.sampleRate };
+  recTime.textContent = fmtTime(recFrames / ctx.sampleRate);
+  recSave.disabled = recFrames === 0;
+  if (!recStatus.textContent.startsWith("Stopped at")) recStatus.textContent = recFrames ? `Ready to save: ${fmtTime(recFrames / ctx.sampleRate)} at ${ctx.sampleRate / 1000} kHz.` : "Nothing was recorded.";
+}
+recBtn.addEventListener("click", () => (recording ? stopRecording() : startRecording()));
+
+function encodeWav(chunks, frames, sampleRate) {
+  const bytes = new Uint8Array(44 + frames * 4), v = new DataView(bytes.buffer);
+  const str = (o, t) => { for (let i = 0; i < t.length; i++) bytes[o + i] = t.charCodeAt(i); };
+  str(0, "RIFF"); v.setUint32(4, 36 + frames * 4, true); str(8, "WAVE");
+  str(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 2, true);
+  v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 4, true); v.setUint16(32, 4, true); v.setUint16(34, 16, true);
+  str(36, "data"); v.setUint32(40, frames * 4, true);
+  const pcm = new Int16Array(bytes.buffer, 44, frames * 2);
+  let o = 0;
+  for (const c of chunks) { pcm.set(c, o); o += c.length; }
+  return bytes;
+}
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(bytes) {
+  let c = 0xffffffff;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+// A one-file zip with the file stored (no compression).
+function zipStore(name, data) {
+  const nameBytes = new TextEncoder().encode(name), crc = crc32(data), d = new Date();
+  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  const local = new DataView(new ArrayBuffer(30));
+  [[0, 0x04034b50, 4], [4, 20, 2], [6, 0, 2], [8, 0, 2], [10, time, 2], [12, date, 2], [14, crc, 4],
+   [18, data.length, 4], [22, data.length, 4], [26, nameBytes.length, 2], [28, 0, 2]].forEach(([o, val, n]) => n === 4 ? local.setUint32(o, val, true) : local.setUint16(o, val, true));
+  const central = new DataView(new ArrayBuffer(46));
+  [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0, 2], [10, 0, 2], [12, time, 2], [14, date, 2], [16, crc, 4],
+   [20, data.length, 4], [24, data.length, 4], [28, nameBytes.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2],
+   [38, 0, 4], [42, 0, 4]].forEach(([o, val, n]) => n === 4 ? central.setUint32(o, val, true) : central.setUint16(o, val, true));
+  const end = new DataView(new ArrayBuffer(22));
+  [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, 1, 2], [10, 1, 2], [12, 46 + nameBytes.length, 4],
+   [16, 30 + nameBytes.length + data.length, 4], [20, 0, 2]].forEach(([o, val, n]) => n === 4 ? end.setUint32(o, val, true) : end.setUint16(o, val, true));
+  return new Blob([local, nameBytes, data, central, nameBytes, end]);
+}
+window.recorder = { encodeWav, zipStore, crc32, take: () => recTake };
+
+recSave.addEventListener("click", async () => {
+  if (!recTake || !recTake.frames) return;
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
+  const wavName = `ribbon35-${stamp}.wav`;
+  const wav = encodeWav(recTake.chunks, recTake.frames, recTake.sampleRate);
+  if (downloads) {
+    const zipName = wavName.replace(/\.wav$/, ".zip");
+    try {
+      await downloads.save({ filename: zipName, data: zipStore(wavName, wav) });
+      recStatus.textContent = `Saved ${zipName}, which holds ${wavName}.`;
+    } catch (err) {
+      recStatus.textContent = {
+        declined: "Not saved.",
+        rate_limited: "Another save is still waiting. Try again in a moment.",
+        too_large: "This recording is too large to save here. Record a shorter take.",
+        extension_not_enabled: "Saving .zip files isn't enabled in this view.",
+      }[err && err.code] || "Saving isn't available in this view.";
+    }
+    return;
+  }
+  if (!inFrame) {
+    const url = URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = wavName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    recStatus.textContent = `Saved ${wavName}.`;
+    return;
+  }
+  recStatus.textContent = "Saving isn't available in this view.";
+});
+
+/* ---------- output panel ---------- */
+function setShared(name, value) {
+  shared[name] = value;
+  for (const s of Object.values(synths)) s.set(name, name === "speaker" && s.routedTo ? 0 : value);
+}
+const vol = document.getElementById("volume");
+const volOut = document.getElementById("volume-out");
+vol.addEventListener("input", () => { setShared("volume", Number(vol.value)); volOut.textContent = Math.round(vol.value * 100); });
+function segmented(id, param) {
+  const seg = document.getElementById(id);
+  seg.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    seg.querySelectorAll("button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+    setShared(param, Number(b.dataset.value));
+  }));
+}
+segmented("seg-speaker", "speaker");
+segmented("seg-filter", "stdlib_filter");
+
+for (const [key, synth] of Object.entries(synths)) {
+  const row = document.getElementById(`${key}-presets`);
+  for (const p of synth.spec.presets) {
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.addEventListener("click", () => synth.applyPreset(p));
+    row.appendChild(b);
+  }
+}
+
+/* ---------- scopes + LED ---------- */
+(function frame() {
+  for (const s of Object.values(synths)) s.draw();
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>

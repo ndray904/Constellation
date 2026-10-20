@@ -1,0 +1,103 @@
+// Circuits shared by the monotron family models. The monotron (2010-10-13) and
+// monotron DUO (2012-02-22) public schematics use the same gate timing, VCF,
+// diode limiter and TPA6111 amp, part value for part value.
+//
+// Building blocks from the Faust standard libraries (STK-4.3 / MIT-style):
+//   ve.korg35LPF  Korg 35 low-pass (Eric Tarr), used directly in "stdlib" mode
+//   fi.*, no.*    one-pole filters, noise
+
+import("stdfaust.lib");
+
+//============================== Oscillator helpers ==========================
+
+// PolyBLEP residual for a unit phasor p with increment dt (Valimaki/Finke).
+polyBlep(p, dt) = select2(p < dt, select2(p > 1 - dt, 0, tail), head)
+with {
+  head = 2 * (p / dt) - (p / dt) * (p / dt) - 1;
+  tail = ((p - 1) / dt) * ((p - 1) / dt) + 2 * ((p - 1) / dt) + 1;
+};
+
+// Unit phasor at hz, restarted (to 0) while rst is 1.
+phasor(hz, rst) = step ~ _
+with {
+  step(p) = select2(rst, ma.frac(p + hz / ma.SR), 0);
+};
+
+// Band-limited 50% square, +1 for the first half cycle, from phasor p.
+square(p, dt) = select2(p < 0.5, -1, 1) + polyBlep(p, dt) - polyBlep(ma.frac(p + 0.5), dt);
+
+// Pitch knob law: 1 V/oct over 0..10 V, 0 V = C0 (16.35 Hz).
+//   [hardware: monotron; assumed reference 0 V = C0]
+pitchHz(k) = 16.3516 * pow(2, k * 10);
+
+//============================== Gate =======================================
+// Gate -> 1k into 0.1u || 10k (monotron R51/C16/R52, DUO R63/C27/R71):
+// attack ~ 0.1 ms, release ~ 1 ms.                                [schematic]
+gateEnv(g) = env ~ _
+with {
+  env(y) = y + (g - y) * select2(g > y, kRel, kAtt);
+  kAtt = 1 - exp(-1 / (0.0001 * ma.SR));
+  kRel = 1 - exp(-1 / (0.001 * ma.SR));
+};
+
+// A -80 dB noise floor stands in for circuit noise, so a self-oscillating
+// filter starts on its own as it does on the hardware.
+noiseFloor(active) = no.noise * 0.0001 * active;
+
+//============================== VCF ========================================
+// Two-pole Korg-35-style low-pass (monotron Q12-Q14/C20/C21/IC4C, DUO
+// Q11-Q13/C30/C31/IC5C). The resonance is taken from the output op-amp, whose
+// feedback holds anti-parallel 1SS355 diodes || 330k, so the limiting sits
+// inside the resonance loop.                                       [schematic]
+
+// The diode pair as a soft limiter.
+diode(x) = ma.tanh(x);
+
+// ve.korg35LPF with the diode limiter in its resonance loop. The zero-delay
+// solve stays exactly as in the library, so tuning holds up to Nyquist; the
+// loop gain K is scaled by the diode's effective gain tanh(y)/y at the current
+// output level, which bounds self-oscillation the way the diodes do.
+korg35Diode(normFreq, K, x) = diode(y)
+letrec {
+  's1 = (x - s1) * (alpha * 2) + s1;
+  's2 = (lp2(s1, s2, s3, Kd(y)) * Kd(y) - s2) * (alpha * 2) + s2;
+  's3 = (u(s1, s2, s3, Kd(y)) - s3) * (alpha * 2) + s3;
+  'y  = lp2(s1, s2, s3, Kd(y));
+}
+with {
+  freq   = 2 * (10 ^ (3 * normFreq + 1));
+  wd     = 2 * ma.PI * freq;
+  T      = 1 / ma.SR;
+  wa     = (2 / T) * tan(wd * T / 2);
+  g      = wa * T / 2;
+  alpha  = g / (1 + g);
+  Kd(y)  = K * select2(abs(y) > 1e-4, 1, ma.tanh(y) / y);
+  B3(k)  = (k - k * alpha) / (1 + g);
+  B2     = -1 / (1 + g);
+  alpha0(k) = 1 / (1 - k * alpha + k * alpha * alpha);
+  u(s1, s2, s3, k)   = ((x - s1) * alpha + s1 + s3 * B3(k) + s2 * B2) * alpha0(k);
+  lp2(s1, s2, s3, k) = (u(s1, s2, s3, k) - s3) * alpha + s3;
+};
+
+// Whole VCF. peakK 0..1. The loop gain at cutoff is K/2, so K = 2 is the
+// oscillation edge; the diode model runs to 2.2 so it self-oscillates near full
+// PEAK. stdlib = 1 selects the plain ve.korg35LPF (linear loop, diode after).
+vcf(normFreq, peakK, stdlib) = _ <: korg35Diode(normFreq, peakK * 2.2),
+                                    (ve.korg35LPF(normFreq, linQ) : diode)
+                                : select2(stdlib)
+with {
+  linQ = (1 / sqrt(2)) + min(1.96, peakK * 2.08) * (10 - 1 / sqrt(2)) / 2;
+};
+
+// CUTOFF knob to the filter's normalised frequency (VR wiper 0..0.6 VCC into
+// a 68k summing resistor on both models).
+cutoffNorm(k) = 0.05 + cutSpan * k;
+cutSpan = 0.9;
+
+//============================== AMP ========================================
+// TPA6111 speaker channel: 0.01u + (47k + 22k) -> HPF 231 Hz, 0.1u / 22k ->
+// HPF 72 Hz, 270k || 100p -> LPF 5.9 kHz. Headphone channel: 1u / 68k ->
+// HPF 2.3 Hz, otherwise flat.                                      [schematic]
+speakerEQ   = fi.highpass(1, 231) : fi.highpass(1, 72) : fi.lowpass(1, 5900) : *(1.6);
+headphoneEQ = fi.highpass(1, 2.3);
+amp(speaker, vol, active) = _ <: speakerEQ, headphoneEQ : select2(1 - speaker) : *(vol * vol * active);
