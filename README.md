@@ -1,4 +1,4 @@
-# Ribbon 35 — Pulsar, Binary, Singularity
+# Constellation — Pulsar, Binary, Singularity
 
 Browser synths modelled from KORG's public schematics: the monotron (2010-10-13) as
 **Pulsar**, the monotron DUO (2012-02-22) as **Binary**, and the monotron DELAY
@@ -16,7 +16,7 @@ WebAssembly and run in an AudioWorklet; all three play on one page.
 | `web/faust-runtime.js` | Small host for the compiled wasm (memory layout, params, `compute`). Runs in the worklet and in Node. |
 | `web/faust-worklet.js` | AudioWorklet processor. |
 | `web/index.html` | Page template. Each instrument is built from a spec (`SPECS`): knobs, switch, ribbon length, presets. |
-| `build.mjs` | Compiles both DSPs and inlines everything into `dist/ribbon-35.html`. |
+| `build.mjs` | Compiles both DSPs and inlines everything into `dist/constellation.html`. |
 | `test/render.cjs` | Pulsar offline checks: tuning, 18-semitone ribbon, LFO range and aliasing, gating, self-oscillation. |
 | `test/render-duo.cjs` | Binary offline checks: scales, VCO2 offset, X-MOD depth, gating, self-oscillation. |
 | `test/render-delay.cjs` | Singularity offline checks: 4-octave ribbon, echo times vs the PT2399 fit, feedback decay and runaway, tape-style pitch bend. |
@@ -26,7 +26,7 @@ WebAssembly and run in an AudioWorklet; all three play on one page.
 
 ```sh
 npm install
-node build.mjs            # -> dist/ribbon-35.html (artifact) and dist/ribbon-35-standalone.html (open from disk)
+node build.mjs            # -> dist/constellation.html (artifact) and dist/constellation-standalone.html (open from disk)
 node test/render.cjs      # optional arg: a folder to write WAV renders into
 node test/render-duo.cjs
 node test/render-delay.cjs

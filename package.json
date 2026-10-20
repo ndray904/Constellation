@@ -1,5 +1,5 @@
 {
-  "name": "ribbon-35",
+  "name": "constellation",
   "version": "0.1.0",
   "private": true,
   "description": "Pulsar, Binary and Singularity: browser ribbon synths modelled from the public monotron, monotron DUO and monotron DELAY schematics, in Faust and WebAssembly.",

@@ -1,4 +1,4 @@
-// Builds dist/ribbon-35.html: compiles each synth's .dsp with the Faust compiler
+// Builds dist/constellation.html: compiles each synth's .dsp with the Faust compiler
 // (build-time only) and inlines the wasm, its metadata and the worklet code into
 // web/index.html so the page runs from a single file.
 import { execFileSync } from "node:child_process";
@@ -30,8 +30,8 @@ const page = read("web/index.html").toString()
   .replace("/*@ASSETS@*/", () => `const ASSETS = ${JSON.stringify(assets)};`);
 
 mkdirSync(join(root, "dist"), { recursive: true });
-writeFileSync(join(root, "dist/ribbon-35.html"), page);
-console.log(`dist/ribbon-35.html  ${(page.length / 1024).toFixed(1)} KB`);
+writeFileSync(join(root, "dist/constellation.html"), page);
+console.log(`dist/constellation.html  ${(page.length / 1024).toFixed(1)} KB`);
 
 // The same page as a complete document to open straight from disk. Outside the
 // Claude viewer it can use Web MIDI and saves recordings as plain .wav files.
@@ -42,5 +42,5 @@ const standalone = `<!doctype html>
 ${page}
 </body></html>
 `;
-writeFileSync(join(root, "dist/ribbon-35-standalone.html"), standalone);
-console.log(`dist/ribbon-35-standalone.html  ${(standalone.length / 1024).toFixed(1)} KB`);
+writeFileSync(join(root, "dist/constellation-standalone.html"), standalone);
+console.log(`dist/constellation-standalone.html  ${(standalone.length / 1024).toFixed(1)} KB`);

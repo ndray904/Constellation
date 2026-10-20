@@ -1,11 +1,11 @@
-// Loads dist/ribbon-35.html in headless Chromium, plays both ribbons and checks
+// Loads dist/constellation.html in headless Chromium, plays both ribbons and checks
 // that audio reaches each analyser. Usage: node test/browser.cjs [screenshotDir]
 const path = require("path");
 const fs = require("fs");
 const http = require("http");
 const { chromium } = require(require.resolve("playwright", { paths: [process.execPath + "/../../lib/node_modules"] }));
 
-const page = fs.readFileSync(path.join(__dirname, "../dist/ribbon-35.html"), "utf8");
+const page = fs.readFileSync(path.join(__dirname, "../dist/constellation.html"), "utf8");
 const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>${page}</body></html>`;
 const shots = process.argv[2];
 
@@ -223,7 +223,7 @@ const shots = process.argv[2];
     check(`[${name}] To Singularity: Singularity in standby silences the routed sound`, standbyMaster < 0.005 && /switch on to hear/.test(standbyLabel), `(${standbyMaster.toFixed(4)}, ${standbyLabel})`);
     await p.click("#delay-mode-1");
 
-    await p.click("#ribbon35-hold");                       // release: echoes of Ribbon 35 ring on in the Delay
+    await p.click("#ribbon35-hold");                       // release: echoes of Pulsar ring on in Singularity
     await p.waitForTimeout(150);
     const echoTail = await loudest(masterRms, 8);
     check(`[${name}] To Singularity: Pulsar's echoes ring on after release`, echoTail > 0.005, `(rms ${echoTail.toFixed(4)})`);
@@ -330,7 +330,7 @@ const shots = process.argv[2];
     let peak = 0; for (let i = 44; i < wav.length; i += 2) peak = Math.max(peak, Math.abs(wav.readInt16LE(i)));
     const seconds = take.frames / take.sr;
     check(`[${name}] Recording: take length matches what was played (~1.4 s)`, seconds > 1.0 && seconds < 3.0, `(${seconds.toFixed(2)} s)`);
-    check(`[${name}] Recording: saves a valid 16-bit stereo WAV with audio`, wavOk && /\.wav$/.test(download.suggestedFilename()) && peak > 1000, `(${download.suggestedFilename()}, ${wav.length} bytes, peak ${peak})`);
+    check(`[${name}] Recording: saves a valid 16-bit stereo WAV with audio`, wavOk && /^constellation-.*\.wav$/.test(download.suggestedFilename()) && peak > 1000, `(${download.suggestedFilename()}, ${wav.length} bytes, peak ${peak})`);
 
     // The viewer saves a .zip holding the WAV: check that zip with Python's zipfile.
     const zipB64 = await p.evaluate(async () => {

@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
-<title>Ribbon 35</title>
+<title>Constellation</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -270,7 +270,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
 <div class="wrap">
   <header>
     <div>
-      <h1>Ribbon 35</h1>
+      <h1>Constellation</h1>
       <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library.</p>
     </div>
     <span class="status" id="status">Sound off · touch a ribbon</span>
@@ -1116,7 +1116,7 @@ window.recorder = { encodeWav, zipStore, crc32, take: () => recTake };
 recSave.addEventListener("click", async () => {
   if (!recTake || !recTake.frames) return;
   const stamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
-  const wavName = `ribbon35-${stamp}.wav`;
+  const wavName = `constellation-${stamp}.wav`;
   const wav = encodeWav(recTake.chunks, recTake.frames, recTake.sampleRate);
   if (downloads) {
     const zipName = wavName.replace(/\.wav$/, ".zip");
