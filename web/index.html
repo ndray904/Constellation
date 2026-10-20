@@ -41,6 +41,9 @@
   --nebula-body: #3b2e52;
   --nebula-body-hi: #4c3d67;
   --nebula-body-edge: #211934;
+  --aurora-body: #23463f;
+  --aurora-body-hi: #2f5a51;
+  --aurora-body-edge: #122822;
 
   --font-display: "Michroma", "Eurostile", "Arial Black", sans-serif;
   --font-label: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
@@ -94,6 +97,7 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .device.duo { --body: var(--duo-body); --body-hi: var(--duo-body-hi); --body-edge: var(--duo-body-edge); }
 .device.delay { --body: var(--delay-body); --body-hi: var(--delay-body-hi); --body-edge: var(--delay-body-edge); }
 .device.nebula { --body: var(--nebula-body); --body-hi: var(--nebula-body-hi); --body-edge: var(--nebula-body-edge); }
+.device.aurora { --body: var(--aurora-body); --body-hi: var(--aurora-body-hi); --body-edge: var(--aurora-body-edge); --scope-trace: #9ff2b8; }
 .credit { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk-dim); }
 .controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px clamp(14px, 3vw, 30px); }
 .group { display: grid; gap: 8px; }
@@ -151,6 +155,27 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .switch-labels button[aria-checked="true"] { color: var(--silk); }
 .switch-labels button:focus-visible { outline: 1px solid var(--silk); outline-offset: 2px; }
 
+/* algorithm selector (Nebula, Aurora): a lit display with step buttons */
+.algo-group { flex: 0 1 260px; min-width: 0; }
+.algo { display: grid; gap: 8px; }
+.algo-row { display: flex; align-items: stretch; gap: 6px; }
+.algo-step {
+  all: unset; cursor: pointer; flex: none; width: 28px; display: grid; place-items: center; border-radius: 6px;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal-lo)); color: var(--body-edge); font-size: 12px;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.5);
+}
+.algo-step:active { transform: translateY(1px); }
+.algo-step:focus-visible { outline: 2px solid var(--silk); outline-offset: 2px; }
+.algo select {
+  appearance: none; -webkit-appearance: none; flex: 1; min-width: 0; margin: 0; cursor: pointer;
+  font-family: var(--font-mono); font-size: 13px; color: var(--scope-trace); background: var(--scope-bg);
+  border: 0; border-radius: 6px; padding: 7px 10px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+  text-overflow: ellipsis;
+}
+.algo select:focus-visible { outline: 2px solid var(--silk); outline-offset: 2px; }
+.algo select option, .algo select optgroup { color: #1b2320; background: #f4f6f4; }
+.algo-about { margin: 0; font-size: 12px; line-height: 1.4; color: var(--silk-dim); min-height: 2.8em; }
+
 /* ribbon */
 .ribbon-wrap { display: grid; gap: 6px; }
 .ribbon {
@@ -205,6 +230,7 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .line-in { font-family: var(--font-label); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk); display: flex; align-items: center; gap: 7px; }
 .line-in .led { width: 7px; height: 7px; opacity: 1; box-shadow: 0 0 8px 1px rgba(255,61,46,0.6); }
 .line-in.off { color: var(--silk-dim); }
+.line-in[hidden] { display: none; }
 .line-in.off .led { opacity: 0.25; box-shadow: none; }
 
 /* ---------- bench ---------- */
@@ -273,7 +299,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
   <header>
     <div>
       <h1>Constellation</h1>
-      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds space reverbs from Airwindows' open-source code.</p>
+      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds 43 space reverbs from Airwindows' open-source code, and Aurora 13 more from the Faust standard library, Cloud Seed and Mutable Instruments' Eurorack firmware.</p>
     </div>
     <span class="status" id="status">Sound off · touch a ribbon</span>
   </header>
@@ -331,8 +357,12 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
         <span>Nebula starting points</span>
         <div class="presets" id="nebula-presets"></div>
       </div>
+      <div class="field">
+        <span>Aurora starting points</span>
+        <div class="presets" id="aurora-presets"></div>
+      </div>
     </div>
-    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three, and any of them "To Nebula" for reverb. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down; double-click one to reset it. At full Peak a filter whistles on its own, without touching the ribbon.</p>
+    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three, and any of them "To Nebula" or "To Aurora" for reverb; Nebula can feed Aurora too. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down; double-click one to reset it. At full Peak a filter whistles on its own, without touching the ribbon.</p>
   </section>
 
   <section class="notes">
@@ -401,24 +431,45 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
     </div>
 
     <h2>Nebula: where the code comes from</h2>
-    <p>Nebula runs three reverbs by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a>, from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and confirms the browser version's output is bit-identical.</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Switch</th><th>Plugin</th><th>In Chris Johnson's words</th><th>Controls</th></tr></thead>
-        <tbody>
-          <tr><td>Galactic</td><td class="part">Galactic3</td><td>"A super-reverb designed specially for pads and space ambient"; Galactic3 is "exactly Galactic again, but with better undersampling."</td><td>Replace, Bright, Detune, Derez, Bigness, Dry/Wet</td></tr>
-          <tr><td>Infinity</td><td class="part">Infinity</td><td>"A MatrixVerb specifically designed to sustain and layer sounds forever." Fed back on itself, it sustains indefinitely: that's its natural state.</td><td>Filter, Damping, Size, Dry/Wet</td></tr>
-          <tr><td>StarChild</td><td class="part">StarChild2</td><td>"A weird digital ambience/echo plugin", inspired by the Ursa Major Space Station; StarChild2 adapts it to high sample rates.</td><td>Sustain, Grain, Dry/Wet</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>Patched in with "To Nebula", an instrument's sound goes only through Nebula, so its Dry/Wet sets the balance. Galactic and Infinity start at 50% instead of their fully wet plugin defaults.</p>
+    <p>Nebula runs all 42 reverbs in Airwindows' own Reverb category, plus StarChild2, all by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a> from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and compares: 78 of 86 test renders are bit-identical, and the rest match to 160 dB or better, except kPlateC at its defaults. Its output compressor can flip on a last-bit rounding difference while the input is loud, then comes back bit-identical.</p>
+    <p>The selector's one-line descriptions are Chris Johnson's, from his Airwindopedia. Plugins that are fully wet by default start at 50% here, because an instrument patched in with "To Nebula" is heard only through Nebula. Knobs show each plugin's own readout where it has one (PocketVerbs' Type, kPlate's Damping); plain 0–1 controls show as percent. VerbSixes and VerbSevens are calibrated reference reverbs with no controls.</p>
+    <p>To keep knob moves from clicking, each change crossfades over 20 ms from the running reverb to an exact copy of it with the new setting.</p>
     <details>
       <summary>Airwindows license (MIT)</summary>
       <p>Copyright (c) 2018 Chris Johnson</p>
       <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
       <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
       <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+    </details>
+
+    <h2>Aurora: where the code comes from</h2>
+    <p>Aurora gathers permissively licensed reverbs from three places. Nothing here is GPL.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Reverb</th><th>Source</th><th>Author</th><th>License</th></tr></thead>
+        <tbody>
+          <tr><td>Plate</td><td class="part">Faust re.dattorro_rev</td><td>Jakob Zerbian, after Jon Dattorro (1997)</td><td>STK-4.3</td></tr>
+          <tr><td>Zita</td><td class="part">Faust re.zita_rev1_stereo</td><td>Julius O. Smith III, after Fons Adriaensen's zita-rev1</td><td>STK-4.3</td></tr>
+          <tr><td>JPverb, Greyhole</td><td class="part">Faust re.jpverb, re.greyhole</td><td>Julian Parker; Till Bovermann</td><td>MIT</td></tr>
+          <tr><td>Freeverb</td><td class="part">Faust re.stereo_freeverb</td><td>Romain Michon, after Jezar</td><td>LGPL, with GRAME's exception for compiled code</td></tr>
+          <tr><td>Gemini, Centaurus, Sagittarius, Great Annihilator, Lyra, Virgo</td><td class="part">Faust re.valhallaSupermassive (copied into dsp/aurora/massive.lib)</td><td>David Braun</td><td>MIT</td></tr>
+          <tr><td>Cloud Seed</td><td class="part">CloudSeedCore (C++, unmodified)</td><td>Ghost Note Audio</td><td>MIT</td></tr>
+          <tr><td>Texture</td><td class="part">Rings reverb + stmlib (C++, unmodified)</td><td>Emilie Gillet</td><td>MIT</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The six "Deep space" reverbs are David Braun's Faust models of six modes of Valhalla DSP's free ValhallaSupermassive. They take the plug-in's mode names, and Cloud Seed keeps its name as its README allows. Neither Valhalla DSP nor Ghost Note Audio made or endorses this project. Texture is the reverb from the Rings and Clouds Eurorack modules, renamed as the Mutable Instruments license asks of derivative works.</p>
+    <p>Cloud Seed starts from its core's one bundled program, Dark Plate, with nine of its 45 parameters on knobs. Texture is Rings' version, tuned for 48 kHz; at 44.1 kHz its delays run 9% longer. Plate keeps Dattorro's delay lengths in samples at 29.8 kHz, so at 48 kHz it is a smaller plate. Native builds of the two C++ reverbs match the browser's: Texture bit for bit, Cloud Seed to 136 dB.</p>
+    <p>Aurora's knobs glide rather than jump. A sudden change inside a reverb's feedback loop (a gain, a diffusion coefficient, a delay length) clicks. So gains and coefficients ease in over about 20 ms, and delay times slew like a tape delay's time knob, bending the pitch by at most 25% while they move. Cloud Seed is created once, when sound starts, because its 64 MB of delay lines take about 80 ms to clear. While another reverb plays, it rings out silently in the background.</p>
+    <details>
+      <summary>Aurora licenses</summary>
+      <p><strong>MIT</strong>: Cloud Seed (Copyright (c) 2024 Ghost Note Audio / Ghost Note Engineering Ltd), Rings reverb and stmlib (Copyright 2012–2014 Emilie Gillet), JPverb and Greyhole (Julian Parker, Till Bovermann), the ValhallaSupermassive models (David Braun):</p>
+      <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+      <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+      <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+      <p><strong>STK-4.3</strong>: Plate (Jakob Zerbian) and Zita (Copyright (C) 2003–2017 Julius O. Smith III), from the Faust standard library:</p>
+      <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. Any person wishing to distribute modifications to the Software is asked to send the modifications to the original developer so that they can be incorporated into the canonical version. This is, however, not a binding provision of this license. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+      <p><strong>Freeverb</strong> (Copyright (C) 2003–2017 GRAME): LGPL 2.1 or later, with GRAME's exception that code generated by the Faust compiler from these libraries may be released under any license.</p>
     </details>
   </section>
 </div>
@@ -455,9 +506,63 @@ function quantize(semis, scale) {
   return oct * 12 + best;
 }
 
+const AW_GROUPS = [
+  ["Space", ["Galactic3", "Galactic2", "Galactic", "StarChild2", "Infinity", "Infinity2", "kCosmos", "kAlienSpaceship"]],
+  ["Halls & cathedrals", ["kCathedral", "kCathedral2", "kCathedral3", "kCathedral4", "kCathedral5", "kBeyond", "kRockstar", "kRockstar2", "kGuitarHall", "kGuitarHall2", "kCyberCity"]],
+  ["Plates", ["kPlate140", "kPlate240", "kPlateA", "kPlateB", "kPlateC", "kPlateD"]],
+  ["Rooms & chambers", ["kStation", "kWoodRoom", "Chamber", "Chamber2", "Verbity", "Verbity2", "PocketVerbs"]],
+  ["Matrix & classic", ["MatrixVerb", "Reverb", "NonlinearSpace", "Ultralight", "Ultralight2", "VerbTiny", "VerbThic", "VerbSixes", "VerbSevens", "CreamCoat", "CrunchCoat"]],
+];
+// Each plugin in Chris Johnson's words (his Airwindopedia).
+const AW_ABOUT = {
+  Galactic3: "is exactly Galactic again, but with better undersampling.",
+  Galactic2: "is a super-reverb REdesigned specially for pads and space ambient.",
+  Galactic: "is a super-reverb designed specially for pads and space ambient.",
+  StarChild2: "is a weird digital ambience/echo plugin adapted to high sample rates.",
+  Infinity: "is a MatrixVerb specifically designed to sustain and layer sounds forever.",
+  Infinity2: "expands Infinity with more tone shaping and a much-requested kill-switch!",
+  kCosmos: "is infinite space ambient, or titanic hall.",
+  kAlienSpaceship: "is an unreal realistic reverb.",
+  kCathedral: "is a giant reverby space.",
+  kCathedral2: "is a giant reverby space modeled after the Bricasti Cathedral.",
+  kCathedral3: "is a giant cathedral-like space using Bezier undersampling.",
+  kCathedral4: "is the Cathedral sound expressed as distant space.",
+  kCathedral5: "lets you place yourself anywhere you like in the space.",
+  kBeyond: "is a recital hall.",
+  kRockstar: "is a realistic hall reverb that blends very well.",
+  kRockstar2: "is a realistic hall reverb using a new matrix!",
+  kGuitarHall: "accentuates loud midrange skronk!",
+  kGuitarHall2: "puts things in a Loud Room.",
+  kCyberCity: "brings live atmosphere to deep reverb.",
+  kPlate140: "is a next-generation Airwindows plate reverb.",
+  kPlate240: "is for the texture of smaller, gold foil reverb.",
+  kPlateA: "is a plate reverb, not unlike its namesake atop Abbey Road.",
+  kPlateB: "is a plate reverb, not unlike its namesake atop Abbey Road.",
+  kPlateC: "is a plate reverb, not unlike its namesake atop Abbey Road.",
+  kPlateD: "is a plate reverb, not unlike its namesake atop Abbey Road.",
+  kStation: "is a realistic small room modeled after David Bowie's vocal reverb.",
+  kWoodRoom: "is a small wooden performing space.",
+  Chamber: "is a feedforward reverb based on the golden ratio.",
+  Chamber2: "is a feedforward reverb, a blur delay, and a glitch topping!",
+  Verbity: "is a dual-mono reverb, which uses feedforward reverb topology.",
+  Verbity2: "adds stereo crossmodulation and expands Verbity's feedforward reverb topology.",
+  PocketVerbs: "is my popular old special effects reverbs plugin!",
+  MatrixVerb: "is a wildly adjustable, strangely colorful reverb for deep and flexible spaces.",
+  Reverb: "is simplified and tuned MatrixVerb, adjusting everything for each optimum verb size.",
+  NonlinearSpace: "is a flexible reverb plugin.",
+  Ultralight: "is the most low-CPU matrix reverb I can make.",
+  Ultralight2: "is more of the most low-CPU matrix reverb I can make.",
+  VerbTiny: "is a classic artificial reverb that expands reverb shape.",
+  VerbThic: "is a classic artificial reverb for being opaque and textured.",
+  VerbSixes: "is a calibrated reference reverb plugin for Householder matrices.",
+  VerbSevens: "is a calibrated reference reverb plugin for reverb matrices.",
+  CreamCoat: "is a swiss army knife reverb with soft undersampling.",
+  CrunchCoat: "is a cursed retro digital reverb!",
+};
+
 const SPECS = {
   ribbon35: {
-    brand: "PULSAR", short: "Pulsar", sub: "analogue ribbon synth model", theme: "", hold: true, sendTo: ["duo", "delay", "nebula"],
+    brand: "PULSAR", short: "Pulsar", sub: "analogue ribbon synth model", theme: "", hold: true, sendTo: ["duo", "delay", "nebula", "aurora"],
     semis: 18, modeTitle: "LFO target", modes: ["Standby", "Pitch", "Cutoff"], mode: 1,
     groups: [
       { title: "VCO", knobs: ["pitch"] },
@@ -482,7 +587,7 @@ const SPECS = {
     ],
   },
   duo: {
-    brand: "BINARY", short: "Binary", sub: "two-oscillator ribbon synth model", theme: "duo", hold: true, sendTo: ["delay", "nebula"], lineIn: true,
+    brand: "BINARY", short: "Binary", sub: "two-oscillator ribbon synth model", theme: "duo", hold: true, sendTo: ["delay", "nebula", "aurora"], lineIn: true,
     semis: 24, modeTitle: "Oscillators", modes: ["Standby", "VCO1", "VCO1+2"], mode: 2, scale: true,
     groups: [
       { title: "VCO1", knobs: ["pitch"] },
@@ -507,7 +612,7 @@ const SPECS = {
     ],
   },
   delay: {
-    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", sendTo: ["nebula"], lineIn: true,
+    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", sendTo: ["nebula", "aurora"], lineIn: true,
     semis: 48, modeTitle: "LFO wave", modes: ["Standby", "Triangle", "Square"], mode: 1,
     groups: [
       { title: "LFO", knobs: ["lfo_rate", "lfo_int", "lfo_shape"], led: true },
@@ -533,26 +638,84 @@ const SPECS = {
     ],
   },
   nebula: {
-    brand: "NEBULA", short: "Nebula", sub: "space reverb", theme: "nebula", effect: true, lineIn: true,
-    modeTitle: "Reverb", modes: ["Galactic", "Infinity", "StarChild"], mode: 0, knobs: {},
-    // Airwindows plugins (airwindows/src); "start" overrides a plugin default.
-    algorithms: [
-      { module: "Galactic3", start: { "Dry/Wet": 0.5 } },
-      { module: "Infinity", start: { "Dry/Wet": 0.5 } },
-      { module: "StarChild2", start: {} },
-    ],
-    // values in each plugin's own parameter order
+    brand: "NEBULA", short: "Nebula", sub: "space reverb", theme: "nebula", effect: true, lineIn: true, sendTo: ["aurora"],
+    bank: "reverbs", modeTitle: "Reverb", mode: 0, knobs: {}, title: "Airwindows", credit: "Airwindows · Chris Johnson · MIT",
+    // Airwindows plugins (airwindows/src), grouped; "start" overrides a plugin default.
+    algorithms: AW_GROUPS.flatMap(([group, names]) => names.map((module) => ({
+      module, label: module, group, about: `${module} ${AW_ABOUT[module]}`, start: {},
+    }))),
+    // values by the plugin's own parameter names; the rest start at their defaults
     presets: [
-      { name: "Galaxy",        mode: 0, values: [0.5, 0.5, 0.5, 1, 1, 0.5] },
-      { name: "Drift",         mode: 0, values: [0.2, 0.35, 0.85, 1, 1, 0.6] },
-      { name: "Forever",       mode: 1, values: [0.8, 0.2, 0.7, 0.45] },
-      { name: "Gong",          mode: 1, values: [0.6, 0.5, 0.15, 0.4] },
-      { name: "Space station", mode: 2, values: [1, 0.7, 0.35] },
+      { name: "Galaxy",        algo: "Galactic3", values: { Replace: 0.5, Brightns: 0.5, Detune: 0.5, Derez: 1, Bigness: 1, "Dry/Wet": 0.5 } },
+      { name: "Drift",         algo: "Galactic3", values: { Replace: 0.2, Brightns: 0.35, Detune: 0.85, Derez: 1, Bigness: 1, "Dry/Wet": 0.6 } },
+      { name: "Forever",       algo: "Infinity", values: { Filter: 0.8, Damping: 0.2, Size: 0.7, "Dry/Wet": 0.45 } },
+      { name: "Gong",          algo: "Infinity", values: { Filter: 0.6, Damping: 0.5, Size: 0.15, "Dry/Wet": 0.4 } },
+      { name: "Space station", algo: "StarChild2", values: { Sustain: 1, Grain: 0.7, "Dry/Wet": 0.35 } },
+      { name: "Cosmos",        algo: "kCosmos", values: { Regen: 0.7, "Dry/Wet": 0.45 } },
+      { name: "Cathedral",     algo: "kCathedral3", values: { Wetness: 0.35 } },
+      { name: "Plate",         algo: "kPlateD", values: { Wetness: 0.3 } },
+      { name: "Vocal room",    algo: "kStation", values: { "Dry/Wet": 0.35 } },
+    ],
+  },
+  aurora: {
+    brand: "AURORA", short: "Aurora", sub: "open-source reverbs", theme: "aurora", effect: true, lineIn: true,
+    bank: "aurora", modeTitle: "Reverb", mode: 0, knobs: {},
+    // Faust standard-library reverbs (dsp/aurora) and two C++ ones (aurora/src);
+    // "knobs" orders the controls.
+    algorithms: [
+      { module: "plate", label: "Plate", group: "Plates & halls", title: "Faust · re.dattorro_rev", credit: "Jakob Zerbian · STK-4.3",
+        about: "Jon Dattorro's 1997 plate: four input diffusers feeding a figure-eight tank.",
+        knobs: ["Mix", "Predelay", "Decay", "Damping", "Diffusion", "Tone"] },
+      { module: "zita", label: "Zita", group: "Plates & halls", title: "Faust · re.zita_rev1_stereo", credit: "Fons Adriaensen · J. O. Smith III · STK-4.3",
+        about: "Fons Adriaensen's zita-rev1 hall: eight feedback delay lines, with their own low and mid decay times.",
+        knobs: ["Mix", "Predelay", "Low decay", "Mid decay", "Low X", "Damping"] },
+      { module: "jpverb", label: "JPverb", group: "Plates & halls", title: "Faust · re.jpverb", credit: "Julian Parker · MIT",
+        about: "Julian Parker's smooth, modulated hall, first written for SuperCollider.",
+        knobs: ["Mix", "Decay", "Size", "Damping", "Diffusion", "Mod depth", "Mod rate"] },
+      { module: "freeverb", label: "Freeverb", group: "Plates & halls", title: "Faust · re.stereo_freeverb", credit: "Jezar · Romain Michon · GRAME",
+        about: "Jezar's classic 2000 Freeverb: eight combs and four allpasses per side.",
+        knobs: ["Mix", "Room size", "Damping", "Width"] },
+      { module: "cloudseed", label: "Cloud Seed", group: "Clouds & textures", title: "C++ · Cloud Seed core", credit: "Ghost Note Audio · MIT · not affiliated",
+        about: "The open-source core of Ghost Note Audio's Cloud Seed: up to 12 modulated delay lines, starting from its Dark Plate program." },
+      { module: "texture", label: "Texture", group: "Clouds & textures", title: "C++ · Eurorack reverb", credit: "Emilie Gillet · MIT",
+        about: "The reverb in Emilie Gillet's Rings and Clouds Eurorack modules; its tank stores 16-bit samples, like the hardware." },
+      { module: "greyhole", label: "Greyhole", group: "Clouds & textures", title: "Faust · re.greyhole", credit: "Julian Parker · MIT",
+        about: "Julian Parker's diffuse delay: echoes that smear into a cloud. Near full Feedback it sustains.",
+        knobs: ["Mix", "Delay", "Size", "Feedback", "Damping", "Diffusion", "Mod depth", "Mod rate"] },
+      ...[
+        ["gemini", "Gemini", 0, "Sixteen modulated delays, scattered by a butterfly of rotations."],
+        ["centaurus", "Centaurus", 2, "Four four-channel matrix allpasses in series."],
+        ["sagittarius", "Sagittarius", 3, "Eight stereo matrix allpasses in series."],
+        ["annihilator", "Great Annihilator", 4, "Three matrix allpasses inside one global feedback loop; at full Feedback it sustains."],
+        ["lyra", "Lyra", 6, "Four modulated delays with a four-channel scattering matrix."],
+        ["virgo", "Virgo", 19, "Lyra, with its low and high cuts inside the feedback loop."],
+      ].map(([module, label, mode, about]) => ({
+        module, label, group: "Deep space", title: `Faust · massive.lib mode ${mode}`, credit: "David Braun · MIT · models ValhallaSupermassive",
+        about, knobs: ["Mix", "Delay", "Warp", "Feedback", "Density", "Width", "Low cut", "High cut", "Mod rate", "Mod depth"],
+      })),
+    ],
+    presets: [
+      { name: "Plate",         algo: "plate", values: { Mix: 0.3, Decay: 0.55, Damping: 0.25 } },
+      { name: "Concert hall",  algo: "zita", values: { Mix: 0.3, Predelay: 0.3, "Low decay": 0.67, "Mid decay": 0.53 } },
+      { name: "Lush hall",     algo: "jpverb", values: { Mix: 0.4, Decay: 0.64, Size: 0.25, "Mod depth": 0.3 } },
+      { name: "Cloud Seed",    algo: "cloudseed", values: {} },
+      { name: "Vast seed",     algo: "cloudseed", values: { Mix: 0.5, Size: 0.8, Decay: 0.8 } },
+      { name: "Eurorack",      algo: "texture", values: { Amount: 0.6, Time: 0.8 } },
+      { name: "Black hole",    algo: "greyhole", values: { Mix: 0.6, Delay: 0.6, Size: 0.8, Feedback: 0.9 } },
+      { name: "Twin stars",    algo: "gemini", values: { Mix: 0.5, Delay: 0.79, Feedback: 0.8 } },
+      { name: "Annihilation",  algo: "annihilator", values: { Mix: 0.6, Delay: 0.72, Feedback: 0.97 } },
     ],
   },
 };
 // Airwindows names parameters in 8 characters; spell out the cut-short ones.
-const AW_LABELS = { Brightns: "Bright" };
+const AW_LABELS = {
+  Brightns: "Bright", Brightne: "Bright", Predlay: "Predelay", Livenes: "Liveness", Positin: "Position", Distnce: "Distance",
+  EarlyRF: "Early", RmSize: "Room size", SmpRate: "Rate", SolidWl: "Solid wall", ReflcWl: "Reflect", UnSolid: "Unsolid",
+  UnReflc: "Unreflect", Nonlin: "Nonlinear", InputPad: "Input pad", "Top dB": "Top dB",
+};
+// Patched in, a sound goes only through the effect, so plugins that default to
+// fully wet start at half.
+const WET_NAMES = ["Dry/Wet", "Wetness", "Wet", "Mix", "Amount"];
 
 // Settings on the Output panel go to every instrument.
 const shared = { volume: 0.7, speaker: 0, stdlib_filter: 0, line_in: 0 };
@@ -894,32 +1057,57 @@ class Synth {
   }
 }
 
-// An effect unit (Nebula): no ribbon or keys; the switch picks the algorithm
-// and the knobs are rebuilt from that plugin's own parameter list.
+// An effect unit (Nebula, Aurora): no ribbon or keys. The selector picks the
+// algorithm, and the knobs are rebuilt from that module's own parameter list.
+const AW_MATH = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow"]
+  .map((f) => [f, Math[f]]).concat([["fmod", (a, b) => a % b]]));
+const cString = (x, ptr) => { const m = new Uint8Array(x.memory.buffer); let t = ""; while (m[ptr]) t += String.fromCharCode(m[ptr++]); return t; };
+
+// A Faust control's knob position (0-1) as text in its own units.
+function controlText(p, v) {
+  const x = p.log ? p.min * (p.max / p.min) ** v : p.min + (p.max - p.min) * v;
+  switch (p.unit) {
+    case "%": return Math.round(x) + "%";
+    case "ms": return (x < 10 ? x.toFixed(1) : Math.round(x)) + " ms";
+    case "s": return x < 1 ? Math.round(x * 1000) + " ms" : (x < 10 ? x.toFixed(2) : x.toFixed(1)) + " s";
+    case "Hz": return x < 10 ? x.toFixed(2) + " Hz" : x < 1000 ? Math.round(x) + " Hz" : (x / 1000).toFixed(1) + " kHz";
+    default: return x.toFixed(2);
+  }
+}
+
 class Effect extends Synth {
   render(container) {
     const s = this.spec, k = this.key;
-    const mods = s.algorithms.map((a) => ASSETS.reverbs.find((r) => r.name === a.module));
-    this.names = mods.map((m) => m.params.map((p) => p.name));
-    this.defaults = s.algorithms.map((a, i) => mods[i].params.map((p) => (a.start[p.name] !== undefined ? a.start[p.name] : p.value)));
+    this.mods = s.algorithms.map((a) => ASSETS[s.bank].find((m) => m.name === a.module));
+    this.defaults = s.algorithms.map((a, i) => this.mods[i].params.map((p) =>
+      a.start && a.start[p.name] !== undefined ? a.start[p.name] : WET_NAMES.includes(p.name) && p.value === 1 ? 0.5 : p.value));
     this.store = this.defaults.map((d) => d.slice());      // each algorithm keeps its own settings
+    this.display = null;                                    // { index, x }: reads a C module's parameter text
+    const groups = [];
+    s.algorithms.forEach((a, i) => {
+      let g = groups.find((x) => x.name === a.group);
+      if (!g) groups.push(g = { name: a.group, items: [] });
+      g.items.push(`<option value="${i}">${a.label}</option>`);
+    });
     const el = document.createElement("section");
     el.className = "device " + s.theme;
     el.id = k;
     el.setAttribute("aria-label", s.brand);
     el.innerHTML = `
       <div class="controls">
-        <div class="group">
-          <div class="group-title">${s.modeTitle}</div>
-          <div class="switch">
-            <div class="switch-track" data-role="switch-track"><div class="switch-thumb" data-role="switch-thumb"></div></div>
-            <div class="switch-labels" role="radiogroup" aria-label="${s.modeTitle}">
-              ${s.modes.map((m, i) => `<button role="radio" id="${k}-mode-${i}" data-mode="${i}">${m}</button>`).join("")}
+        <div class="group algo-group">
+          <div class="group-title"><label for="${k}-algo">${s.modeTitle}</label><span>${s.algorithms.length}</span></div>
+          <div class="algo">
+            <div class="algo-row">
+              <button class="algo-step" data-step="-1" aria-label="Previous ${s.modeTitle.toLowerCase()}">◂</button>
+              <select id="${k}-algo">${groups.map((g) => `<optgroup label="${g.name}">${g.items.join("")}</optgroup>`).join("")}</select>
+              <button class="algo-step" data-step="1" aria-label="Next ${s.modeTitle.toLowerCase()}">▸</button>
             </div>
+            <p class="algo-about" data-role="about"></p>
           </div>
         </div>
         <div class="group">
-          <div class="group-title">Airwindows <span data-role="plugin"></span></div>
+          <div class="group-title" data-role="title"></div>
           <div class="group-row" data-role="knobs"></div>
         </div>
         <div class="group scope-group">
@@ -929,25 +1117,30 @@ class Effect extends Synth {
       </div>
       <div class="foot">
         <div class="brand">${s.brand}<small>${s.sub}</small></div>
+        ${s.sendTo ? `<div class="toggles">${s.sendTo.map((t) => `<button class="toggle" id="${k}-send-${t}" data-send="${t}" aria-pressed="false"><span class="cap"></span><span class="led"></span>To ${SPECS[t].short}</button>`).join("")}</div>` : ""}
         <span class="line-in" data-role="line-in" hidden><span class="led"></span><span data-role="line-in-text"></span></span>
-        <span class="credit">Airwindows · Chris Johnson · MIT</span>
+        <span class="credit" data-role="credit"></span>
       </div>`;
     container.appendChild(el);
     this.el = el;
     const q = (role) => el.querySelector(`[data-role="${role}"]`);
     this.knobRow = q("knobs");
-    this.pluginName = q("plugin");
+    this.titleEl = q("title");
+    this.aboutEl = q("about");
+    this.creditEl = q("credit");
     this.canvas = q("scope");
     this.g = this.canvas.getContext("2d");
     this.lineIn = q("line-in");
     this.lineInText = q("line-in-text");
     this.knobEls = {};
-    this.thumb = q("switch-thumb");
-    el.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => this.setMode(Number(b.dataset.mode))));
-    q("switch-track").addEventListener("click", (e) => {
-      const r = e.currentTarget.getBoundingClientRect();
-      this.setMode(Math.min(2, Math.max(0, Math.floor(((e.clientY - r.top) / r.height) * 3))));
-    });
+    this.select = el.querySelector("select");
+    this.select.addEventListener("change", () => this.setMode(Number(this.select.value)));
+    el.querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => {
+      const n = s.algorithms.length;
+      this.setMode((this.params.mode + Number(b.dataset.step) + n) % n);
+    }));
+    this.sendBtns = [...el.querySelectorAll("[data-send]")];
+    for (const b of this.sendBtns) b.addEventListener("click", () => setRoute(this, this.routedTo === b.dataset.send ? null : b.dataset.send));
     this.setMode(this.params.mode);
     const fit = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -958,32 +1151,66 @@ class Effect extends Synth {
     fit();
   }
 
+  setMode(m) {
+    this.set("mode", m);
+    this.select.value = String(m);
+    if (this.lineIn) updateLineIn();
+  }
+
+  // A parameter's text: Faust controls in their own units; C modules (Airwindows,
+  // Texture, Cloud Seed) say it themselves, through an instance of the module
+  // on this thread. Airwindows' plain 0-1 readouts show as percent, like the knobs.
+  paramText(a, i, v) {
+    const m = this.mods[a], p = m.params[i];
+    if (m.kind === "faust") return controlText(p, v);
+    if (!this.display || this.display.index !== a) {
+      const x = new WebAssembly.Instance(new WebAssembly.Module(base64ToBytes(m.wasm)), { env: AW_MATH }).exports;
+      if (m.displayInit) x.init(48000);
+      this.display = { index: a, x };
+    }
+    const x = this.display.x;
+    x.setParam(i, v);
+    const shown = cString(x, x.paramDisplay(i)).trim(), label = cString(x, x.paramLabel(i)).trim();
+    const num = Number(shown);
+    if (shown === "" || (Number.isFinite(num) && Math.abs(num - v) < 0.0015 && !label)) return fmt.pct(v);
+    return (Number.isFinite(num) && shown !== "" ? String(+num.toFixed(2)) : shown) + (label ? " " + label : "");
+  }
+
   set(name, value) {
     this.params[name] = value;
     if (name === "mode") {
       if (this.node) this.node.port.postMessage({ algo: value });
-      this.spec.knobs = Object.fromEntries(this.names[value].map((n, i) => ["p" + i, { label: AW_LABELS[n] || n, value: this.defaults[value][i], fmt: fmt.pct }]));
+      const a = this.spec.algorithms[value], m = this.mods[value];
+      const order = (a.knobs || m.params.map((p) => p.name)).map((n) => m.params.findIndex((p) => p.name === n));
+      this.spec.knobs = Object.fromEntries(order.map((i) => ["p" + i, {
+        label: AW_LABELS[m.params[i].name] || m.params[i].name, value: this.defaults[value][i], fmt: (v) => this.paramText(value, i, v),
+      }]));
       if (!this.knobRow) return;
-      this.pluginName.textContent = "· " + this.spec.algorithms[value].module;
+      this.titleEl.textContent = a.title || `${this.spec.title} · ${a.module}`;
+      this.aboutEl.textContent = a.about || "";
+      this.creditEl.textContent = a.credit || this.spec.credit || "";
       this.knobRow.replaceChildren();
       this.knobEls = {};
       for (const id of Object.keys(this.spec.knobs)) {
         this.knobRow.appendChild(this.renderKnob(id));
         this.setKnob(id, this.store[value][+id.slice(1)]);
       }
+      if (!order.length) this.knobRow.textContent = "No controls: a fixed reference reverb.";
     } else if (/^p\d+$/.test(name)) {
       const i = +name.slice(1);
       this.store[this.params.mode][i] = value;
       if (this.node) this.node.port.postMessage({ param: i, value });
     }
-    // shared Output settings (volume, speaker...) don't apply to Nebula
+    // shared Output settings (volume, speaker...) don't apply to effects
   }
 
   async connect() {
-    this.node = new AudioWorkletNode(ctx, "airwindows", {
+    this.node = new AudioWorkletNode(ctx, "reverb", {
       numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: "explicit",
       processorOptions: {
-        modules: this.spec.algorithms.map((a, i) => ({ wasm: base64ToBytes(ASSETS.reverbs.find((r) => r.name === a.module).wasm), params: this.store[i] })),
+        modules: this.mods.map((m, i) => ({
+          kind: m.kind, wasm: base64ToBytes(m.wasm), meta: m.meta, controls: m.controls, declick: m.declick, keep: m.keep, params: this.store[i],
+        })),
       },
     });
     this.node.port.postMessage({ algo: this.params.mode });
@@ -992,13 +1219,23 @@ class Effect extends Synth {
     this.node.connect(this.analyser);
     this.out = ctx.createGain();
     this.sends = {};
+    for (const target of this.spec.sendTo || []) {
+      this.sends[target] = ctx.createGain();
+      this.sends[target].gain.value = 0;
+      this.analyser.connect(this.sends[target]);
+    }
     this.analyser.connect(this.out);
     this.out.connect(master);
   }
 
+  // a preset names its algorithm and sets controls by name; the rest go back
+  // to their defaults
   applyPreset(p) {
-    this.setMode(p.mode);
-    p.values.forEach((v, i) => this.setKnob("p" + i, v));
+    const a = this.spec.algorithms.findIndex((x) => x.module === p.algo);
+    this.setMode(a);
+    this.mods[a].params.forEach((param, i) => {
+      if (this.knobEls["p" + i]) this.setKnob("p" + i, p.values[param.name] !== undefined ? p.values[param.name] : this.defaults[a][i]);
+    });
   }
 
   ribbonUpdate() {}

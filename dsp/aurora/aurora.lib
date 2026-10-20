@@ -1,0 +1,32 @@
+// Shared by the Aurora reverbs. Every control is an hslider in real units; the
+// page turns its 0-1 knob into the slider's range ([scale:log] sliders
+// exponentially) and shows the [unit].
+//
+// The controls never jump: a jump inside a reverb's loop (a gain, a diffusion
+// coefficient, a delay length) steps the tank and clicks. Gains and
+// coefficients ease in over about 20 ms (smoo); delay times slew at most
+// 0.25 ms per ms, a tape-like pitch bend of up to 25% while they move. Both
+// start at the control's own value (si.smoo would rise from 0, and a decay
+// time of 0 s makes zita divide by zero).
+import("stdfaust.lib");
+
+// one-pole smoothing with a 20 ms time constant; starts at x
+smoo(x) = loop ~ _ with {
+  loop(y) = ba.if(1 - 1', x, y * p + x * (1 - p));
+  p = ba.tau2pole(0.02);
+};
+
+// x, moving toward its target by at most `rate` per sample; starts at x
+slew(rate, x) = loop ~ _ with {
+  loop(y) = ba.if(1 - 1', x, y + max(0 - rate, min(rate, x - y)));
+};
+
+mix = hslider("Mix [unit:%]", 35, 0, 100, 1) / 100 : smoo;
+
+// stereo in, stereo out: the reverb fx under an equal-gain dry/wet crossfade
+wetdry(fx) = si.bus(2) <: (fx : par(i, 2, *(mix))), par(i, 2, *(1 - mix)) :> si.bus(2);
+
+// a stereo predelay of `ms` (up to 200 ms) that glides instead of jumping
+predelay(ms) = par(i, 2, de.fdelay(65536, d)) with {
+  d = ms * ma.SR / 1000 : slew(0.25);
+};

@@ -4,12 +4,31 @@
 
 const BLOCK = 128;
 
+// The math a Faust module imports, by name: "_sinf" is Math.sin and so on.
+const FAUST_MATH = {
+  _fmodf: (a, b) => a % b, _remainderf: (a, b) => a - Math.round(a / b) * b,
+  _rintf: (x) => { const r = Math.round(x); return Math.abs(x % 1) === 0.5 && r % 2 ? r - 1 : r; },
+  _log10f: Math.log10, _atan2f: Math.atan2,
+};
+function faustEnv(module) {
+  const env = {};
+  for (const { name } of WebAssembly.Module.imports(module)) {
+    const fn = FAUST_MATH[name] || Math[name.replace(/^_/, "").replace(/f$/, "")];
+    if (!fn) throw new Error(`Faust module needs ${name}`);
+    env[name] = fn;
+  }
+  return env;
+}
+
 class FaustMono {
-  constructor(wasmBytes, meta, sampleRate, blockSize = BLOCK) {
-    const module = new WebAssembly.Module(wasmBytes);
-    this.instance = new WebAssembly.Instance(module, {
-      env: { _expf: Math.exp, _powf: Math.pow, _tanf: Math.tan, _tanhf: Math.tanh },
-    });
+  // fresh: don't clear the whole DSP state on init (for a reverb's long delay
+  // lines that takes tens of milliseconds). Fresh wasm memory is zero except
+  // the module's data segments (meta.dataEnd bytes from 0: Faust's JSON, where
+  // the state goes), so only those are cleared. test/aurora.cjs checks the
+  // state comes out exactly as init() leaves it.
+  constructor(wasmBytes, meta, sampleRate, blockSize = BLOCK, { fresh = false } = {}) {
+    const module = wasmBytes instanceof WebAssembly.Module ? wasmBytes : new WebAssembly.Module(wasmBytes);
+    this.instance = new WebAssembly.Instance(module, { env: faustEnv(module) });
     this.exports = this.instance.exports;
     this.memory = this.exports.memory;
     this.numIn = meta.inputs;
@@ -45,7 +64,13 @@ class FaustMono {
     }
     this.inTable = inTable;
     this.outTable = outTable;
-    this.exports.init(0, sampleRate);
+    if (fresh) {
+      new Uint8Array(this.memory.buffer, 0, meta.dataEnd).fill(0);
+      this.exports.instanceConstants(0, sampleRate);
+      this.exports.instanceResetUserInterface(0);
+    } else {
+      this.exports.init(0, sampleRate);
+    }
   }
 
   set(name, value) {

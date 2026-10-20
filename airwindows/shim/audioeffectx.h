@@ -51,12 +51,27 @@ public:
 
 AudioEffect* createEffectInstance(audioMasterCallback audioMaster);
 
-// String helpers from the SDK (AudioEffect::vst_strncpy / float2string).
+// String helpers from the SDK (AudioEffect::vst_strncpy / int2string / float2string).
 inline char* vst_strncpy(char* dst, const char* src, VstInt32 max) {
   VstInt32 i = 0;
   for (; i < max && src[i]; i++) dst[i] = src[i];
   dst[i] = 0;
   return dst;
+}
+
+// Whole number as text, like the SDK's (which shows "Huge!" past 8 digits).
+inline void int2string(VstInt32 value, char* text, VstInt32 max) {
+  if (value >= 100000000) { vst_strncpy(text, "Huge!", max); return; }
+  char buf[16];
+  int n = 0;
+  long long v = value;
+  if (v < 0) { buf[n++] = '-'; v = -v; }
+  char digits[12];
+  int d = 0;
+  do { digits[d++] = (char)('0' + v % 10); v /= 10; } while (v);
+  while (d) buf[n++] = digits[--d];
+  buf[n] = 0;
+  vst_strncpy(text, buf, max);
 }
 
 // Fixed-point text with up to 3 decimals, enough for parameter displays.

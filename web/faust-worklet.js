@@ -77,31 +77,46 @@ class RecorderProcessor extends AudioWorkletProcessor {
 
 registerProcessor("recorder", RecorderProcessor);
 
-// Hosts the Airwindows reverbs (C++ compiled to wasm, see airwindows/).
-// processorOptions: { modules: [{ wasm: ArrayBuffer, params: [values] }] }
+// Hosts the reverbs of Nebula (Airwindows) and Aurora. A module is either
+//   { kind: "c", wasm, params }                 C interface: airwindows/shim/wrapper.cpp, aurora/shim/wrapper.h
+//   { kind: "faust", wasm, meta, params, controls }   a Faust DSP; controls[i] = { index, min, max, log }
+// plus declick: "clone" (default) or "glide", and keep: true for a module that
+// is slow to create (CloudSeed clears 64 MB in its constructor): it is created
+// once, with the node, and kept; while another reverb plays, it rings out on
+// silence in the background until it is quiet. params are the 0-1 knob values,
+// in the module's parameter order.
 // Messages in: { algo: index } switches reverb (the new one starts empty and
 // crossfades in over ~20 ms); { param: index, value } sets a parameter.
 //
-// The plugins apply parameters instantly; some (StarChild's Sustain and Grain,
+// Many reverbs apply parameters instantly; some (StarChild's Sustain and Grain,
 // Infinity's Size, Galactic's Bigness) move their delay taps, so a change is a
-// jump in the output: a click. So a change goes to a clone of the running
-// reverb (same wasm memory, so the same tank contents) and the output
+// jump in the output: a click. So for "clone" modules a change goes to a clone
+// of the running reverb (same memory, so the same tank contents) and the output
 // crossfades to it over ~20 ms. Changes that arrive during a fade are applied
 // together at its end, so a knob drag becomes a run of short crossfades.
+// "glide" modules are too big to copy every few milliseconds (CloudSeed, the
+// Supermassive models); they smooth their own controls, so changes go straight in.
 const AW_ENV = {
   sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan, atan2: Math.atan2,
   sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, exp: Math.exp, log: Math.log, log10: Math.log10, pow: Math.pow,
   fmod: (a, b) => a % b,
 };
 
-class AirwindowsProcessor extends AudioWorkletProcessor {
+// A knob's 0-1 position as a Faust slider value.
+const controlValue = (c, v) => (c.log ? c.min * (c.max / c.min) ** v : c.min + (c.max - c.min) * v);
+
+class ReverbProcessor extends AudioWorkletProcessor {
   constructor(options) {
     super();
     const { modules } = options.processorOptions;
-    this.modules = modules.map((m) => new WebAssembly.Module(m.wasm));
+    // all compiled up front (about 20 ms for all of Nebula's and Aurora's), so
+    // switching never waits on the compiler
+    this.specs = modules.map((m) => ({ ...m, kind: m.kind || "c", declick: m.declick || "clone", module: new WebAssembly.Module(m.wasm) }));
     this.params = modules.map((m) => m.params.slice());
     this.zeros = new Float32Array(BLOCK);
     this.fadeStep = 1 / (0.02 * sampleRate);
+    this.kept = {};
+    this.specs.forEach((m, i) => { if (m.keep) this.kept[i] = this.create(i); });
     this.current = this.create(0);
     this.previous = null;
     this.dirty = false;            // parameters changed since the current instance got them
@@ -114,52 +129,97 @@ class AirwindowsProcessor extends AudioWorkletProcessor {
         this.dirty = false;
       } else if (d.param !== undefined) {
         this.params[this.current.index][d.param] = d.value;
-        this.dirty = true;
+        if (this.specs[this.current.index].declick === "glide") this.current.setParam(d.param, d.value);
+        else this.dirty = true;
       }
     };
   }
 
-  create(index) {
-    const x = new WebAssembly.Instance(this.modules[index], { env: AW_ENV }).exports;
-    x.init(sampleRate);
-    this.params[index].forEach((v, i) => x.setParam(i, v));
-    return { index, x };
+  // A running instance of module `index`: fresh, or an exact copy of `from`
+  // (its plugin object, delay lines and counters).
+  instance(index, from) {
+    const spec = this.specs[index];
+    if (spec.kind === "faust") {
+      const dsp = new FaustMono(spec.module, spec.meta, sampleRate, BLOCK, { fresh: spec.meta.fresh });
+      if (from) new Uint8Array(dsp.memory.buffer).set(new Uint8Array(from.dsp.memory.buffer, 0, spec.meta.size));
+      return {
+        index, dsp,
+        io: [dsp.inputs[0], dsp.inputs[1], dsp.outputs[0], dsp.outputs[1]],
+        setParam: (i, v) => dsp.exports.setParamValue(0, spec.controls[i].index, controlValue(spec.controls[i], v)),
+        process: () => dsp.compute(),
+      };
+    }
+    const x = new WebAssembly.Instance(spec.module, { env: AW_ENV }).exports;
+    if (from) {
+      const src = new Uint8Array(from.x.memory.buffer);
+      const missing = src.length - x.memory.buffer.byteLength;
+      if (missing > 0) x.memory.grow(missing / 65536);
+      new Uint8Array(x.memory.buffer).set(src);
+    } else {
+      x.init(sampleRate);
+    }
+    const ptrs = [x.inL(), x.inR(), x.outL(), x.outR()];
+    let mem = null, views = null;
+    return {
+      index, x,
+      // views of the I/O buffers, renewed if the module grew its memory
+      get io() {
+        if (mem !== x.memory.buffer) { mem = x.memory.buffer; views = ptrs.map((ptr) => new Float32Array(mem, ptr, BLOCK)); }
+        return views;
+      },
+      setParam: (i, v) => x.setParam(i, v),
+      process: () => x.process(BLOCK),
+    };
   }
 
-  // A second instance of the same plugin with an exact copy of fx's memory: the
-  // plugin object, its delay lines and its counters.
+  create(index) {
+    const fx = this.kept[index] || this.instance(index);
+    this.params[index].forEach((v, i) => fx.setParam(i, v));
+    fx.quietFor = 0;
+    return fx;
+  }
+
+  // Kept reverbs that aren't playing ring out on silence until quiet (1 s
+  // below -140 dB), so selecting one again doesn't bring back a frozen tail.
+  ringOut() {
+    for (const fx of Object.values(this.kept)) {
+      if (fx === this.current || fx === this.previous || fx.quietFor >= sampleRate) continue;
+      const [l, r] = this.run(fx, this.zeros, this.zeros);
+      let peak = 0;
+      for (let i = 0; i < BLOCK; i++) peak = Math.max(peak, Math.abs(l[i]), Math.abs(r[i]));
+      fx.quietFor = peak < 1e-7 ? fx.quietFor + BLOCK : 0;
+    }
+  }
+
   clone(fx) {
-    const x = new WebAssembly.Instance(this.modules[fx.index], { env: AW_ENV }).exports;
-    const src = new Uint8Array(fx.x.memory.buffer);
-    const missing = src.length - x.memory.buffer.byteLength;
-    if (missing > 0) x.memory.grow(missing / 65536);
-    new Uint8Array(x.memory.buffer).set(src);
-    return { index: fx.index, x };
+    return this.instance(fx.index, fx);
   }
 
   run(fx, inL, inR) {
-    const { x } = fx, mem = x.memory.buffer;
-    new Float32Array(mem, x.inL(), BLOCK).set(inL);
-    new Float32Array(mem, x.inR(), BLOCK).set(inR);
-    x.process(BLOCK);
-    return [new Float32Array(x.memory.buffer, x.outL(), BLOCK), new Float32Array(x.memory.buffer, x.outR(), BLOCK)];
+    const [iL, iR] = fx.io;
+    iL.set(inL);
+    iR.set(inR);
+    fx.process();
+    const io = fx.io;
+    return [io[2], io[3]];
   }
 
   process(inputs, outputs) {
     if (this.dirty && !this.previous) {
       const next = this.clone(this.current);
-      this.params[next.index].forEach((v, i) => next.x.setParam(i, v));
+      this.params[next.index].forEach((v, i) => next.setParam(i, v));
       this.previous = this.current;
       this.previous.gain = 1;
       this.current = next;
       this.dirty = false;
     }
+    this.ringOut();
     const input = inputs[0] || [];
     const inL = input[0] || this.zeros, inR = input[1] || inL;
     const [L, R] = outputs[0];
     const [cL, cR] = this.run(this.current, inL, inR);
     if (!this.previous) {
-      L.set(cL); R.set(cR || cL);
+      L.set(cL); if (R) R.set(cR);
       return true;
     }
     const [pL, pR] = this.run(this.previous, inL, inR);
@@ -175,4 +235,4 @@ class AirwindowsProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor("airwindows", AirwindowsProcessor);
+registerProcessor("reverb", ReverbProcessor);

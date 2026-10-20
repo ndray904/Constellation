@@ -19,7 +19,7 @@ const scope = {
 };
 vm.createContext(scope);
 vm.runInContext(fs.readFileSync(path.join(root, "web/faust-runtime.js"), "utf8") + "\n" + fs.readFileSync(path.join(root, "web/faust-worklet.js"), "utf8"), scope);
-const Airwindows = processors.airwindows;
+const Airwindows = processors.reverb;
 
 const env = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow"]
   .map((f) => [f, Math[f]]).concat([["fmod", (a, b) => a % b]]));

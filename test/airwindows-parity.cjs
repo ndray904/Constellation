@@ -60,14 +60,15 @@ function runNative(name, params) {
   return new Float32Array(new Uint8Array(raw).buffer);
 }
 
-const CASES = [
-  ["Galactic3", []],
-  ["Galactic3", [[0, 0.8], [2, 0.9], [3, 0.3], [5, 0.6]]],
-  ["Infinity", []],
-  ["Infinity", [[0, 0.7], [2, 0.2], [3, 0.5]]],
-  ["StarChild2", []],
-  ["StarChild2", [[0, 0.6], [1, 0.2], [2, 0.7]]],
-];
+// Every plugin at its defaults, and again with every control moved to a
+// different (fixed) spot.
+const CASES = fs.readdirSync(path.join(root, "airwindows/src")).sort().flatMap((name) => {
+  const x = new WebAssembly.Instance(new WebAssembly.Module(fs.readFileSync(path.join(root, `build/airwindows/${name}.wasm`))), { env }).exports;
+  x.init(SR);
+  const moved = Array.from({ length: x.numParams() }, (_, i) => [i, Math.round((0.25 + 0.5 * ((i * 0.618034 + 0.3) % 1)) * 100) / 100]);
+  return [[name, []], [name, moved]];
+});
+const GAIN_RIDERS = ["kPlateC"];
 let failed = 0;
 for (const [name, params] of CASES) {
   const w = runWasm(name, params), n = runNative(name, params);
@@ -77,8 +78,15 @@ for (const [name, params] of CASES) {
     sig += n[i] * n[i]; err += d * d; peak = Math.max(peak, Math.abs(n[i])); maxDiff = Math.max(maxDiff, Math.abs(d));
   }
   const db = 10 * Math.log10(sig / Math.max(err, 1e-300));
-  const ok = w.length === n.length && w.every(Number.isFinite) && peak > 0.01 && db > 100;
-  const match = err === 0 ? "bit-identical" : `to ${db.toFixed(0)} dB (max diff ${maxDiff.toExponential(1)})`;
+  // kPlateC's output compressor branches on fabs(x*4) > 1 and then adds
+  // sin()*pow(), so a last-bit libm difference can flip the branch and step its
+  // gain while the input is loud. It sits after the tank, so once the gain
+  // settles back to 1 the output must be bit-identical again.
+  const rider = GAIN_RIDERS.includes(name);
+  let tailExact = true;
+  for (let i = Math.floor(1.5 * SR) * 2; i < w.length; i++) if (w[i] !== n[i]) { tailExact = false; break; }
+  const ok = w.length === n.length && w.every(Number.isFinite) && peak > 0.01 && (db > 100 || (rider && db > 40 && tailExact));
+  const match = err === 0 ? "bit-identical" : `to ${db.toFixed(0)} dB (max diff ${maxDiff.toExponential(1)})${rider ? (tailExact ? ", tail bit-identical" : ", tail differs") : ""}`;
   console.log(`${ok ? "PASS" : "FAIL"}  ${name} ${params.length ? JSON.stringify(params) : "defaults"}: wasm = native ${match}, peak ${peak.toFixed(2)}`);
   if (!ok) failed++;
 }

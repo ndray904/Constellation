@@ -1,0 +1,9 @@
+// The few <algorithm> templates the reverbs use.
+#ifndef AURORA_SHIM_ALGORITHM
+#define AURORA_SHIM_ALGORITHM
+namespace std {
+template <class T> const T& min(const T& a, const T& b) { return b < a ? b : a; }
+template <class T> const T& max(const T& a, const T& b) { return a < b ? b : a; }
+template <class It, class T> void fill(It first, It last, const T& value) { for (; first != last; ++first) *first = value; }
+}
+#endif
