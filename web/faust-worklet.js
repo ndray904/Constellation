@@ -81,6 +81,13 @@ registerProcessor("recorder", RecorderProcessor);
 // processorOptions: { modules: [{ wasm: ArrayBuffer, params: [values] }] }
 // Messages in: { algo: index } switches reverb (the new one starts empty and
 // crossfades in over ~20 ms); { param: index, value } sets a parameter.
+//
+// The plugins apply parameters instantly; some (StarChild's Sustain and Grain,
+// Infinity's Size, Galactic's Bigness) move their delay taps, so a change is a
+// jump in the output: a click. So a change goes to a clone of the running
+// reverb (same wasm memory, so the same tank contents) and the output
+// crossfades to it over ~20 ms. Changes that arrive during a fade are applied
+// together at its end, so a knob drag becomes a run of short crossfades.
 const AW_ENV = {
   sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan, atan2: Math.atan2,
   sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, exp: Math.exp, log: Math.log, log10: Math.log10, pow: Math.pow,
@@ -97,15 +104,17 @@ class AirwindowsProcessor extends AudioWorkletProcessor {
     this.fadeStep = 1 / (0.02 * sampleRate);
     this.current = this.create(0);
     this.previous = null;
+    this.dirty = false;            // parameters changed since the current instance got them
     this.port.onmessage = (e) => {
       const d = e.data;
       if (d.algo !== undefined && d.algo !== this.current.index) {
         this.previous = this.current;
         this.previous.gain = 1;
-        this.current = this.create(d.algo);
+        this.current = this.create(d.algo);   // starts with the latest parameters
+        this.dirty = false;
       } else if (d.param !== undefined) {
         this.params[this.current.index][d.param] = d.value;
-        this.current.x.setParam(d.param, d.value);
+        this.dirty = true;
       }
     };
   }
@@ -117,6 +126,17 @@ class AirwindowsProcessor extends AudioWorkletProcessor {
     return { index, x };
   }
 
+  // A second instance of the same plugin with an exact copy of fx's memory: the
+  // plugin object, its delay lines and its counters.
+  clone(fx) {
+    const x = new WebAssembly.Instance(this.modules[fx.index], { env: AW_ENV }).exports;
+    const src = new Uint8Array(fx.x.memory.buffer);
+    const missing = src.length - x.memory.buffer.byteLength;
+    if (missing > 0) x.memory.grow(missing / 65536);
+    new Uint8Array(x.memory.buffer).set(src);
+    return { index: fx.index, x };
+  }
+
   run(fx, inL, inR) {
     const { x } = fx, mem = x.memory.buffer;
     new Float32Array(mem, x.inL(), BLOCK).set(inL);
@@ -126,6 +146,14 @@ class AirwindowsProcessor extends AudioWorkletProcessor {
   }
 
   process(inputs, outputs) {
+    if (this.dirty && !this.previous) {
+      const next = this.clone(this.current);
+      this.params[next.index].forEach((v, i) => next.x.setParam(i, v));
+      this.previous = this.current;
+      this.previous.gain = 1;
+      this.current = next;
+      this.dirty = false;
+    }
     const input = inputs[0] || [];
     const inL = input[0] || this.zeros, inR = input[1] || inL;
     const [L, R] = outputs[0];

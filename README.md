@@ -26,6 +26,7 @@ three space reverbs by Chris Johnson of [Airwindows](https://www.airwindows.com/
 | `test/render-duo.cjs` | Binary offline checks: scales, VCO2 offset, X-MOD depth, gating, self-oscillation. |
 | `test/render-delay.cjs` | Singularity offline checks: 4-octave ribbon, echo times vs the PT2399 fit, feedback decay and runaway, tape-style pitch bend. |
 | `test/airwindows-parity.cjs` | Builds each reverb natively (`test/airwindows-native/`) and checks the wasm output is bit-identical to it. |
+| `test/nebula-declick.cjs` | Runs Nebula's worklet in Node: dragging a reverb's controls must not click (each change crossfades to a clone of the running reverb with the new settings). |
 | `test/browser.cjs` | Headless Chromium: plays all three ribbons, echoes, scale button, Hold, routing through Singularity, computer keys, layout at phone and desktop widths. |
 
 ## Build and test
@@ -39,6 +40,7 @@ node test/render.cjs      # optional arg: a folder to write WAV renders into
 node test/render-duo.cjs
 node test/render-delay.cjs
 node test/airwindows-parity.cjs
+node test/nebula-declick.cjs
 node test/browser.cjs     # optional arg: a folder for screenshots
 ```
 
