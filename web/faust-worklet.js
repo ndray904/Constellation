@@ -76,3 +76,75 @@ class RecorderProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor("recorder", RecorderProcessor);
+
+// Hosts the Airwindows reverbs (C++ compiled to wasm, see airwindows/).
+// processorOptions: { modules: [{ wasm: ArrayBuffer, params: [values] }] }
+// Messages in: { algo: index } switches reverb (the new one starts empty and
+// crossfades in over ~20 ms); { param: index, value } sets a parameter.
+const AW_ENV = {
+  sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan, atan2: Math.atan2,
+  sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, exp: Math.exp, log: Math.log, log10: Math.log10, pow: Math.pow,
+  fmod: (a, b) => a % b,
+};
+
+class AirwindowsProcessor extends AudioWorkletProcessor {
+  constructor(options) {
+    super();
+    const { modules } = options.processorOptions;
+    this.modules = modules.map((m) => new WebAssembly.Module(m.wasm));
+    this.params = modules.map((m) => m.params.slice());
+    this.zeros = new Float32Array(BLOCK);
+    this.fadeStep = 1 / (0.02 * sampleRate);
+    this.current = this.create(0);
+    this.previous = null;
+    this.port.onmessage = (e) => {
+      const d = e.data;
+      if (d.algo !== undefined && d.algo !== this.current.index) {
+        this.previous = this.current;
+        this.previous.gain = 1;
+        this.current = this.create(d.algo);
+      } else if (d.param !== undefined) {
+        this.params[this.current.index][d.param] = d.value;
+        this.current.x.setParam(d.param, d.value);
+      }
+    };
+  }
+
+  create(index) {
+    const x = new WebAssembly.Instance(this.modules[index], { env: AW_ENV }).exports;
+    x.init(sampleRate);
+    this.params[index].forEach((v, i) => x.setParam(i, v));
+    return { index, x };
+  }
+
+  run(fx, inL, inR) {
+    const { x } = fx, mem = x.memory.buffer;
+    new Float32Array(mem, x.inL(), BLOCK).set(inL);
+    new Float32Array(mem, x.inR(), BLOCK).set(inR);
+    x.process(BLOCK);
+    return [new Float32Array(x.memory.buffer, x.outL(), BLOCK), new Float32Array(x.memory.buffer, x.outR(), BLOCK)];
+  }
+
+  process(inputs, outputs) {
+    const input = inputs[0] || [];
+    const inL = input[0] || this.zeros, inR = input[1] || inL;
+    const [L, R] = outputs[0];
+    const [cL, cR] = this.run(this.current, inL, inR);
+    if (!this.previous) {
+      L.set(cL); R.set(cR || cL);
+      return true;
+    }
+    const [pL, pR] = this.run(this.previous, inL, inR);
+    let g = this.previous.gain;
+    for (let i = 0; i < BLOCK; i++) {
+      g = Math.max(0, g - this.fadeStep);
+      L[i] = cL[i] * (1 - g) + pL[i] * g;
+      if (R) R[i] = cR[i] * (1 - g) + pR[i] * g;
+    }
+    this.previous.gain = g;
+    if (g === 0) this.previous = null;
+    return true;
+  }
+}
+
+registerProcessor("airwindows", AirwindowsProcessor);

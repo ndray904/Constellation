@@ -1,6 +1,7 @@
 // Builds dist/constellation.html: compiles each synth's .dsp with the Faust compiler
-// (build-time only) and inlines the wasm, its metadata and the worklet code into
-// web/index.html so the page runs from a single file.
+// and each Airwindows reverb's unmodified C++ with clang (both build-time only),
+// and inlines the wasm, its metadata and the worklet code into web/index.html so
+// the page runs from a single file.
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -21,8 +22,38 @@ for (const [name, dsp] of Object.entries(SYNTHS)) {
   };
 }
 
+// ---- Airwindows reverbs (Nebula): C++ -> wasm32 with clang, no libc ----------
+// airwindows/src holds the plugins' LinuxVST sources unmodified; airwindows/shim
+// stands in for the VST SDK, libm (Math.* imported from JS) and a tiny runtime.
+const REVERBS = ["Galactic3", "Infinity", "StarChild2"];
+const mathEnv = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow"]
+  .map((f) => [f, Math[f]]).concat([["fmod", (a, b) => a % b]]));
+const reverbs = [];
+mkdirSync(join(root, "build/airwindows"), { recursive: true });
+for (const name of REVERBS) {
+  const out = `build/airwindows/${name}.wasm`;
+  execFileSync("clang++", [
+    "--target=wasm32", "-O3", "-std=c++17", "-ffreestanding", "-nostdlib", "-nostdinc++",
+    "-fno-exceptions", "-fno-rtti", "-mnontrapping-fptoint", "-mbulk-memory", "-w",
+    "-I", "airwindows/shim", "-I", `airwindows/src/${name}`, `-DAW_HEADER="${name}.h"`, `-DAW_CLASS=${name}`,
+    `airwindows/src/${name}/${name}.cpp`, `airwindows/src/${name}/${name}Proc.cpp`,
+    "airwindows/shim/wrapper.cpp", "airwindows/shim/longdouble.cpp",
+    "-Wl,--no-entry", "-Wl,--export-memory", "-Wl,--strip-all", "-o", out,
+  ], { cwd: root, stdio: "inherit" });
+  // read the parameter names and defaults from the plugin itself
+  const bytes = read(out);
+  const x = new WebAssembly.Instance(new WebAssembly.Module(bytes), { env: mathEnv }).exports;
+  x.init(48000);
+  const cstr = (ptr) => { const m = new Uint8Array(x.memory.buffer); let s = ""; while (m[ptr]) s += String.fromCharCode(m[ptr++]); return s; };
+  const params = [];
+  for (let i = 0; i < x.numParams(); i++) params.push({ name: cstr(x.paramName(i)), value: x.getParam(i) });
+  reverbs.push({ name, wasm: bytes.toString("base64"), params });
+  console.log(`${out}  ${(bytes.length / 1024).toFixed(1)} KB  ${params.map((p) => p.name).join(", ")}`);
+}
+
 const assets = {
   synths,
+  reverbs,
   worklet: read("web/faust-runtime.js") + "\n" + read("web/faust-worklet.js"),
 };
 

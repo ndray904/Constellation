@@ -1,0 +1,10 @@
+// Just enough std::string for the canDo set (see <set>).
+#ifndef AW_SHIM_STRING
+#define AW_SHIM_STRING
+namespace std {
+struct string {
+  string() {}
+  string(const char*) {}
+};
+}
+#endif

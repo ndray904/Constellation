@@ -38,6 +38,9 @@
   --delay-body: #2e3a52;
   --delay-body-hi: #3d4b66;
   --delay-body-edge: #1a2132;
+  --nebula-body: #3b2e52;
+  --nebula-body-hi: #4c3d67;
+  --nebula-body-edge: #211934;
 
   --font-display: "Michroma", "Eurostile", "Arial Black", sans-serif;
   --font-label: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
@@ -90,6 +93,8 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .devices { display: grid; gap: 28px; }
 .device.duo { --body: var(--duo-body); --body-hi: var(--duo-body-hi); --body-edge: var(--duo-body-edge); }
 .device.delay { --body: var(--delay-body); --body-hi: var(--delay-body-hi); --body-edge: var(--delay-body-edge); }
+.device.nebula { --body: var(--nebula-body); --body-hi: var(--nebula-body-hi); --body-edge: var(--nebula-body-edge); }
+.credit { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk-dim); }
 .controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px clamp(14px, 3vw, 30px); }
 .group { display: grid; gap: 8px; }
 .group-title { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--silk-dim); border-bottom: 1px solid rgba(239,230,210,0.35); padding-bottom: 3px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -108,7 +113,8 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
     repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px);
   box-shadow: inset 0 0 18px rgba(0,0,0,0.7);
 }
-.group-row { display: flex; gap: clamp(10px, 2.4vw, 22px); align-items: flex-start; }
+.group-row { display: flex; flex-wrap: wrap; gap: 14px clamp(10px, 2.4vw, 22px); align-items: flex-start; }
+.group { min-width: 0; }
 
 .knob { display: grid; justify-items: center; gap: 6px; width: 64px; }
 .knob-dial {
@@ -267,7 +273,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
   <header>
     <div>
       <h1>Constellation</h1>
-      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library.</p>
+      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds space reverbs from Airwindows' open-source code.</p>
     </div>
     <span class="status" id="status">Sound off · touch a ribbon</span>
   </header>
@@ -321,8 +327,12 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
         <span>Singularity starting points</span>
         <div class="presets" id="delay-presets"></div>
       </div>
+      <div class="field">
+        <span>Nebula starting points</span>
+        <div class="presets" id="nebula-presets"></div>
+      </div>
     </div>
-    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down; double-click one to reset it. At full Peak a filter whistles on its own, without touching the ribbon.</p>
+    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three, and any of them "To Nebula" for reverb. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down; double-click one to reset it. At full Peak a filter whistles on its own, without touching the ribbon.</p>
   </section>
 
   <section class="notes">
@@ -389,6 +399,27 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
         </tbody>
       </table>
     </div>
+
+    <h2>Nebula: where the code comes from</h2>
+    <p>Nebula runs three reverbs by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a>, from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and confirms the browser version's output is bit-identical.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Switch</th><th>Plugin</th><th>In Chris Johnson's words</th><th>Controls</th></tr></thead>
+        <tbody>
+          <tr><td>Galactic</td><td class="part">Galactic3</td><td>"A super-reverb designed specially for pads and space ambient"; Galactic3 is "exactly Galactic again, but with better undersampling."</td><td>Replace, Bright, Detune, Derez, Bigness, Dry/Wet</td></tr>
+          <tr><td>Infinity</td><td class="part">Infinity</td><td>"A MatrixVerb specifically designed to sustain and layer sounds forever." Fed back on itself, it sustains indefinitely: that's its natural state.</td><td>Filter, Damping, Size, Dry/Wet</td></tr>
+          <tr><td>StarChild</td><td class="part">StarChild2</td><td>"A weird digital ambience/echo plugin", inspired by the Ursa Major Space Station; StarChild2 adapts it to high sample rates.</td><td>Sustain, Grain, Dry/Wet</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Patched in with "To Nebula", an instrument's sound goes only through Nebula, so its Dry/Wet sets the balance. Galactic and Infinity start at 50% instead of their fully wet plugin defaults.</p>
+    <details>
+      <summary>Airwindows license (MIT)</summary>
+      <p>Copyright (c) 2018 Chris Johnson</p>
+      <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+      <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+      <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+    </details>
   </section>
 </div>
 
@@ -426,7 +457,7 @@ function quantize(semis, scale) {
 
 const SPECS = {
   ribbon35: {
-    brand: "PULSAR", short: "Pulsar", sub: "analogue ribbon synth model", theme: "", hold: true, sendTo: ["duo", "delay"],
+    brand: "PULSAR", short: "Pulsar", sub: "analogue ribbon synth model", theme: "", hold: true, sendTo: ["duo", "delay", "nebula"],
     semis: 18, modeTitle: "LFO target", modes: ["Standby", "Pitch", "Cutoff"], mode: 1,
     groups: [
       { title: "VCO", knobs: ["pitch"] },
@@ -451,7 +482,7 @@ const SPECS = {
     ],
   },
   duo: {
-    brand: "BINARY", short: "Binary", sub: "two-oscillator ribbon synth model", theme: "duo", hold: true, sendTo: ["delay"], lineIn: true,
+    brand: "BINARY", short: "Binary", sub: "two-oscillator ribbon synth model", theme: "duo", hold: true, sendTo: ["delay", "nebula"], lineIn: true,
     semis: 24, modeTitle: "Oscillators", modes: ["Standby", "VCO1", "VCO1+2"], mode: 2, scale: true,
     groups: [
       { title: "VCO1", knobs: ["pitch"] },
@@ -476,7 +507,7 @@ const SPECS = {
     ],
   },
   delay: {
-    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", lineIn: true,
+    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", sendTo: ["nebula"], lineIn: true,
     semis: 48, modeTitle: "LFO wave", modes: ["Standby", "Triangle", "Square"], mode: 1,
     groups: [
       { title: "LFO", knobs: ["lfo_rate", "lfo_int", "lfo_shape"], led: true },
@@ -501,7 +532,27 @@ const SPECS = {
       { name: "Runaway",     mode: 1, lfo_rate: 0.2,  lfo_int: 0.1,  lfo_shape: 0.5, cutoff: 0.5,  time: 0.15, feedback: 0.85 },
     ],
   },
+  nebula: {
+    brand: "NEBULA", short: "Nebula", sub: "space reverb", theme: "nebula", effect: true, lineIn: true,
+    modeTitle: "Reverb", modes: ["Galactic", "Infinity", "StarChild"], mode: 0, knobs: {},
+    // Airwindows plugins (airwindows/src); "start" overrides a plugin default.
+    algorithms: [
+      { module: "Galactic3", start: { "Dry/Wet": 0.5 } },
+      { module: "Infinity", start: { "Dry/Wet": 0.5 } },
+      { module: "StarChild2", start: {} },
+    ],
+    // values in each plugin's own parameter order
+    presets: [
+      { name: "Galaxy",        mode: 0, values: [0.5, 0.5, 0.5, 1, 1, 0.5] },
+      { name: "Drift",         mode: 0, values: [0.2, 0.35, 0.85, 1, 1, 0.6] },
+      { name: "Forever",       mode: 1, values: [0.8, 0.2, 0.7, 0.45] },
+      { name: "Gong",          mode: 1, values: [0.6, 0.5, 0.15, 0.4] },
+      { name: "Space station", mode: 2, values: [1, 0.7, 0.35] },
+    ],
+  },
 };
+// Airwindows names parameters in 8 characters; spell out the cut-short ones.
+const AW_LABELS = { Brightns: "Bright" };
 
 // Settings on the Output panel go to every instrument.
 const shared = { volume: 0.7, speaker: 0, stdlib_filter: 0, line_in: 0 };
@@ -843,9 +894,120 @@ class Synth {
   }
 }
 
+// An effect unit (Nebula): no ribbon or keys; the switch picks the algorithm
+// and the knobs are rebuilt from that plugin's own parameter list.
+class Effect extends Synth {
+  render(container) {
+    const s = this.spec, k = this.key;
+    const mods = s.algorithms.map((a) => ASSETS.reverbs.find((r) => r.name === a.module));
+    this.names = mods.map((m) => m.params.map((p) => p.name));
+    this.defaults = s.algorithms.map((a, i) => mods[i].params.map((p) => (a.start[p.name] !== undefined ? a.start[p.name] : p.value)));
+    this.store = this.defaults.map((d) => d.slice());      // each algorithm keeps its own settings
+    const el = document.createElement("section");
+    el.className = "device " + s.theme;
+    el.id = k;
+    el.setAttribute("aria-label", s.brand);
+    el.innerHTML = `
+      <div class="controls">
+        <div class="group">
+          <div class="group-title">${s.modeTitle}</div>
+          <div class="switch">
+            <div class="switch-track" data-role="switch-track"><div class="switch-thumb" data-role="switch-thumb"></div></div>
+            <div class="switch-labels" role="radiogroup" aria-label="${s.modeTitle}">
+              ${s.modes.map((m, i) => `<button role="radio" id="${k}-mode-${i}" data-mode="${i}">${m}</button>`).join("")}
+            </div>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group-title">Airwindows <span data-role="plugin"></span></div>
+          <div class="group-row" data-role="knobs"></div>
+        </div>
+        <div class="group scope-group">
+          <div class="group-title">Scope</div>
+          <div class="scope-bezel"><canvas data-role="scope" aria-label="Oscilloscope view of the ${s.brand} output"></canvas></div>
+        </div>
+      </div>
+      <div class="foot">
+        <div class="brand">${s.brand}<small>${s.sub}</small></div>
+        <span class="line-in" data-role="line-in" hidden><span class="led"></span><span data-role="line-in-text"></span></span>
+        <span class="credit">Airwindows · Chris Johnson · MIT</span>
+      </div>`;
+    container.appendChild(el);
+    this.el = el;
+    const q = (role) => el.querySelector(`[data-role="${role}"]`);
+    this.knobRow = q("knobs");
+    this.pluginName = q("plugin");
+    this.canvas = q("scope");
+    this.g = this.canvas.getContext("2d");
+    this.lineIn = q("line-in");
+    this.lineInText = q("line-in-text");
+    this.knobEls = {};
+    this.thumb = q("switch-thumb");
+    el.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => this.setMode(Number(b.dataset.mode))));
+    q("switch-track").addEventListener("click", (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      this.setMode(Math.min(2, Math.max(0, Math.floor(((e.clientY - r.top) / r.height) * 3))));
+    });
+    this.setMode(this.params.mode);
+    const fit = () => {
+      const dpr = window.devicePixelRatio || 1;
+      this.canvas.width = Math.max(1, Math.round(this.canvas.clientWidth * dpr));
+      this.canvas.height = Math.max(1, Math.round(this.canvas.clientHeight * dpr));
+    };
+    new ResizeObserver(fit).observe(this.canvas);
+    fit();
+  }
+
+  set(name, value) {
+    this.params[name] = value;
+    if (name === "mode") {
+      if (this.node) this.node.port.postMessage({ algo: value });
+      this.spec.knobs = Object.fromEntries(this.names[value].map((n, i) => ["p" + i, { label: AW_LABELS[n] || n, value: this.defaults[value][i], fmt: fmt.pct }]));
+      if (!this.knobRow) return;
+      this.pluginName.textContent = "· " + this.spec.algorithms[value].module;
+      this.knobRow.replaceChildren();
+      this.knobEls = {};
+      for (const id of Object.keys(this.spec.knobs)) {
+        this.knobRow.appendChild(this.renderKnob(id));
+        this.setKnob(id, this.store[value][+id.slice(1)]);
+      }
+    } else if (/^p\d+$/.test(name)) {
+      const i = +name.slice(1);
+      this.store[this.params.mode][i] = value;
+      if (this.node) this.node.port.postMessage({ param: i, value });
+    }
+    // shared Output settings (volume, speaker...) don't apply to Nebula
+  }
+
+  async connect() {
+    this.node = new AudioWorkletNode(ctx, "airwindows", {
+      numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: "explicit",
+      processorOptions: {
+        modules: this.spec.algorithms.map((a, i) => ({ wasm: base64ToBytes(ASSETS.reverbs.find((r) => r.name === a.module).wasm), params: this.store[i] })),
+      },
+    });
+    this.node.port.postMessage({ algo: this.params.mode });
+    this.analyser = ctx.createAnalyser();
+    this.analyser.fftSize = 4096;
+    this.node.connect(this.analyser);
+    this.out = ctx.createGain();
+    this.sends = {};
+    this.analyser.connect(this.out);
+    this.out.connect(master);
+  }
+
+  applyPreset(p) {
+    this.setMode(p.mode);
+    p.values.forEach((v, i) => this.setKnob("p" + i, v));
+  }
+
+  ribbonUpdate() {}
+  updateReadout() {}
+}
+
 const devicesEl = document.getElementById("devices");
 const synths = {};
-for (const [key, spec] of Object.entries(SPECS)) synths[key] = new Synth(key, spec, devicesEl);
+for (const [key, spec] of Object.entries(SPECS)) synths[key] = new (spec.effect ? Effect : Synth)(key, spec, devicesEl);
 window.synths = synths;
 
 /* ---------- audio ---------- */
@@ -908,7 +1070,7 @@ function updateLineIn() {
     const sources = Object.values(synths).filter((s) => s.routedTo === dest.key);
     dest.set("line_in", sources.length ? 1 : 0);
     dest.lineIn.hidden = sources.length === 0;
-    const standby = dest.params.mode === 0;
+    const standby = !dest.spec.effect && dest.params.mode === 0;
     dest.lineIn.classList.toggle("off", standby);
     dest.lineInText.textContent = "Line in ◂ " + sources.map((s) => s.spec.short).join(" + ")
       + (standby ? " · switch on to hear" : "");

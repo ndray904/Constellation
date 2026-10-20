@@ -1,0 +1,13 @@
+// The plugins keep a std::set<std::string> of VST "canDo" strings that no host
+// will ever ask about here, so this set stores nothing and finds nothing.
+#ifndef AW_SHIM_SET
+#define AW_SHIM_SET
+namespace std {
+template <class T> struct set {
+  struct iterator { bool operator==(const iterator&) const { return true; } bool operator!=(const iterator&) const { return false; } };
+  void insert(const T&) {}
+  iterator find(const T&) const { return iterator(); }
+  iterator end() const { return iterator(); }
+};
+}
+#endif

@@ -346,6 +346,53 @@ const shots = process.argv[2];
       zipPath, wavPath]).toString().trim();
     check(`[${name}] Recording: viewer zip is valid and holds the identical WAV`, zipCheck === "True ['take.wav'] True", `(${zipCheck})`);
 
+    // ---- Nebula (Airwindows reverbs) ----
+    const nebulaKnobs = () => p.evaluate(() => [...document.querySelectorAll("#nebula .knob-label")].map((e) => e.textContent));
+    const nebulaIdle = await loudest(() => rms(p, "nebula"));
+    const galactic = await nebulaKnobs();
+    await p.evaluate(() => synths.nebula.setKnob("p0", 0.2));
+    await p.click("#nebula-mode-1");
+    const infinity = [await nebulaKnobs(), await p.evaluate(() => document.querySelector("#nebula [data-role=plugin]").textContent)];
+    await p.click("#nebula-mode-2");
+    const starchild = await nebulaKnobs();
+    await p.click("#nebula-mode-0");
+    const remembered = await p.evaluate(() => synths.nebula.params.p0);
+    check(`[${name}] Nebula is silent at load`, nebulaIdle < 0.001, `(rms ${nebulaIdle.toExponential(1)})`);
+    check(`[${name}] Nebula switch loads each plugin's own controls`,
+      galactic.join() === "Replace,Bright,Detune,Derez,Bigness,Dry/Wet" && infinity[0].join() === "Filter,Damping,Size,Dry/Wet"
+      && infinity[1] === "· Infinity" && starchild.join() === "Sustain,Grain,Dry/Wet", `(${galactic} | ${infinity[0]} | ${starchild})`);
+    check(`[${name}] Nebula keeps each reverb's settings`, Math.abs(remembered - 0.2) < 1e-6, `(${remembered})`);
+
+    await p.click("#ribbon35-presets button:text-is(\"Init\")");
+    await p.click("#ribbon35-hold");
+    await press("#ribbon35-ribbon", 0.4, 150);
+    await p.click("#ribbon35-send-nebula");
+    await p.waitForTimeout(700);
+    const verb = {
+      direct: await p.evaluate(() => synths.ribbon35.out.gain.value),
+      nebula: await loudest(() => rms(p, "nebula")),
+      master: await loudest(masterRms),
+      label: await p.evaluate(() => synths.nebula.lineInText.textContent),
+    };
+    check(`[${name}] To Nebula: Pulsar plays through the reverb`, verb.direct < 0.01 && verb.nebula > 0.02 && verb.master > 0.02, `(Nebula ${verb.nebula.toFixed(3)}, master ${verb.master.toFixed(3)})`);
+    check(`[${name}] To Nebula: Nebula shows "Line in ◂ Pulsar"`, verb.label === "Line in ◂ Pulsar", `(${verb.label})`);
+    for (const m of [1, 2, 0]) { await p.click(`#nebula-mode-${m}`); await p.waitForTimeout(300); }
+    const afterSwitching = await loudest(() => rms(p, "nebula"));
+    check(`[${name}] Nebula keeps sounding while switching reverbs`, afterSwitching > 0.02, `(rms ${afterSwitching.toFixed(3)})`);
+    await p.click("#ribbon35-hold");                       // release: the reverb tail rings on
+    await p.waitForTimeout(300);
+    const verbTail = await loudest(() => rms(p, "nebula"));
+    check(`[${name}] Nebula's tail rings on after release`, verbTail > 0.005, `(rms ${verbTail.toFixed(4)})`);
+
+    await p.click("#ribbon35-send-delay");                 // chain: Pulsar -> Singularity -> Nebula
+    await p.click("#delay-send-nebula");
+    await p.click("#ribbon35-hold");
+    await press("#ribbon35-ribbon", 0.5, 150);
+    await p.waitForTimeout(700);
+    const chain3 = [await p.evaluate(() => [synths.delay.lineInText.textContent, synths.nebula.lineInText.textContent]), await loudest(() => rms(p, "nebula"))];
+    check(`[${name}] chain Pulsar -> Singularity -> Nebula`, chain3[0][0] === "Line in ◂ Pulsar" && chain3[0][1] === "Line in ◂ Singularity" && chain3[1] > 0.02, `(${chain3[0]}, ${chain3[1].toFixed(3)})`);
+    await p.click("#ribbon35-hold"); await p.click("#delay-send-nebula"); await p.click("#ribbon35-send-delay");
+
     if (shots) await p.screenshot({ path: path.join(shots, `${name}.png`), fullPage: true });
     const overflow = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     check(`[${name}] no horizontal page scroll`, !overflow);
