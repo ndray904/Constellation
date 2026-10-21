@@ -28,14 +28,35 @@ console.log(`build/libm.wasm  ${(libmBytes.length / 1024).toFixed(1)} KB`);
 
 const SYNTHS = { ribbon35: "dsp/monotron.dsp", duo: "dsp/duo.dsp", delay: "dsp/delay.dsp" };
 
+// Faust computes every branch of a select, so a module with all the filter
+// models runs all six filters all the time. The page gets one module per
+// model instead, with the model fixed (and mc.vcfFixed, which drops the other
+// filters even inside a feedback loop), so only the chosen filter runs; the
+// worklet swaps between them. The module with the model as a control is still
+// built (build/<name>), for the offline tests.
+const FILTER_MODELS = 6;
 const synths = {};
-for (const [name, dsp] of Object.entries(SYNTHS)) {
-  execFileSync("npx", ["faust2wasm-ts", dsp, `build/${name}`, "-no-template"], { cwd: root, stdio: "inherit" });
-  const meta = JSON.parse(read(`build/${name}/dsp-meta.json`));
-  synths[name] = {
-    wasm: read(`build/${name}/dsp-module.wasm`).toString("base64"),
+mkdirSync(join(root, "build/variants"), { recursive: true });
+writeFileSync(join(root, "build/variants/monotron-common.lib"), read("dsp/monotron-common.lib"));
+const faust = (dsp, out) => {
+  execFileSync("npx", ["faust2wasm-ts", dsp, out, "-no-template"], { cwd: root, stdio: "inherit" });
+  const meta = JSON.parse(read(`${out}/dsp-meta.json`));
+  return {
+    wasm: read(`${out}/dsp-module.wasm`).toString("base64"),
     meta: { size: meta.size, inputs: meta.inputs, outputs: meta.outputs, ui: meta.ui },
   };
+};
+for (const [name, dsp] of Object.entries(SYNTHS)) {
+  faust(dsp, `build/${name}`);
+  const source = read(dsp).toString();
+  const control = /nentry\("\[\d+\]filter model", 0, 0, 5, 1\)/;
+  if (!control.test(source)) throw new Error(`${dsp}: filter model control not found`);
+  synths[name] = [];
+  for (let m = 0; m < FILTER_MODELS; m++) {
+    const variant = `build/variants/${name}-${m}.dsp`;
+    writeFileSync(join(root, variant), source.replace(control, String(m)).replaceAll("mc.vcf(", "mc.vcfFixed("));
+    synths[name].push(faust(variant, `build/variants/${name}-${m}`));
+  }
 }
 
 // ---- Airwindows reverbs (Nebula): C++ -> wasm32 with clang, no libc ----------

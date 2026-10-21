@@ -643,7 +643,7 @@ const SPECS = {
     ],
   },
   delay: {
-    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", sendTo: ["nebula"], lineIn: true,
+    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", hold: true, sendTo: ["nebula"], lineIn: true,
     semis: 48, modeTitle: "LFO wave", modes: ["Standby", "Triangle", "Square"], mode: 1,
     groups: [
       { title: "LFO", knobs: ["lfo_rate", "lfo_int", "lfo_shape"], led: true },
@@ -961,10 +961,11 @@ class Synth {
   }
 
   async connect() {
-    const { wasm, meta } = ASSETS.synths[this.key];
+    // One build per filter model; the worklet runs only the chosen one.
+    const variants = ASSETS.synths[this.key].map(({ wasm, meta }) => ({ wasm: base64ToBytes(wasm), meta }));
     this.node = new AudioWorkletNode(ctx, "faust-mono", {
       numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
-      processorOptions: { wasm: base64ToBytes(wasm), meta, libm: base64ToBytes(ASSETS.libm) },
+      processorOptions: { variants, model: shared.filter_model, libm: base64ToBytes(ASSETS.libm) },
     });
     for (const [name, value] of Object.entries({ ...this.params, ...shared })) this.node.port.postMessage({ name, value });
     this.node.port.onmessage = (e) => { this.lfo = e.data.lfo; };

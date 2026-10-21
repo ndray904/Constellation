@@ -1,13 +1,32 @@
 // AudioWorklet processor. Concatenated after faust-runtime.js at build time.
-// processorOptions: { wasm: ArrayBuffer, meta: object, libm: ArrayBuffer }
+// processorOptions: { variants: [{ wasm, meta }], model, libm: ArrayBuffer }
 // Messages in:  { name, value }   Messages out: { lfo }  (~60 per second, when the DSP has an "lfo led")
+//
+// variants holds one build of the synth per filter model (build.mjs), so only
+// the chosen filter runs. All are instantiated, and run once, up front: Chrome
+// compiles wasm lazily, on first call. { name: "filter_model" } switches: the
+// new build is cleared, given every setting, run silently for PREROLL blocks
+// so its smoothed controls and envelope settle, then crossfaded in over FADE
+// blocks. Its state starts fresh, so echoes and the LFO phase restart.
+const PREROLL = 24, FADE = 8;
 
 class FaustMonoProcessor extends AudioWorkletProcessor {
   constructor(options) {
     super();
-    const { wasm, meta, libm } = options.processorOptions;
+    const { variants, model, libm } = options.processorOptions;
     if (libm) setMathLibrary(libm);
-    this.dsp = new FaustMono(wasm, meta, sampleRate);
+    this.dsps = variants.map(({ wasm, meta }) => {
+      const dsp = new FaustMono(wasm, meta, sampleRate);
+      dsp.inputs[0].fill(0);
+      dsp.compute();
+      return dsp;
+    });
+    this.cur = Math.min(model | 0, this.dsps.length - 1);
+    this.dsps[this.cur].exports.instanceClear(0);
+    this.dsp = this.dsps[this.cur];
+    this.next = -1;                          // build being switched to, or -1
+    this.step = 0;                           // blocks into the switch
+    this.settings = {};                      // every value received, for the next build
     // Messages are applied at the start of each block. A gate change ends the
     // batch, so a tap shorter than one block still sounds for one block.
     this.queue = [];
@@ -17,19 +36,52 @@ class FaustMonoProcessor extends AudioWorkletProcessor {
     this.blockCount = 0;
   }
 
+  switchTo(model) {
+    model = Math.min(Math.max(0, model | 0), this.dsps.length - 1);
+    if (model === this.cur) { this.next = -1; return; }
+    if (model === this.next) return;
+    const dsp = this.dsps[model];
+    dsp.exports.instanceClear(0);
+    for (const [name, value] of Object.entries(this.settings)) dsp.set(name, value);
+    this.next = model;
+    this.step = 0;
+  }
+
   process(inputs, outputs) {
     let gateSeen = false;
     while (this.queue.length) {
       const { name, value } = this.queue[0];
       if (name === "gate") { if (gateSeen) break; gateSeen = true; }
-      this.dsp.set(name, value);
+      this.settings[name] = value;
+      if (name === "filter_model") this.switchTo(value);
+      else {
+        this.dsp.set(name, value);
+        if (this.next >= 0) this.dsps[this.next].set(name, value);
+      }
       this.queue.shift();
     }
     const input = inputs[0] && inputs[0][0];
     if (input) this.dsp.inputs[0].set(input);
     else this.dsp.inputs[0].fill(0);
     this.dsp.compute();
-    for (const channel of outputs[0]) channel.set(this.dsp.outputs[0]);
+    let out = this.dsp.outputs[0];
+    if (this.next >= 0) {
+      const incoming = this.dsps[this.next];
+      incoming.inputs[0].set(this.dsp.inputs[0]);
+      incoming.compute();
+      const fade = this.step - PREROLL;
+      if (fade >= 0) {                       // crossfade, sample by sample
+        const a = incoming.outputs[0], b = out, n = a.length;
+        for (let i = 0; i < n; i++) {
+          const g = Math.min(1, (fade * n + i + 1) / (FADE * n));
+          b[i] += (a[i] - b[i]) * g;
+        }
+      }
+      if (++this.step >= PREROLL + FADE) {
+        this.cur = this.next; this.dsp = incoming; this.next = -1;
+      }
+    }
+    for (const channel of outputs[0]) channel.set(out);
     if (this.hasLed && ++this.blockCount >= this.ledEvery) {
       this.blockCount = 0;
       this.port.postMessage({ lfo: this.dsp.get("lfo_led") });

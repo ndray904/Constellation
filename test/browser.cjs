@@ -213,6 +213,17 @@ const shots = process.argv[2];
     await p.click("#ribbon35-hold");
     await p.waitForTimeout(300);
 
+    // ---- Singularity has a Hold button too ----
+    await p.click("#delay-hold");
+    await press("#delay-ribbon", 0.5, 120);
+    await p.waitForTimeout(400);
+    const delayHeld = [await p.evaluate(() => synths.delay.params.gate), await loudest(() => rms(p, "delay"), 3)];
+    await p.click("#delay-hold");
+    await p.waitForTimeout(100);
+    const delayReleased = await p.evaluate(() => synths.delay.params.gate);
+    check(`[${name}] Singularity's Hold keeps the note after release`, delayHeld[0] === 1 && delayHeld[1] > 0.02 && delayReleased === 0, `(${delayHeld[0]}, ${delayHeld[1].toFixed(3)}, off: ${delayReleased})`);
+    await p.waitForTimeout(2500);                          // let its echoes die away
+
     // ---- Routing: Pulsar through Singularity ----
     await p.click("#ribbon35-hold");
     await press("#ribbon35-ribbon", 0.4, 120);

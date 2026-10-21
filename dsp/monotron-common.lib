@@ -129,17 +129,20 @@ oberheimLP(normFreq, peakK) = ve.oberheimLPF(normFreq, 0.6 * 20 ^ peakK) : diode
 // oscillation edge; the diode model runs to 2.2 so it self-oscillates near full
 // PEAK. model: 0 = diodes in the loop, 1 = plain ve.korg35LPF (linear loop,
 // diode after), 2 = Moog ladder, 3 = Moog half ladder, 4 = Oberheim SEM,
-// 5 = TB-303. Faust runs all of them and picks one.
-vcf(normFreq, peakK, model) = _ <: korg35Diode(normFreq, peakK * 2.2),
-                                   (ve.korg35LPF(normFreq, linQ) : diode),
-                                   moogDiode(normFreq, peakK * 1.1),
-                                   moogHalf(normFreq, peakK * 1.1),
-                                   oberheimLP(normFreq, peakK),
-                                   tb303(normFreq, peakK * 1.1)
-                               : ba.selectn(6, model)
+// 5 = TB-303. vcf runs all of them and picks one (Faust computes every branch
+// of a select); vcfFixed takes a constant model and routes out only that
+// filter, so the compiler drops the others. The page uses vcfFixed builds.
+vcfModels(normFreq, peakK) = _ <: korg35Diode(normFreq, peakK * 2.2),
+                                  (ve.korg35LPF(normFreq, linQ) : diode),
+                                  moogDiode(normFreq, peakK * 1.1),
+                                  moogHalf(normFreq, peakK * 1.1),
+                                  oberheimLP(normFreq, peakK),
+                                  tb303(normFreq, peakK * 1.1)
 with {
   linQ = (1 / sqrt(2)) + min(1.96, peakK * 2.08) * (10 - 1 / sqrt(2)) / 2;
 };
+vcf(normFreq, peakK, model) = vcfModels(normFreq, peakK) : ba.selectn(6, model);
+vcfFixed(normFreq, peakK, model) = vcfModels(normFreq, peakK) : route(6, 1, model + 1, 1);
 
 // CUTOFF knob to the filter's normalised frequency (VR wiper 0..0.6 VCC into
 // a 68k summing resistor on both models).
