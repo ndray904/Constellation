@@ -412,8 +412,9 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
       <div class="field">
         <span>Filter model</span>
         <div class="seg" id="seg-filter">
-          <button id="flt-diode" data-value="0" aria-pressed="true">Diodes in loop</button>
-          <button id="flt-stdlib" data-value="1" aria-pressed="false">Faust korg35LPF</button>
+          <button id="flt-diode" data-value="0" aria-pressed="true" title="Korg 35 with the diodes in its resonance loop">Diodes</button>
+          <button id="flt-stdlib" data-value="1" aria-pressed="false" title="Faust's plain korg35LPF">Korg</button>
+          <button id="flt-moog" data-value="2" aria-pressed="false" title="Moog four-pole ladder">Moog</button>
         </div>
       </div>
       <div class="field">
@@ -463,6 +464,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
           <tr><td>LFO shape</td><td class="part">C10, Q3, IC3E/D</td><td>Falling ramp (icon at R64), restarted on every touch through the C9/R24 "LFO reset" pulse. The snap back up is band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Filter key tracking</td><td class="part">R42 330k, R50 68k, R75</td><td>The ribbon voltage also feeds the cutoff. Relative to the cutoff knob's 0–0.6 VCC span it adds 0.34 of the knob's range.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Filter + resonance</td><td class="part">Q12–14, C20, C21, IC4C, D1/D2</td><td>Two-pole Korg 35 low-pass. The 1SS355 diodes in IC4C's feedback sit inside the resonance loop, so self-oscillation is soft-limited.</td><td><span class="tag sch">schematic</span></td></tr>
+          <tr><td>Filter model: Moog</td><td class="part">not on the monotron</td><td>The Output panel's Filter model can swap in a four-pole Moog ladder (24 dB/oct, darker and thicker) on all three synths, with the same diode limit in its loop, so it self-oscillates near full Peak like the Korg filter.</td><td></td></tr>
           <tr><td>Speaker path</td><td class="part">C26, R80, R77, C27, R81, C30</td><td>High-pass at 231 Hz and 72 Hz, low-pass at 5.9 kHz: the thin, bright sound of the built-in speaker.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Headphone path</td><td class="part">C25, R79, R82, C32</td><td>High-pass at 2.3 Hz, otherwise flat.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Pitch knob range</td><td class="part">VR3A, R18, R20, R21</td><td>1 V/octave over 0–10 V: 5 V centre, ±5 octaves. With 0 V = C0 assumed, the bottom of the ribbon runs from 16.4 Hz to 16.7 kHz, with C5 at the centre.</td><td><span class="tag sch">hardware</span></td></tr>
@@ -693,7 +695,7 @@ const AW_LABELS = {
 const WET_NAMES = ["Dry/Wet", "Wetness", "Wet", "Mix", "Amount"];
 
 // Settings on the Output panel go to every instrument.
-const shared = { volume: 0.7, speaker: 0, stdlib_filter: 0, line_in: 0 };
+const shared = { volume: 0.7, speaker: 0, filter_model: 0, line_in: 0 };
 
 let ctx = null, starting = null, keyTarget = null, master = null, masterAnalyser = null;
 const statusEl = document.getElementById("status");
@@ -1791,7 +1793,7 @@ function segmented(id, param) {
   }));
 }
 segmented("seg-speaker", "speaker");
-segmented("seg-filter", "stdlib_filter");
+segmented("seg-filter", "filter_model");
 
 for (const [key, synth] of Object.entries(synths)) {
   const row = document.getElementById(`${key}-presets`);

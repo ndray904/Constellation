@@ -29,7 +29,7 @@ peakK   = hslider("[7]peak", 0.3, 0, 1, 0.0001) : si.smoo;
 volK    = hslider("[8]volume", 0.7, 0, 1, 0.0001) : si.smoo;
 lineK   = hslider("[9]line in", 0, 0, 1, 0.0001) : si.smoo;
 speaker = checkbox("[10]speaker");        // 1 = internal speaker path, 0 = headphones
-stdlib  = checkbox("[11]stdlib filter");  // 1 = plain ve.korg35LPF (linear loop)
+fltModel = nentry("[11]filter model", 0, 0, 2, 1);  // 0 diodes in loop, 1 korg35LPF, 2 Moog
 
 pitchMode  = mode == 1;
 cutoffMode = mode == 2;
@@ -96,4 +96,4 @@ vcfIn = vco * gateEnv * 0.8 + _ * lineK * 2 + mc.noiseFloor(active);
 //============================== AMP =======================================
 // TPA6111 speaker / headphone channels: see mc.amp.                [schematic]
 
-process = vcfIn : mc.vcf(cutNorm, peakK, stdlib) : mc.amp(speaker, volK, active) : ma.tanh : attach(_, lfoLed);
+process = vcfIn : mc.vcf(cutNorm, peakK, fltModel) : mc.amp(speaker, volK, active) : ma.tanh : attach(_, lfoLed);

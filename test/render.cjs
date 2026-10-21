@@ -54,7 +54,10 @@ results.push(render("open-filter-top", 1, note(1)));
 results.push(render("gate-off-silence", 1, (d) => { d.set("gate", 0); d.set("peak", 0); }));
 results.push(render("standby-silence", 1, (d) => { d.set("gate", 1); d.set("mode", 0); }));
 results.push(render("peak-max-self-osc", 1, (d) => { d.set("gate", 0); d.set("cutoff", 0.5); d.set("peak", 1); }));
-results.push(render("peak-max-stdlib", 1, (d) => { d.set("gate", 1); d.set("cutoff", 0.5); d.set("peak", 1); d.set("stdlib_filter", 1); }));
+results.push(render("peak-max-stdlib", 1, (d) => { d.set("gate", 1); d.set("cutoff", 0.5); d.set("peak", 1); d.set("filter_model", 1); }));
+const moogOsc = render("peak-max-moog", 1, (d) => { d.set("gate", 0); d.set("cutoff", 0.5); d.set("peak", 1); d.set("filter_model", 2); });
+results.push(render("moog-open", 1, (d) => { note(0.5)(d); d.set("filter_model", 2); }));
+results.push(render("moog-mid-peak", 1, (d) => { note(0.3)(d); d.set("cutoff", 0.5); d.set("peak", 0.6); d.set("filter_model", 2); }));
 results.push(render("lfo-pitch-sweep", 2, (d) => { d.set("gate", 1); d.set("lfo_int", 1); d.set("lfo_rate", 0.2); d.set("cutoff", 0.8); }));
 results.push(render("lfo-cutoff-wobble", 2, (d) => { d.set("gate", 1); d.set("mode", 2); d.set("lfo_int", 0.8); d.set("lfo_rate", 0.35); d.set("cutoff", 0.4); d.set("peak", 0.7); }));
 results.push(render("speaker-path", 1, (d) => { note(0.5)(d); d.set("speaker", 1); }));
@@ -122,6 +125,8 @@ console.log(`lfo at min: ${(1 / lfoSlow).toFixed(2)} s/cycle   lfo at max: ${lfo
 // Pitch knob: 1 V/oct over 0..10 V from C0 = 16.35 Hz. Default 0.333 -> 3.33 V -> 164.4 Hz; ribbon 1 adds 18 semitones.
 const pitchHz = (k) => 16.3516 * Math.pow(2, k * 10);
 const expectLow = pitchHz(0.333);
+const moogBelow = render("moog-peak-0.85-no-gate", 1, (d) => { d.set("gate", 0); d.set("cutoff", 0.5); d.set("peak", 0.85); d.set("filter_model", 2); });
+const moogWobble = render("moog-lfo-cutoff-max-peak", 2, (d) => { d.set("gate", 1); d.set("mode", 2); d.set("lfo_int", 1); d.set("lfo_rate", 0.6); d.set("cutoff", 0.5); d.set("peak", 1); d.set("filter_model", 2); });
 const knobCentre = render("pitch-knob-centre-5V", 1, (d) => { note(0)(d); d.set("pitch", 0.5); });
 const knob8V = render("pitch-knob-8V", 1, (d) => { note(0)(d); d.set("pitch", 0.8); });
 const checks = [
@@ -138,6 +143,9 @@ const checks = [
   ["silent in standby", results[3].peak < 1e-3],
   ["diode loop self-oscillates at max peak (no gate)", results[4].peak > 0.05],
   ["self-oscillation near cutoff (632 Hz)", results[4].hz > 400 && results[4].hz < 700],
+  ["Moog ladder self-oscillates at max peak, near cutoff", moogOsc.peak > 0.05 && moogOsc.hz > 400 && moogOsc.hz < 700],
+  ["Moog ladder stays quiet below the oscillation edge", moogBelow.peak < 1e-3],
+  ["Moog ladder stays bounded under audio-rate cutoff sweeps", !moogWobble.nan && moogWobble.peak <= 1.0001],
 ];
 let failed = 0;
 for (const [label, ok] of checks) { console.log(`${ok ? "PASS" : "FAIL"}  ${label}`); if (!ok) failed++; }

@@ -31,7 +31,7 @@ peakK   = hslider("[8]peak", 0.3, 0, 1, 0.0001) : si.smoo;
 volK    = hslider("[9]volume", 0.7, 0, 1, 0.0001) : si.smoo;
 lineK   = hslider("[10]line in", 0, 0, 1, 0.0001) : si.smoo;
 speaker = checkbox("[11]speaker");        // 1 = internal speaker path, 0 = headphones
-stdlib  = checkbox("[12]stdlib filter");  // 1 = plain ve.korg35LPF (linear loop)
+fltModel = nentry("[12]filter model", 0, 0, 2, 1);  // 0 diodes in loop, 1 korg35LPF, 2 Moog
 
 // SW1A "PATCH SELECT": STANDBY / VCO1 / VCO1+2. In the standby position SW1B
 // cuts power; the third position connects SQR2 to the mixer.       [schematic]
@@ -106,4 +106,4 @@ cutNorm = mc.cutoffNorm(cutK) : max(0) : min(0.97);
 
 vcfIn = vcoMix * gateEnv + _ * lineK * 2 + mc.noiseFloor(active);
 
-process = vcfIn : mc.vcf(cutNorm, peakK, stdlib) : mc.amp(speaker, volK, active) : ma.tanh;
+process = vcfIn : mc.vcf(cutNorm, peakK, fltModel) : mc.amp(speaker, volK, active) : ma.tanh;

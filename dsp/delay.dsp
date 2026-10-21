@@ -29,7 +29,7 @@ fbK      = hslider("[8]feedback", 0.35, 0, 1, 0.0001) : si.smoo;
 volK     = hslider("[9]volume", 0.7, 0, 1, 0.0001) : si.smoo;
 lineK    = hslider("[10]line in", 0, 0, 1, 0.0001) : si.smoo;
 speaker  = checkbox("[11]speaker");        // 1 = internal speaker path, 0 = headphones
-stdlib   = checkbox("[12]stdlib filter");  // 1 = plain ve.korg35LPF (linear loop)
+fltModel = nentry("[12]filter model", 0, 0, 2, 1);  // 0 diodes in loop, 1 korg35LPF, 2 Moog
 
 // SW1A "WAVE SELECT": STANDBY / triangle / square. In standby SW1B cuts
 // power.                                                            [schematic]
@@ -125,6 +125,6 @@ dry      = vco * gateEnv * 0.8 + _ * lineK * 2 + mc.noiseFloor(active);
 
 // Loop: (feedback + dry) -> VCF; the VCF output goes to the amp and into the
 // PT2399, whose output comes back as feedback.
-voice    = (((+ : mc.vcf(cutNorm, peakFixed, stdlib)) <: pt2399, _) ~ *(fbGain)) : !, _;
+voice    = (((+ : mc.vcf(cutNorm, peakFixed, fltModel)) <: pt2399, _) ~ *(fbGain)) : !, _;
 
 process  = dry : voice : mc.amp(speaker, volK, active) : ma.tanh : attach(_, lfoLed);
