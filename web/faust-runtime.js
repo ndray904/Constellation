@@ -4,7 +4,19 @@
 
 const BLOCK = 128;
 
-// The math a Faust module imports, by name: "_sinf" is Math.sin and so on.
+// The math a module imports. It comes from musl's libm compiled to wasm
+// (libm/, built by build.mjs) once setMathLibrary() has loaded it: a call from
+// wasm into a JS function like Math.tanh boxes its result, and the synths make
+// such calls several times a sample, so the garbage piles up and V8 stops the
+// audio thread to collect it (pauses of up to 3 ms, audible as crackle).
+// wasm-to-wasm calls make no garbage. Math.* is the fallback.
+let LIBM = null;
+function setMathLibrary(bytes) {
+  if (!LIBM) LIBM = new WebAssembly.Instance(new WebAssembly.Module(bytes)).exports;
+  return LIBM;
+}
+
+// A Faust module's imports by name: "_sinf" is sinf and so on.
 const FAUST_MATH = {
   _fmodf: (a, b) => a % b, _remainderf: (a, b) => a - Math.round(a / b) * b,
   _rintf: (x) => { const r = Math.round(x); return Math.abs(x % 1) === 0.5 && r % 2 ? r - 1 : r; },
@@ -13,7 +25,7 @@ const FAUST_MATH = {
 function faustEnv(module) {
   const env = {};
   for (const { name } of WebAssembly.Module.imports(module)) {
-    const fn = FAUST_MATH[name] || Math[name.replace(/^_/, "").replace(/f$/, "")];
+    const fn = (LIBM && LIBM[name.replace(/^_/, "")]) || FAUST_MATH[name] || Math[name.replace(/^_/, "").replace(/f$/, "")];
     if (!fn) throw new Error(`Faust module needs ${name}`);
     env[name] = fn;
   }
@@ -24,8 +36,10 @@ class FaustMono {
   // fresh: don't clear the whole DSP state on init (for a reverb's long delay
   // lines that takes tens of milliseconds). Fresh wasm memory is zero except
   // the module's data segments (meta.dataEnd bytes from 0: Faust's JSON, where
-  // the state goes), so only those are cleared. test/aurora.cjs checks the
-  // state comes out exactly as init() leaves it.
+  // the state goes), so only those are cleared, and the few non-zero starting
+  // values the full clear would write come from meta.initPatch (build.mjs).
+  // build.mjs and test/aurora.cjs check the state comes out exactly as init()
+  // leaves it.
   constructor(wasmBytes, meta, sampleRate, blockSize = BLOCK, { fresh = false } = {}) {
     const module = wasmBytes instanceof WebAssembly.Module ? wasmBytes : new WebAssembly.Module(wasmBytes);
     this.instance = new WebAssembly.Instance(module, { env: faustEnv(module) });
@@ -68,6 +82,8 @@ class FaustMono {
       new Uint8Array(this.memory.buffer, 0, meta.dataEnd).fill(0);
       this.exports.instanceConstants(0, sampleRate);
       this.exports.instanceResetUserInterface(0);
+      const heap = new Uint8Array(this.memory.buffer);
+      for (const [offset, bytes] of meta.initPatch || []) heap.set(bytes, offset);
     } else {
       this.exports.init(0, sampleRate);
     }
@@ -89,4 +105,4 @@ class FaustMono {
   }
 }
 
-if (typeof module !== "undefined") module.exports = { FaustMono };
+if (typeof module !== "undefined") module.exports = { FaustMono, setMathLibrary };

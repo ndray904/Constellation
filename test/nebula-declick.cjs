@@ -21,8 +21,10 @@ vm.createContext(scope);
 vm.runInContext(fs.readFileSync(path.join(root, "web/faust-runtime.js"), "utf8") + "\n" + fs.readFileSync(path.join(root, "web/faust-worklet.js"), "utf8"), scope);
 const Airwindows = processors.reverb;
 
-const env = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow"]
-  .map((f) => [f, Math[f]]).concat([["fmod", (a, b) => a % b]]));
+// the modules' math imports: musl's libm in wasm (build/libm.wasm), as in the browser
+const libm = new WebAssembly.Instance(new WebAssembly.Module(fs.readFileSync(path.join(root, "build/libm.wasm")))).exports;
+const env = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow", "fmod"]
+  .map((f) => [f, libm[f]]));
 function defaults(name) {
   const x = new WebAssembly.Instance(new WebAssembly.Module(fs.readFileSync(path.join(root, `build/airwindows/${name}.wasm`))), { env }).exports;
   x.init(SR);
@@ -32,7 +34,7 @@ function defaults(name) {
 // Plays a 220 Hz tone through one reverb for 2 s; `changes(t)` returns the
 // parameter messages to send at time t. Returns the left output.
 function play(name, changes) {
-  const proc = new Airwindows({ processorOptions: { modules: [{ wasm: fs.readFileSync(path.join(root, `build/airwindows/${name}.wasm`)), params: defaults(name) }] } });
+  const proc = new Airwindows({ processorOptions: { libm: fs.readFileSync(path.join(root, "build/libm.wasm")), modules: [{ wasm: fs.readFileSync(path.join(root, `build/airwindows/${name}.wasm`)), params: defaults(name) }] } });
   const out = [];
   for (let b = 0; b < SR * 2 / 128; b++) {
     const t = b * 128 / SR;

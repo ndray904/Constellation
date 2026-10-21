@@ -11,6 +11,22 @@ import { createRequire } from "node:module";
 const root = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(join(root, p));
 
+// ---- libm: musl's math library in wasm, the imports of every module --------
+// libm/musl holds the needed musl sources unmodified; libm/inc and
+// libm/builtins.c stand in for the bits of its build that aren't the math.
+const LIBM_EXPORTS = ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow", "fmod"]
+  .flatMap((f) => [f, f + "f"]);
+mkdirSync(join(root, "build"), { recursive: true });
+execFileSync("clang", [
+  "--target=wasm32", "-O2", "-std=c99", "-ffreestanding", "-D_XOPEN_SOURCE=700", "-w",
+  "-I", "libm/inc", "-I", "libm/musl/arch/generic", "-I", "libm/musl/src/include", "-I", "libm/musl/src/internal", "-idirafter", "libm/musl/include",
+  "libm/builtins.c", ...readdirSync(join(root, "libm/musl/src/math")).filter((f) => f.endsWith(".c")).map((f) => `libm/musl/src/math/${f}`),
+  "-nostdlib", "-Wl,--no-entry", ...LIBM_EXPORTS.map((f) => `-Wl,--export=${f}`), "-Wl,--strip-all", "-o", "build/libm.wasm",
+], { cwd: root, stdio: "inherit" });
+const libmBytes = read("build/libm.wasm");
+const libm = new WebAssembly.Instance(new WebAssembly.Module(libmBytes)).exports;
+console.log(`build/libm.wasm  ${(libmBytes.length / 1024).toFixed(1)} KB`);
+
 const SYNTHS = { ribbon35: "dsp/monotron.dsp", duo: "dsp/duo.dsp", delay: "dsp/delay.dsp" };
 
 const synths = {};
@@ -27,8 +43,8 @@ for (const [name, dsp] of Object.entries(SYNTHS)) {
 // airwindows/src holds the plugins' LinuxVST sources unmodified; airwindows/shim
 // stands in for the VST SDK, libm (Math.* imported from JS) and a tiny runtime.
 const REVERBS = readdirSync(join(root, "airwindows/src")).sort();
-const mathEnv = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow"]
-  .map((f) => [f, Math[f]]).concat([["fmod", (a, b) => a % b]]));
+const mathEnv = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow", "fmod"]
+  .map((f) => [f, libm[f]]));
 const reverbs = [];
 mkdirSync(join(root, "build/airwindows"), { recursive: true });
 const cstr = (x, ptr) => { const m = new Uint8Array(x.memory.buffer); let s = ""; while (m[ptr]) s += String.fromCharCode(m[ptr++]); return s; };
@@ -88,14 +104,29 @@ function dataEnd(bytes) {
   }
   return end;
 }
-// Whether a fresh instance can skip Faust's full state clear: true when
-// clearing just the data segments gives the same state (some constructs, like
-// smooth_init, start from non-zero values that only the clear writes).
-const { FaustMono } = createRequire(import.meta.url)("./web/faust-runtime.js");
-function freshMatchesInit(bytes, meta) {
+// A fresh instance skips Faust's full state clear (tens of milliseconds over a
+// reverb's delay lines, on the audio thread): it clears only the data segments.
+// Some constructs (smooth_init) start from non-zero values that only the full
+// clear writes; those bytes are recorded here as runs of [offset, [bytes]] and
+// written back (meta.initPatch). The result must equal a full init.
+const { FaustMono, setMathLibrary } = createRequire(import.meta.url)("./web/faust-runtime.js");
+setMathLibrary(libmBytes);
+function structOf(dsp, meta) { return Buffer.from(dsp.memory.buffer, 0, meta.size); }
+function initPatch(bytes, meta) {
   const mod = new WebAssembly.Module(bytes);
-  const a = new FaustMono(mod, meta, 48000), b = new FaustMono(mod, meta, 48000, 128, { fresh: true });
-  return Buffer.compare(Buffer.from(a.memory.buffer, 0, meta.size), Buffer.from(b.memory.buffer, 0, meta.size)) === 0;
+  const full = structOf(new FaustMono(mod, meta, 48000), meta);
+  const fresh = structOf(new FaustMono(mod, meta, 48000, 128, { fresh: true }), meta);
+  const runs = [];
+  for (let i = 0; i < full.length; i++) {
+    if (full[i] === fresh[i]) continue;
+    const last = runs[runs.length - 1];
+    if (last && last[0] + last[1].length === i) last[1].push(full[i]);
+    else runs.push([i, [full[i]]]);
+  }
+  meta.initPatch = runs;
+  const patched = structOf(new FaustMono(mod, meta, 48000, 128, { fresh: true }), meta);
+  if (Buffer.compare(full, patched) !== 0) throw new Error("fresh init doesn't match a full init");
+  return runs;
 }
 const AURORA_FAUST = ["plate", "jpverb", "greyhole", "zita", "freeverb", "gemini", "centaurus", "sagittarius", "annihilator", "lyra", "virgo"];
 const aurora = [];
@@ -116,9 +147,9 @@ for (const name of AURORA_FAUST) {
   const declick = "glide";
   const wasm = read(`build/aurora/${name}/dsp-module.wasm`);
   const m = { size: meta.size, inputs: meta.inputs, outputs: meta.outputs, ui: meta.ui, dataEnd: dataEnd(wasm) };
-  m.fresh = freshMatchesInit(wasm, m);
+  const patch = initPatch(wasm, m);
   aurora.push({ name, kind: "faust", wasm: wasm.toString("base64"), meta: m, controls, params, declick });
-  console.log(`build/aurora/${name}  ${(meta.size / 1048576).toFixed(1)} MB state, ${declick}, ${m.fresh ? "fast" : "full"} init  ${params.map((p) => p.name).join(", ")}`);
+  console.log(`build/aurora/${name}  ${(meta.size / 1048576).toFixed(1)} MB state, ${declick}, init patch ${patch.reduce((n, r) => n + r[1].length, 0)} bytes  ${params.map((p) => p.name).join(", ")}`);
 }
 const AURORA_C = {
   texture: ["-DTEST", "-I", "aurora/src/mutable", "aurora/shim/texture.cpp"],
@@ -128,14 +159,13 @@ const AURORA_C = {
 for (const [name, args] of Object.entries(AURORA_C)) {
   const out = `build/aurora/${name}.wasm`;
   execFileSync("clang++", [...CLANG, "-I", "aurora/shim", "-I", "airwindows/shim", ...args, ...LINK, "-o", out], { cwd: root, stdio: "inherit" });
-  // both wrappers glide (see aurora/shim); CloudSeed is slow to create, so the
-  // host makes it once and keeps it
-  aurora.push(cModule(name, out, { declick: "glide", ...(name === "cloudseed" ? { keep: true } : {}) }));
+  aurora.push(cModule(name, out, { declick: "glide" }));   // both wrappers glide (see aurora/shim)
 }
 
 writeFileSync(join(root, "build/aurora/modules.json"), JSON.stringify(aurora));   // for test/aurora.cjs
 
 const assets = {
+  libm: libmBytes.toString("base64"),
   synths,
   reverbs,
   aurora,

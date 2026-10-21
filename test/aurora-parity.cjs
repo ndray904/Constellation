@@ -12,8 +12,10 @@ const { execFileSync } = require("child_process");
 
 const root = path.join(__dirname, "..");
 const SR = 48000, FRAMES = SR * 3;
-const env = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow"]
-  .map((f) => [f, Math[f]]).concat([["fmod", (a, b) => a % b]]));
+// the modules' math imports: musl's libm in wasm (build/libm.wasm), as in the browser
+const libm = new WebAssembly.Instance(new WebAssembly.Module(fs.readFileSync(path.join(root, "build/libm.wasm")))).exports;
+const env = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow", "fmod"]
+  .map((f) => [f, libm[f]]));
 
 // Test input: a noise burst and two tones (1 s), then silence for the tail.
 const input = [];

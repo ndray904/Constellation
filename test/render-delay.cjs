@@ -1,7 +1,8 @@
 // Offline checks for the Delay model. Usage: node test/render-delay.cjs [outDir]
 const fs = require("fs");
 const path = require("path");
-const { FaustMono } = require("../web/faust-runtime.js");
+const { FaustMono, setMathLibrary } = require("../web/faust-runtime.js");
+setMathLibrary(require("fs").readFileSync(require("path").join(__dirname, "../build/libm.wasm")));   // as in the browser
 
 const root = path.join(__dirname, "..");
 const wasm = fs.readFileSync(path.join(root, "build/delay/dsp-module.wasm"));

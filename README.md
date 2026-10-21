@@ -25,6 +25,7 @@ and Clouds.
 | `aurora/src/` | Aurora's C++, unmodified: CloudSeedCore (GhostNoteAudio @ `deb21de`, MIT) and the Rings reverb with the stmlib headers it uses (pichenettes/eurorack @ `f4cfa76`, stmlib @ `d18def8`, MIT). |
 | `aurora/shim/` | Wrappers that give both the Airwindows C interface (`texture.cpp`, `cloudseed.cpp`), plus what they need as freestanding wasm32: an allocator, minimal `vector`/`algorithm`/`cmath`, and the C standard's `rand()`. |
 | `airwindows/LICENSE` | Airwindows' MIT license (Copyright (c) 2018 Chris Johnson). |
+| `libm/` | musl's math library (MIT), the subset the modules import: `libm/musl` holds the sources unmodified (from WebAssembly/wasi-libc @ `ebd7c7f`, musl's own site being unreachable from the build machine), `libm/inc` and `builtins.c` stand in for musl's generated headers and use wasm's own `sqrt`/`fabs`. Every module imports its math from this instead of JavaScript's `Math`, whose results get boxed when called from wasm: enough garbage to make V8 pause the audio thread. |
 | `web/faust-runtime.js` | Small host for the compiled wasm (memory layout, params, `compute`). Runs in the worklet and in Node. |
 | `web/faust-worklet.js` | AudioWorklet processors: Faust synths, the recorder, and the reverb host for Nebula and Aurora. A module takes knob changes either by crossfading to a copy of itself (Airwindows) or by gliding its own controls (Aurora). |
 | `web/index.html` | Page template. Each instrument is built from a spec (`SPECS`): knobs, switch, ribbon length, presets. |
@@ -32,10 +33,11 @@ and Clouds.
 | `test/render.cjs` | Pulsar offline checks: tuning, 18-semitone ribbon, LFO range and aliasing, gating, self-oscillation. |
 | `test/render-duo.cjs` | Binary offline checks: scales, VCO2 offset, X-MOD depth, gating, self-oscillation. |
 | `test/render-delay.cjs` | Singularity offline checks: 4-octave ribbon, echo times vs the PT2399 fit, feedback decay and runaway, tape-style pitch bend. |
-| `test/airwindows-parity.cjs` | Builds each Airwindows reverb natively (`test/airwindows-native/`) and compares it with the wasm build, at defaults and with every control moved: 78 of 86 renders bit-identical, the rest within last-bit libm rounding. |
+| `test/airwindows-parity.cjs` | Builds each Airwindows reverb natively (`test/airwindows-native/`) and compares it with the wasm build, at defaults and with every control moved: 81 of 86 renders bit-identical, the rest within last-bit libm rounding (musl in the browser, glibc natively). |
 | `test/aurora-parity.cjs` | The same for Aurora's C++ (`test/aurora-native/`): Texture bit-identical, Cloud Seed to 136 dB. |
 | `test/nebula-declick.cjs` | Runs Nebula's worklet in Node: dragging a reverb's controls must not click (each change crossfades to a clone of the running reverb with the new settings). |
 | `test/aurora.cjs` | Runs every Aurora reverb in the worklet host: it rings on, stays bounded, and none of its knobs click when dragged; fast instance creation matches a full init. |
+| `test/audio-load.cjs` | Diagnostic: audio-thread load and stalls in the real page, per reverb, optionally with V8's GC trace. |
 | `test/browser.cjs` | Headless Chromium: plays all three ribbons, echoes, scale button, Hold, routing through Singularity, Nebula and Aurora (every reverb, while sounding), computer keys, layout at phone and desktop widths. |
 
 ## Build and test
@@ -70,6 +72,7 @@ node test/browser.cjs     # optional arg: a folder for screenshots
   - Rings reverb and stmlib (Emilie Gillet): MIT (file headers, `aurora/src/mutable/stmlib/LICENSE`). The Mutable Instruments name is not used for derivative works, so the reverb is called Texture.
   - Faust's `re.vital_rev` and `re.kb_rom_rev1` are GPL-3.0 and are not used.
   - The Supermassive models are not made or endorsed by Valhalla DSP.
+- **musl libm** (`libm/musl`, Rich Felker et al., with code from FreeBSD msun, fdlibm and Arm optimized-routines): MIT, `libm/musl/COPYRIGHT`. Shown on the page under Aurora's licenses.
 - Everything else in this repo is new code, released under the MIT license (`LICENSE`).
 - "KORG" and "monotron" are trademarks of KORG Inc. The product name and look are deliberately different.
 
@@ -83,7 +86,8 @@ node test/browser.cjs     # optional arg: a folder for screenshots
 6. Routing: "To Binary" / "To Singularity" patch an instrument into another's line in (Pulsar -> Binary or Singularity, Binary -> Singularity; chains allowed, no loops) (like a cable from the headphone jack: direct output and speaker path bypassed). The line-in level (`line in` = 1, gain 2 into the VCF mixer) is an estimate. Hold latches the gate on Pulsar and Binary (space bar toggles it); it is a software addition, not on the hardware.
 7. MIDI keyboard input (Web MIDI) works in the standalone file in Chrome, Edge and Firefox; the Claude viewer blocks device access, and Safari has no Web MIDI. Recording captures the master bus as 16-bit stereo WAV; in the viewer it is saved inside a .zip (WAV is not an allowed download type there), standalone as a plain .wav.
 8. VST3/AU/CLAP: the same `.dsp` builds with `faust2juce` or the Faust iPlug2/DPF architectures.
-9. Aurora: Cloud Seed exposes nine of its 45 parameters, starting from its one bundled program (Dark Plate). Texture is Rings' 48 kHz tuning, and Plate keeps Dattorro's 29.8 kHz delay lengths in samples, so both change size with the sample rate. Cloud Seed is created when sound starts (about 80 ms to clear its 64 MB of delay lines) and kept.
+9. Aurora: Cloud Seed exposes nine of its 45 parameters, starting from its one bundled program (Dark Plate). Texture is Rings' 48 kHz tuning, and Plate keeps Dattorro's 29.8 kHz delay lengths in samples, so both change size with the sample rate.
+10. Every reverb instance is made when sound starts (the context stays suspended until they are), then reused: making one while playing stalls the audio thread (Chrome compiles wasm lazily, and allocating or freeing reverb memories of up to 64 MB triggers garbage collection). The cost is address space: about 400 MB reserved in the audio worklet, committed only as delay lines are used.
 
 ## License
 

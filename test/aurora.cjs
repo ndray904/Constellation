@@ -21,12 +21,13 @@ const scope = {
 vm.createContext(scope);
 vm.runInContext(fs.readFileSync(path.join(root, "web/faust-runtime.js"), "utf8") + "\n" + fs.readFileSync(path.join(root, "web/faust-worklet.js"), "utf8"), scope);
 const Reverb = processors.reverb;
+const libm = fs.readFileSync(path.join(root, "build/libm.wasm"));
 const modules = JSON.parse(fs.readFileSync(path.join(root, "build/aurora/modules.json"), "utf8"));
 
 // 2 s of a 220 Hz tone (or `toneEnd` s of it, then silence) through one module;
 // `changes(t, b)` gives the messages to send before block b. Returns the left output.
 function play(m, changes = () => [], toneEnd = 2) {
-  const proc = new Reverb({ processorOptions: { modules: [{ ...m, wasm: Buffer.from(m.wasm, "base64"), params: m.params.map((p) => p.value) }] } });
+  const proc = new Reverb({ processorOptions: { libm, modules: [{ ...m, wasm: Buffer.from(m.wasm, "base64"), params: m.params.map((p) => p.value) }] } });
   const out = [];
   for (let b = 0; b < SR * 2 / 128; b++) {
     const t = b * 128 / SR;
@@ -72,21 +73,25 @@ for (const m of modules) {
   }
 }
 
-// For the Faust DSPs marked fresh, the host skips the full state clear on new
-// instances (it's slow): that must leave exactly the state init() leaves.
-const { FaustMono } = require(path.join(root, "web/faust-runtime.js"));
-for (const m of modules.filter((m) => m.kind === "faust" && m.meta.fresh)) {
+// The host skips the Faust DSPs' full state clear on new instances (it's slow):
+// clearing the data segments and writing meta.initPatch must leave exactly the
+// state init() leaves.
+const { FaustMono, setMathLibrary } = require(path.join(root, "web/faust-runtime.js"));
+setMathLibrary(libm);
+for (const m of modules.filter((m) => m.kind === "faust")) {
   const mod = new WebAssembly.Module(Buffer.from(m.wasm, "base64"));
-  const a = new FaustMono(mod, m.meta, SR), b = new FaustMono(mod, m.meta, SR, 128, { fresh: true });
-  const x = new Uint8Array(a.memory.buffer, 0, m.meta.size), y = new Uint8Array(b.memory.buffer, 0, m.meta.size);
-  let same = true;
-  for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) { same = false; break; }
-  check(`${m.name}: a fresh instance starts in the state init() gives`, same, "");
+  for (const rate of [44100, 48000, 96000]) {
+    const a = new FaustMono(mod, m.meta, rate), b = new FaustMono(mod, m.meta, rate, 128, { fresh: true });
+    const x = new Uint8Array(a.memory.buffer, 0, m.meta.size), y = new Uint8Array(b.memory.buffer, 0, m.meta.size);
+    let same = true;
+    for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) { same = false; break; }
+    check(`${m.name}: a fresh instance at ${rate / 1000} kHz starts in the state init() gives`, same, "");
+  }
 }
 
 // Switching to a module creates a fresh instance inside the audio thread
 // (kept modules are made once, with the node): report what that costs.
-const proc = new Reverb({ processorOptions: { modules: modules.map((m) => ({ ...m, wasm: Buffer.from(m.wasm, "base64"), params: m.params.map((p) => p.value) })) } });
+const proc = new Reverb({ processorOptions: { libm, modules: modules.map((m) => ({ ...m, wasm: Buffer.from(m.wasm, "base64"), params: m.params.map((p) => p.value) })) } });
 const costs = modules.map((m, i) => { const t = process.hrtime.bigint(); proc.create(i); return `${m.name} ${(Number(process.hrtime.bigint() - t) / 1e6).toFixed(1)}${m.keep ? " (kept)" : ""}`; });
 console.log("INFO  switching cost (ms): " + costs.join(", "));
 

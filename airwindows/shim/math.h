@@ -1,6 +1,6 @@
 // libm for the freestanding WebAssembly build. floor/fabs/sqrt/ceil/trunc map to
-// single wasm instructions; the rest are imported from the host (Math.* in JS),
-// the same way the Faust modules get theirs.
+// single wasm instructions; the rest are imported from the host: musl's libm built
+// to wasm (libm/, see web/faust-runtime.js), the same way the Faust modules get theirs.
 #ifndef AW_SHIM_MATH_H
 #define AW_SHIM_MATH_H
 

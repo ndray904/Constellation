@@ -431,7 +431,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
     </div>
 
     <h2>Nebula: where the code comes from</h2>
-    <p>Nebula runs all 42 reverbs in Airwindows' own Reverb category, plus StarChild2, all by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a> from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and compares: 78 of 86 test renders are bit-identical, and the rest match to 160 dB or better, except kPlateC at its defaults. Its output compressor can flip on a last-bit rounding difference while the input is loud, then comes back bit-identical.</p>
+    <p>Nebula runs all 42 reverbs in Airwindows' own Reverb category, plus StarChild2, all by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a> from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and compares: 81 of 86 test renders are bit-identical, and the rest match to 160 dB or better.</p>
     <p>The selector's one-line descriptions are Chris Johnson's, from his Airwindopedia. Plugins that are fully wet by default start at 50% here, because an instrument patched in with "To Nebula" is heard only through Nebula. Knobs show each plugin's own readout where it has one (PocketVerbs' Type, kPlate's Damping); plain 0–1 controls show as percent. VerbSixes and VerbSevens are calibrated reference reverbs with no controls.</p>
     <p>To keep knob moves from clicking, each change crossfades over 20 ms from the running reverb to an exact copy of it with the new setting.</p>
     <details>
@@ -460,7 +460,9 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
     </div>
     <p>The six "Deep space" reverbs are David Braun's Faust models of six modes of Valhalla DSP's free ValhallaSupermassive. They take the plug-in's mode names, and Cloud Seed keeps its name as its README allows. Neither Valhalla DSP nor Ghost Note Audio made or endorses this project. Texture is the reverb from the Rings and Clouds Eurorack modules, renamed as the Mutable Instruments license asks of derivative works.</p>
     <p>Cloud Seed starts from its core's one bundled program, Dark Plate, with nine of its 45 parameters on knobs. Texture is Rings' version, tuned for 48 kHz; at 44.1 kHz its delays run 9% longer. Plate keeps Dattorro's delay lengths in samples at 29.8 kHz, so at 48 kHz it is a smaller plate. Native builds of the two C++ reverbs match the browser's: Texture bit for bit, Cloud Seed to 136 dB.</p>
-    <p>Aurora's knobs glide rather than jump. A sudden change inside a reverb's feedback loop (a gain, a diffusion coefficient, a delay length) clicks. So gains and coefficients ease in over about 20 ms, and delay times slew like a tape delay's time knob, bending the pitch by at most 25% while they move. Cloud Seed is created once, when sound starts, because its 64 MB of delay lines take about 80 ms to clear. While another reverb plays, it rings out silently in the background.</p>
+    <p>Aurora's knobs glide rather than jump. A sudden change inside a reverb's feedback loop (a gain, a diffusion coefficient, a delay length) clicks. So gains and coefficients ease in over about 20 ms, and delay times slew like a tape delay's time knob, bending the pitch by at most 25% while they move.</p>
+    <p>Every reverb in Nebula and Aurora is made, and run once silently, before sound starts. Making one while playing stalls the audio for 3–25 ms: Chrome compiles WebAssembly on first use, and allocating or freeing a large reverb's memory (up to 64 MB) makes the browser stop for garbage collection. Both break up the sound. A reverb you switch away from rings out silently in the background, so switching back to it doesn't bring back an old tail.</p>
+    <p>All the instruments and reverbs get their sines, exponentials and powers from <a href="https://musl.libc.org/" target="_blank" rel="noopener">musl</a>'s math library (MIT), compiled to WebAssembly along with them. Calling the browser's own <code>Math.sin</code> from WebAssembly creates a little garbage on every call. At several calls per sample, collecting it paused the audio often enough to crackle.</p>
     <details>
       <summary>Aurora licenses</summary>
       <p><strong>MIT</strong>: Cloud Seed (Copyright (c) 2024 Ghost Note Audio / Ghost Note Engineering Ltd), Rings reverb and stmlib (Copyright 2012–2014 Emilie Gillet), JPverb and Greyhole (Julian Parker, Till Bovermann), the ValhallaSupermassive models (David Braun):</p>
@@ -470,6 +472,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
       <p><strong>STK-4.3</strong>: Plate (Jakob Zerbian) and Zita (Copyright (C) 2003–2017 Julius O. Smith III), from the Faust standard library:</p>
       <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. Any person wishing to distribute modifications to the Software is asked to send the modifications to the original developer so that they can be incorporated into the canonical version. This is, however, not a binding provision of this license. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
       <p><strong>Freeverb</strong> (Copyright (C) 2003–2017 GRAME): LGPL 2.1 or later, with GRAME's exception that code generated by the Faust compiler from these libraries may be released under any license.</p>
+      <p><strong>musl libm</strong>, used by every instrument and reverb (Copyright © 2005–2020 Rich Felker, et al.; parts from FreeBSD's msun, Sun Microsystems' fdlibm and Arm's optimized-routines, under the permissive terms in musl's COPYRIGHT): MIT, as above.</p>
     </details>
   </section>
 </div>
@@ -774,7 +777,7 @@ class Synth {
     const { wasm, meta } = ASSETS.synths[this.key];
     this.node = new AudioWorkletNode(ctx, "faust-mono", {
       numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
-      processorOptions: { wasm: base64ToBytes(wasm), meta },
+      processorOptions: { wasm: base64ToBytes(wasm), meta, libm: base64ToBytes(ASSETS.libm) },
     });
     for (const [name, value] of Object.entries({ ...this.params, ...shared })) this.node.port.postMessage({ name, value });
     this.node.port.onmessage = (e) => { this.lfo = e.data.lfo; };
@@ -1208,10 +1211,15 @@ class Effect extends Synth {
     this.node = new AudioWorkletNode(ctx, "reverb", {
       numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: "explicit",
       processorOptions: {
+        libm: base64ToBytes(ASSETS.libm),
         modules: this.mods.map((m, i) => ({
-          kind: m.kind, wasm: base64ToBytes(m.wasm), meta: m.meta, controls: m.controls, declick: m.declick, keep: m.keep, params: this.store[i],
+          kind: m.kind, wasm: base64ToBytes(m.wasm), meta: m.meta, controls: m.controls, declick: m.declick, params: this.store[i],
         })),
       },
+    });
+    await new Promise((resolve, reject) => {
+      this.node.port.onmessage = (e) => { if (e.data.ready) resolve(); };
+      this.node.onprocessorerror = () => reject(new Error(`${this.spec.short} failed to start`));
     });
     this.node.port.postMessage({ algo: this.params.mode });
     this.analyser = ctx.createAnalyser();
@@ -1252,6 +1260,10 @@ function startAudio() {
   if (starting) return starting;
   starting = (async () => {
     ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
+    // Nothing plays until every node is built: the reverb units make all their
+    // instances up front (see web/faust-worklet.js), work on the audio thread
+    // that would otherwise break up the first sounds.
+    await ctx.suspend();
     const url = URL.createObjectURL(new Blob([ASSETS.worklet], { type: "text/javascript" }));
     await ctx.audioWorklet.addModule(url);
     master = ctx.createGain();
