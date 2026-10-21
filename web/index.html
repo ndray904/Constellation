@@ -574,6 +574,8 @@ const AW_GROUPS = [
   ["Classic", ["Ultralight", "Ultralight2", "VerbTiny", "VerbThic", "CreamCoat", "CrunchCoat"]],
 ];
 // Each plugin in Chris Johnson's words (his Airwindopedia).
+// Starting values that differ from the plugin's own defaults (0-1).
+const AW_START = { Infinity2: { Feedback: 0.35 }, kCosmos: { Derez: 0.35 } };
 const AW_ABOUT = {
   Galactic3: "is exactly Galactic again, but with better undersampling.",
   Galactic2: "is a super-reverb REdesigned specially for pads and space ambient.",
@@ -673,7 +675,7 @@ const SPECS = {
     bank: "reverbs", modeTitle: "Reverb", mode: 0, knobs: {}, title: "Airwindows", credit: "Airwindows · Chris Johnson · MIT",
     // Airwindows plugins (airwindows/src), grouped; "start" overrides a plugin default.
     algorithms: AW_GROUPS.flatMap(([group, names]) => names.map((module) => ({
-      module, label: module, group, about: `${module} ${AW_ABOUT[module]}`, start: {},
+      module, label: module, group, about: `${module} ${AW_ABOUT[module]}`, start: AW_START[module] || {},
     }))),
     // values by the plugin's own parameter names; the rest start at their defaults
     presets: [
