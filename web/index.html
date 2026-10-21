@@ -295,7 +295,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
   <header>
     <div>
       <h1>Constellation</h1>
-      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds eight space reverbs from Airwindows' open-source code.</p>
+      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds fourteen reverbs from Airwindows' open-source code.</p>
     </div>
     <span class="status" id="status">Sound off · touch a ribbon</span>
   </header>
@@ -423,7 +423,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
     </div>
 
     <h2>Nebula: where the code comes from</h2>
-    <p>Nebula runs eight space reverbs by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a>, from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and confirms the browser version's output matches it, bit for bit in almost every case.</p>
+    <p>Nebula runs fourteen reverbs by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a>, from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and confirms the browser version's output matches it, bit for bit in almost every case.</p>
     <p>The selector's one-line descriptions are Chris Johnson's, from his Airwindopedia. Plugins that are fully wet by default start at 50% here, because an instrument patched in with "To Nebula" is heard only through Nebula.</p>
     <p>To keep knob moves from clicking, each change crossfades over 20 ms from the running reverb to an exact copy of it with the new setting. Every reverb is made, and run once silently, before sound starts: making one while playing would stall the audio. A reverb you switch away from rings out silently in the background, so switching back to it doesn't bring back an old tail. With nothing playing into it and its tail gone, Nebula sleeps and costs nothing.</p>
     <p>All the instruments and reverbs get their sines, exponentials and powers from <a href="https://musl.libc.org/" target="_blank" rel="noopener">musl</a>'s math library (MIT), compiled to WebAssembly along with them. Calling the browser's own <code>Math.sin</code> from WebAssembly creates a little garbage on every call; at several calls per sample, collecting it paused the audio often enough to crackle.</p>
@@ -471,6 +471,7 @@ function quantize(semis, scale) {
 
 const AW_GROUPS = [
   ["Space", ["Galactic3", "Galactic2", "Galactic", "StarChild2", "Infinity", "Infinity2", "kCosmos", "kAlienSpaceship"]],
+  ["Classic", ["Ultralight", "Ultralight2", "VerbTiny", "VerbThic", "CreamCoat", "CrunchCoat"]],
 ];
 // Each plugin in Chris Johnson's words (his Airwindopedia).
 const AW_ABOUT = {
@@ -482,6 +483,12 @@ const AW_ABOUT = {
   Infinity2: "expands Infinity with more tone shaping and a much-requested kill-switch!",
   kCosmos: "is infinite space ambient, or titanic hall.",
   kAlienSpaceship: "is an unreal realistic reverb.",
+  Ultralight: "is the most low-CPU matrix reverb I can make.",
+  Ultralight2: "is more of the most low-CPU matrix reverb I can make.",
+  VerbTiny: "is a classic artificial reverb that expands reverb shape.",
+  VerbThic: "is a classic artificial reverb for being opaque and textured.",
+  CreamCoat: "is a swiss army knife reverb with soft undersampling.",
+  CrunchCoat: "is a cursed retro digital reverb!",
 };
 
 const SPECS = {
@@ -577,6 +584,8 @@ const SPECS = {
       { name: "Space station", algo: "StarChild2", values: { Sustain: 1, Grain: 0.7, "Dry/Wet": 0.35 } },
       { name: "Cosmos",        algo: "kCosmos", values: { Regen: 0.7, "Dry/Wet": 0.45 } },
       { name: "Alien",         algo: "kAlienSpaceship", values: { "Dry/Wet": 0.4 } },
+      { name: "Light hall",    algo: "Ultralight2", values: { "Dry/Wet": 0.35 } },
+      { name: "Crunch",        algo: "CrunchCoat", values: { Regen: 0.4, "Dry/Wet": 0.4 } },
     ],
   },
 };

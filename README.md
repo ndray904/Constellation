@@ -4,9 +4,10 @@ Browser synths modelled from KORG's public schematics: the monotron (2010-10-13)
 **Pulsar**, the monotron DUO (2012-02-22) as **Binary**, and the monotron DELAY
 (2012-02-22) as **Singularity**. Each synth is one Faust file compiled to
 WebAssembly and run in an AudioWorklet; all three play on one page. **Nebula** adds
-eight space reverbs by Chris Johnson of [Airwindows](https://www.airwindows.com/) (Galactic,
-Galactic2, Galactic3, StarChild2, Infinity, Infinity2, kCosmos, kAlienSpaceship), compiled
-from his unmodified C++.
+fourteen reverbs by Chris Johnson of [Airwindows](https://www.airwindows.com/), compiled from
+his unmodified C++: eight space ones (Galactic, Galactic2, Galactic3, StarChild2, Infinity,
+Infinity2, kCosmos, kAlienSpaceship) and six classic ones (Ultralight, Ultralight2, VerbTiny,
+VerbThic, CreamCoat, CrunchCoat).
 
 ## Layout
 
@@ -16,7 +17,7 @@ from his unmodified C++.
 | `dsp/monotron.dsp` | Pulsar: sawtooth VCO, ramp LFO, ribbon-tracking cutoff. Every constant cites its schematic part, tagged `[schematic]`, `[hardware]` or `[estimate]`. |
 | `dsp/duo.dsp` | Binary: two square VCOs, X-MOD, VCO1/VCO1+2 switch, scale quantizer (Chromatic / Major / Minor / Off). |
 | `dsp/delay.dsp` | Singularity: sawtooth VCO, triangle/square LFO, fixed-resonance VCF, PT2399 echo fed back into the filter. |
-| `airwindows/src/` | Airwindows LinuxVST sources for Nebula's eight reverbs, unmodified (upstream `airwindows/airwindows`: Galactic3, Infinity, StarChild2 @ `b79c7a3`, the rest @ `e68f751`). |
+| `airwindows/src/` | Airwindows LinuxVST sources for Nebula's fourteen reverbs, unmodified (upstream `airwindows/airwindows`: Galactic3, Infinity, StarChild2 @ `b79c7a3`, the rest @ `e68f751`). |
 | `airwindows/shim/` | What the plugins need to build as freestanding wasm32: a stand-in for the VST SDK base class, libm (math imported from JS, `fmax`/`fmin`, a correctly rounded software `fma`), a tiny `set`/`string`, binary128 `long double` helpers, and the C interface (`wrapper.cpp`). |
 | `airwindows/LICENSE` | Airwindows' MIT license (Copyright (c) 2018 Chris Johnson). |
 | `libm/` | musl's math library (MIT), the subset the modules import: `libm/musl` holds the sources unmodified (from WebAssembly/wasi-libc @ `ebd7c7f`, musl's own site being unreachable from the build machine), `libm/inc` and `builtins.c` stand in for musl's generated headers and use wasm's own `sqrt`/`fabs`. Every module imports its math from this instead of JavaScript's `Math`, whose results get boxed when called from wasm: enough garbage to make V8 pause the audio thread. |
@@ -68,7 +69,7 @@ node test/browser.cjs     # optional arg: a folder for screenshots
 6. Routing: "To Binary" / "To Singularity" patch an instrument into another's line in (Pulsar -> Binary or Singularity, Binary -> Singularity; chains allowed, no loops) (like a cable from the headphone jack: direct output and speaker path bypassed). The line-in level (`line in` = 1, gain 2 into the VCF mixer) is an estimate. Hold latches the gate on Pulsar and Binary (space bar toggles it); it is a software addition, not on the hardware.
 7. MIDI keyboard input (Web MIDI) works in the standalone file in Chrome, Edge and Firefox; the Claude viewer blocks device access, and Safari has no Web MIDI. Recording captures the master bus as 16-bit stereo WAV; in the viewer it is saved inside a .zip (WAV is not an allowed download type there), standalone as a plain .wav.
 8. VST3/AU/CLAP: the same `.dsp` builds with `faust2juce` or the Faust iPlug2/DPF architectures.
-9. Every Nebula reverb instance is made when sound starts (the context stays suspended until they are), then reused: making one while playing stalls the audio thread (Chrome compiles wasm lazily, and allocating or freeing wasm memory triggers garbage collection). With nothing coming in and its tail gone, Nebula sleeps and costs nothing. An Aurora unit (Faust standard-library reverbs, Cloud Seed, the Rings reverb) and 35 more Airwindows reverbs were tried and taken out again: together they made the page too slow to start and to switch.
+9. Every Nebula reverb instance is made when sound starts (the context stays suspended until they are), then reused: making one while playing stalls the audio thread (Chrome compiles wasm lazily, and allocating or freeing wasm memory triggers garbage collection). With nothing coming in and its tail gone, Nebula sleeps and costs nothing. An Aurora unit (Faust standard-library reverbs, Cloud Seed, the Rings reverb) and 29 more Airwindows reverbs were tried and taken out again: together they made the page too slow to start and to switch.
 
 ## License
 

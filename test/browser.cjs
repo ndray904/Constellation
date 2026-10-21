@@ -367,7 +367,7 @@ const shots = process.argv[2];
     await p.click("#nebula [data-step='-1']");
     const count = await p.evaluate(() => document.querySelectorAll("#nebula-algo option").length);
     check(`[${name}] Nebula is silent at load`, nebulaIdle < 0.001, `(rms ${nebulaIdle.toExponential(1)})`);
-    check(`[${name}] Nebula offers its ${count} space reverbs`, count === 8);
+    check(`[${name}] Nebula offers its ${count} reverbs`, count === 14);
     check(`[${name}] Nebula's selector loads each plugin's own controls`,
       galactic.join() === "Replace,Bright,Detune,Derez,Bigness,Dry/Wet" && infinity[0].join() === "Filter,Damping,Size,Dry/Wet"
       && infinity[1] === "Airwindows · Infinity" && starchild.join() === "Sustain,Grain,Dry/Wet", `(${galactic} | ${infinity[0]} | ${starchild})`);
