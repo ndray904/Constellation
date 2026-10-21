@@ -1268,8 +1268,9 @@ class Synth {
     g.strokeStyle = sc.grid; g.lineWidth = 1;
     for (let x = 0; x <= 8; x++) { g.beginPath(); g.moveTo(x * w / 8, 0); g.lineTo(x * w / 8, h); g.stroke(); }
     for (let y = 0; y <= 4; y++) { g.beginPath(); g.moveTo(0, y * h / 4); g.lineTo(w, y * h / 4); g.stroke(); }
-    if (audioState !== "on") {   // before sound: a hint, then a pulsing "LOADING"
+    if (audioState !== "on" || ctx.state !== "running") {   // before sound: a hint, then a pulsing "LOADING"
       if (audioState === "off") this.scopeLabel(sc, "Touch a ribbon to start.", 0.9);
+      else if (audioState === "on") this.scopeLabel(sc, "Tap to turn sound on", 0.9);   // Safari wants a tap
       else this.scopeLabel(sc, "LOADING", 0.55 + 0.45 * Math.sin(performance.now() / 260));
     } else if (this.analyser) {
       const wave = this.wave;
@@ -1493,14 +1494,18 @@ function startAudio() {
   if (starting) return starting;
   audioState = "loading";
   starting = (async () => {
+    // iOS: play through the speaker even with the ring/silent switch on silent
+    // (Safari 17+; older iOS is handled by the silent <audio> in unlockAudio).
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
     ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
-    // Nothing plays until every node is built: the reverb units make all their
-    // instances up front (see web/faust-worklet.js), work on the audio thread
-    // that would otherwise break up the first sounds.
-    await ctx.suspend();
+    ctx.onstatechange = () => { if (audioState === "on") showSoundState(); };   // e.g. iOS pauses it for a call
+    // Nothing is heard until every node is built (master starts muted): the
+    // reverb units make all their instances up front (see web/faust-worklet.js),
+    // work on the audio thread that would otherwise break up the first sounds.
     const url = URL.createObjectURL(new Blob([ASSETS.worklet], { type: "text/javascript" }));
     await ctx.audioWorklet.addModule(url);
     master = ctx.createGain();
+    master.gain.value = 0;                            // muted until everything is built
     masterAnalyser = ctx.createAnalyser();
     masterAnalyser.fftSize = 4096;
     master.connect(masterAnalyser);
@@ -1513,10 +1518,12 @@ function startAudio() {
     for (const s of Object.values(synths)) await s.connect();
     for (const s of Object.values(synths)) for (const [t, g] of Object.entries(s.sends)) g.connect(synths[t].node);
     applyRouting();
-    await ctx.resume();
+    master.gain.value = 1;
     audioState = "on";
-    statusEl.textContent = "Sound on · " + ctx.sampleRate / 1000 + " kHz";
-    statusEl.classList.add("on");
+    // Safari only starts sound inside a tap; if this resume is refused, the
+    // next tap's unlockAudio() starts it.
+    await ctx.resume().catch(() => {});
+    showSoundState();
   })().catch((err) => {
     statusEl.textContent = "Audio could not start: " + err.message;
     audioState = "off";
@@ -1524,7 +1531,36 @@ function startAudio() {
   });
   return starting;
 }
-document.addEventListener("pointerdown", () => { startAudio(); if (ctx && ctx.state !== "running") ctx.resume(); }, { capture: true });
+function showSoundState() {
+  const on = ctx && ctx.state === "running";
+  statusEl.textContent = on ? "Sound on · " + ctx.sampleRate / 1000 + " kHz" : "Tap anywhere to turn sound on";
+  statusEl.classList.toggle("on", !!on);
+}
+// iOS Safari lets a page start sound only from the end of a touch or a click,
+// not from pointerdown (which comes from the touch's start). So these resume
+// the context (it stays muted until startAudio() has built everything). iOS before 17 has no navigator.audioSession, and
+// mutes Web Audio on the silent switch unless a media element is playing: a
+// looping silent <audio> started here moves the page to playback.
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let silentAudio = null;
+function unlockAudio() {
+  if (isIOS && !navigator.audioSession && !silentAudio) {
+    const n = 4410, b = new ArrayBuffer(44 + n * 2), v = new DataView(b);   // 0.1 s of 16-bit silence
+    const str = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+    str(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); str(8, "WAVEfmt "); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 44100, true); v.setUint32(28, 88200, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, "data"); v.setUint32(40, n * 2, true);
+    silentAudio = new Audio(URL.createObjectURL(new Blob([b], { type: "audio/wav" })));
+    silentAudio.loop = true;
+    silentAudio.setAttribute("playsinline", "");
+    silentAudio.play().catch(() => { silentAudio = null; });
+  }
+  if (!ctx || ctx.state === "running") return;
+  ctx.resume().then(() => { if (audioState === "on") showSoundState(); }, () => {});
+}
+document.addEventListener("pointerdown", () => { startAudio(); if (ctx && ctx.state !== "running" && audioState === "on") ctx.resume().then(showSoundState, () => {}); }, { capture: true });
+document.addEventListener("touchend", unlockAudio, { capture: true });
+document.addEventListener("click", unlockAudio, { capture: true });
 document.addEventListener("keydown", () => startAudio(), { capture: true });
 
 /* ---------- routing: patch cables between instruments ---------- */
