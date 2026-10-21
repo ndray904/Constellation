@@ -89,6 +89,9 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
+  /* no browser tap highlight: on Android it tinted the whole ribbon blue for
+     as long as a finger was on it */
+  -webkit-tap-highlight-color: transparent;
 }
 .devices { display: grid; gap: 28px; }
 .device.duo { --body: var(--duo-body); --body-hi: var(--duo-body-hi); --body-edge: var(--duo-body-edge); }
@@ -186,6 +189,8 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .finger { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--silk); opacity: 0; box-shadow: 0 0 12px 2px rgba(239,230,210,0.45); pointer-events: none; }
 .finger.on { opacity: 0.9; }
 .slot.off-scale::after, .slot.off-scale::before { opacity: 0.28; }
+.ribbon:focus { outline: none; }
+.ribbon:focus-visible { outline: 2px solid var(--silk); outline-offset: 3px; }
 .ribbon-scale { display: grid; grid-template-columns: repeat(var(--slots), 1fr); padding: 0 4px; font-family: var(--font-mono); font-size: 10px; color: var(--silk-dim); text-align: center; }
 
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px; }
@@ -318,6 +323,11 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
 .skin-cosmos .device.skinned.pulsar-skin { --acc: #3fb6ff; --acc2: #9fe0ff; --title: #dcf2ff; }
 .skin-cosmos .device.skinned.binary-skin { --acc: #4aa8ff; --acc2: #ffa040; --title: #f3f5fb; }
 .skin-cosmos .device.skinned.singularity-skin { --acc: #9d6bff; --acc2: #d4b8ff; --title: #dccbff; }
+.skin-cosmos .device.skinned.nebula-skin { --acc: #ff5fb4; --acc2: #ffc4e5; --title: #ffe1f1; }
+/* Nebula's reverb selector: a lit display and dark step buttons */
+.skin-cosmos .skinned .algo select { color: var(--acc2); background: rgba(3,4,9,0.75); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 45%, transparent), inset 0 2px 6px #000; text-shadow: 0 0 8px var(--acc); }
+.skin-cosmos .skinned .algo-step { background: linear-gradient(180deg, #1d2230, #0b0d13); color: var(--acc2); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 45%, transparent), 0 2px 5px #000; }
+.skin-cosmos .skinned .credit { color: color-mix(in srgb, var(--acc) 40%, var(--silk-dim)); }
 .skin-cosmos .skinned .foot .brand { display: none; }
 /* control groups sit in brackets, titled in the accent colour */
 .skin-cosmos .skinned .controls > .group:not(.scope-group) {
@@ -704,6 +714,9 @@ const SKINS = {
   delay: { art: "singularity", acc: "#9d6bff", acc2: "#d4b8ff",
     scope: { bg: "rgba(5,3,12,0.12)", grid: "rgba(157,107,255,0.14)", trace: "#c9a6ff" },
     logo: `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="11" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="20" r="3" fill="currentColor"/><path d="M20 1v7M20 32v7M1 20h7M32 20h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` },
+  nebula: { art: "nebula", acc: "#ff5fb4", acc2: "#ffc4e5", gas: ["#ff5fb4", "#5fd8e6", "#7d5cff", "#ff9a6a"],
+    scope: { bg: "rgba(8,3,10,0.12)", grid: "rgba(255,95,180,0.13)", trace: "#ffb3dc" },
+    logo: `<svg viewBox="0 0 44 40"><path d="M22 20c0-3.5 4.2-5 6.6-2.6 2.8 2.8.6 7.6-3.6 8.2-5.6.8-10-3.8-9-9.2 1.2-6.4 8.6-9.6 14.4-6.8 6.4 3.1 8 11.6 3.6 16.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="22" cy="20" r="2.2" fill="currentColor"/><circle cx="8" cy="9" r="1.2" fill="currentColor"/><circle cx="36" cy="33" r="1.2" fill="currentColor"/></svg>` },
 };
 
 function seeded(seed) {   // mulberry32
@@ -789,6 +802,36 @@ const SKIN_ART = {
       for (let i = 0; i < 300; i++) {   // a granulated surface
         const an = r() * 7, d = Math.sqrt(r()) * rad;
         g.fillStyle = rgba(col, 0.3 * r()); g.fillRect(x + Math.cos(an) * d, y + Math.sin(an) * d, 1.6, 1.6);
+      }
+    }
+  },
+  // a nebula: filaments of glowing gas, dark dust lanes, young stars
+  nebula(g, r, s, cx, cy, S) {
+    for (let f = 0; f < 7; f++) {   // each filament: soft glows strung along a wandering path
+      let x = cx + (r() - 0.5) * S * 2.6, y = cy + (r() - 0.5) * S * 1.3, ang = r() * Math.PI * 2;
+      const col = s.gas[f % s.gas.length];
+      for (let i = 0; i < 70; i++) {
+        ang += (r() - 0.5) * 0.7;
+        x += Math.cos(ang) * S * 0.07; y += Math.sin(ang) * S * 0.045;
+        glow(g, x, y, S * (0.12 + 0.4 * r()), col, 0.03 + 0.05 * r());
+      }
+    }
+    glow(g, cx, cy, S * 1.4, s.acc, 0.12);
+    g.globalCompositeOperation = "source-over";   // dust lanes in front of the gas
+    for (let i = 0; i < 26; i++) {
+      const x = cx + (r() - 0.5) * S * 2.6, y = cy + (r() - 0.5) * S * 1.3, rad = S * (0.12 + 0.3 * r());
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, "rgba(3,2,8,0.45)"); gr.addColorStop(1, "rgba(3,2,8,0)");
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
+    }
+    g.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 16; i++) {   // young stars lighting the gas
+      const x = cx + (r() - 0.5) * S * 2.4, y = cy + (r() - 0.5) * S * 1.2, rad = S * (0.02 + 0.04 * r() ** 2);
+      glow(g, x, y, rad * 5, s.gas[i % s.gas.length], 0.25);
+      glow(g, x, y, rad, "#ffffff", 0.9);
+      if (i % 5 === 0) {
+        g.strokeStyle = "rgba(255,240,250,0.35)"; g.lineWidth = 0.7;
+        g.beginPath(); g.moveTo(x - rad * 6, y); g.lineTo(x + rad * 6, y); g.moveTo(x, y - rad * 6); g.lineTo(x, y + rad * 6); g.stroke();
       }
     }
   },
@@ -1232,10 +1275,12 @@ class Effect extends Synth {
       g.items.push(`<option value="${i}">${a.label}</option>`);
     });
     const el = document.createElement("section");
-    el.className = "device " + s.theme;
+    el.className = "device " + s.theme + (SKINS[k] ? ` skinned ${SKINS[k].art}-skin` : "");
     el.id = k;
     el.setAttribute("aria-label", s.brand);
     el.innerHTML = `
+      ${SKINS[k] ? `<canvas class="skin-art" data-role="skin-art" aria-hidden="true"></canvas>
+      <div class="skin-head" aria-hidden="true">${SKINS[k].logo}<span class="skin-name">${s.brand}</span></div>` : ""}
       <div class="controls">
         <div class="group algo-group">
           <div class="group-title"><label for="${k}-algo">${s.modeTitle}</label><span>${s.algorithms.length}</span></div>
@@ -1291,6 +1336,12 @@ class Effect extends Synth {
     };
     new ResizeObserver(fit).observe(this.canvas);
     fit();
+    this.art = q("skin-art");
+    if (this.art) {   // redrawn when the panel or its scope changes size
+      const ro = new ResizeObserver(() => this.drawArt());
+      ro.observe(this.art);
+      ro.observe(this.canvas.parentElement);
+    }
   }
 
   setMode(m) {
