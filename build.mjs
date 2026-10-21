@@ -79,7 +79,7 @@ for (const name of REVERBS) {
   reverbs.push(cModule(name, out, { displayInit: true }));
 }
 
-// ---- Aurora: Faust standard-library reverbs, Texture and Cloud Seed ----------
+// ---- Aurora: Faust standard-library reverbs and Texture --------------------
 // Faust: dsp/aurora/*.dsp. C++: unmodified sources in aurora/src behind the
 // wrappers in aurora/shim, built like the Airwindows plugins.
 // The end of a wasm module's data segments (Faust keeps its JSON description
@@ -128,7 +128,7 @@ function initPatch(bytes, meta) {
   if (Buffer.compare(full, patched) !== 0) throw new Error("fresh init doesn't match a full init");
   return runs;
 }
-const AURORA_FAUST = ["plate", "jpverb", "greyhole", "zita", "freeverb", "gemini", "centaurus", "sagittarius", "annihilator", "lyra", "virgo"];
+const AURORA_FAUST = ["plate", "jpverb", "greyhole", "zita", "freeverb", "lyra", "virgo"];
 const aurora = [];
 mkdirSync(join(root, "build/aurora"), { recursive: true });
 for (const name of AURORA_FAUST) {
@@ -153,13 +153,11 @@ for (const name of AURORA_FAUST) {
 }
 const AURORA_C = {
   texture: ["-DTEST", "-I", "aurora/src/mutable", "aurora/shim/texture.cpp"],
-  cloudseed: ["-DBUFFER_SIZE=128", "-DMAX_STR_SIZE=32", "-I", "aurora/src/cloudseed", "-include", "cmath", "aurora/shim/cloudseed.cpp",
-    "aurora/src/cloudseed/Parameters.cpp", "aurora/src/cloudseed/DSP/Biquad.cpp", "aurora/src/cloudseed/DSP/RandomBuffer.cpp"],
 };
 for (const [name, args] of Object.entries(AURORA_C)) {
   const out = `build/aurora/${name}.wasm`;
   execFileSync("clang++", [...CLANG, "-I", "aurora/shim", "-I", "airwindows/shim", ...args, ...LINK, "-o", out], { cwd: root, stdio: "inherit" });
-  aurora.push(cModule(name, out, { declick: "glide" }));   // both wrappers glide (see aurora/shim)
+  aurora.push(cModule(name, out, { declick: "glide" }));   // the wrapper glides (see aurora/shim)
 }
 
 writeFileSync(join(root, "build/aurora/modules.json"), JSON.stringify(aurora));   // for test/aurora.cjs

@@ -93,8 +93,7 @@ registerProcessor("recorder", RecorderProcessor);
 // of the running reverb (same memory, so the same tank contents) and the output
 // crossfades to it over ~20 ms. Changes that arrive during a fade are applied
 // together at its end, so a knob drag becomes a run of short crossfades.
-// "glide" modules are too big to copy every few milliseconds (CloudSeed, the
-// Supermassive models); they smooth their own controls, so changes go straight in.
+// "glide" modules (Aurora's) smooth their own controls, so changes go straight in.
 //
 // Every instance is made in the constructor (while the page holds the sound
 // off) and reused, never thrown away: one per module, two for "clone" ones.
@@ -106,6 +105,10 @@ registerProcessor("recorder", RecorderProcessor);
 // not memory. A reverb switched away from rings out on silence for up to 10 s
 // (the two most recent at a time), so selecting it again doesn't bring back
 // an old tail.
+//
+// With nothing coming in and its tail gone (1 s below -140 dB, nothing else
+// ringing out), the unit sleeps: it outputs silence without running anything,
+// until input arrives. An effect nobody has patched in costs nothing.
 // The C modules' math imports (see airwindows/shim/math.h): musl's libm in
 // wasm when loaded (see faust-runtime.js), Math.* otherwise.
 const AW_MATH_NAMES = ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow", "fmod"];
@@ -133,6 +136,7 @@ class ReverbProcessor extends AudioWorkletProcessor {
       return fx;
     }));
     this.ringing = [];                       // pooled instances still ringing out, newest last
+    this.quietFor = 0;                       // frames the output has been silent
     this.current = this.create(0);
     this.previous = null;
     this.dirty = false;            // parameters changed since the current instance got them
@@ -251,11 +255,21 @@ class ReverbProcessor extends AudioWorkletProcessor {
       this.current = next;
       this.dirty = false;
     }
-    this.ringOut();
     const input = inputs[0] || [];
     const inL = input[0] || this.zeros, inR = input[1] || inL;
     const [L, R] = outputs[0];
+    let live = false;
+    for (let i = 0; i < BLOCK && !live; i++) live = inL[i] !== 0 || inR[i] !== 0;
+    if (live) this.quietFor = 0;
+    else if (this.quietFor >= sampleRate && !this.previous && !this.ringing.length) {
+      L.fill(0); if (R) R.fill(0);           // asleep
+      return true;
+    }
+    this.ringOut();
     const [cL, cR] = this.run(this.current, inL, inR);
+    let peak = 0;
+    for (let i = 0; i < BLOCK; i++) peak = Math.max(peak, Math.abs(cL[i]), Math.abs(cR[i]));
+    this.quietFor = peak < 1e-7 ? this.quietFor + BLOCK : 0;
     if (!this.previous) {
       L.set(cL); if (R) R.set(cR);
       return true;

@@ -1,5 +1,5 @@
 // Native reference for test/aurora-parity.cjs: an Aurora wrapper
-// (aurora/shim/texture.cpp or cloudseed.cpp) built with the real C/C++
+// (aurora/shim/texture.cpp) built with the real C/C++
 // libraries, driven the way the AudioWorklet host drives the wasm build.
 // Usage: AW_INPUT=<file> native <sampleRate> <frames> [paramIndex value]...
 // AW_INPUT holds blocks of 128 left then 128 right float32 samples; the output

@@ -1,7 +1,7 @@
-// Checks that Aurora's C++ reverbs compiled to wasm (build/aurora, from
-// build.mjs: the wrappers in aurora/shim over the unmodified sources in
-// aurora/src, with the shim's own vector, allocator and libm) produce the same
-// audio as the same wrappers built natively with the real C/C++ libraries.
+// Checks that Aurora's C++ reverb (Texture) compiled to wasm (build/aurora, from
+// build.mjs: the wrapper in aurora/shim over the unmodified sources in
+// aurora/src, with the shim's own runtime and libm) produces the same audio as
+// the same wrapper built natively with the real C/C++ libraries.
 // Like test/airwindows-parity.cjs, differences can only come from last-bit
 // libm rounding, so a faithful port matches to well over 100 dB.
 // Usage: node test/aurora-parity.cjs   (needs a native clang++)
@@ -51,8 +51,6 @@ function runWasm(name, params) {
 
 const SOURCES = {
   texture: ["-DTEST", "-I", "aurora/src/mutable", "aurora/shim/texture.cpp"],
-  cloudseed: ["-DBUFFER_SIZE=128", "-DMAX_STR_SIZE=32", "-I", "aurora/src/cloudseed", "aurora/shim/cloudseed.cpp",
-    "aurora/src/cloudseed/Parameters.cpp", "aurora/src/cloudseed/DSP/Biquad.cpp", "aurora/src/cloudseed/DSP/RandomBuffer.cpp"],
 };
 const nativeDir = path.join(root, "build/aurora-native");
 fs.mkdirSync(nativeDir, { recursive: true });
@@ -70,8 +68,6 @@ function runNative(name, params) {
 const CASES = [
   ["texture", []],
   ["texture", [[0, 0.8], [1, 0.9], [2, 0.3], [3, 0.4]]],
-  ["cloudseed", []],
-  ["cloudseed", [[0, 0.7], [1, 0.3], [2, 0.8], [3, 0.5], [4, 0.6], [5, 0.7], [6, 0.5], [7, 0.3], [8, 0.6]]],
 ];
 let failed = 0;
 for (const [name, params] of CASES) {

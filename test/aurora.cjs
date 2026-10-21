@@ -2,7 +2,7 @@
 // (web/faust-worklet.js) in Node: each must ring on after its input stops and
 // stay finite and bounded, and dragging any of its knobs must not click.
 // "clone" modules crossfade to a copy of themselves per change; "glide" ones
-// (CloudSeed, the Supermassive models) slew their own controls.
+// (all of Aurora's) slew their own controls.
 // Usage: node test/aurora.cjs   (after node build.mjs)
 const fs = require("fs");
 const path = require("path");

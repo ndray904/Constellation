@@ -4,7 +4,7 @@
 // 9% longer. The tank stores samples as 16-bit, like the hardware's SRAM.
 //
 // Its settings act inside the feedback loop, so a jump in Time or Diffusion
-// steps the tank and clicks. So, like cloudseed.cpp, the wrapper runs it in
+// steps the tank and clicks. So the wrapper runs it in
 // 16-sample chunks and moves each setting a little toward its knob before each.
 #include "runtime.h"
 #include "text.h"

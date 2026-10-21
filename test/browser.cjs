@@ -408,15 +408,15 @@ const shots = process.argv[2];
     check(`[${name}] Nebula's tail rings on after release`, verbTail > 0.005, `(rms ${verbTail.toFixed(4)})`);
     await p.click("#ribbon35-send-nebula");
 
-    // ---- Aurora (Faust, Cloud Seed, Texture) ----
+    // ---- Aurora (Faust, Texture) ----
     const auroraIdle = await loudest(() => rms(p, "aurora"));
     const plate = [await knobs("aurora"), await knobText("aurora", "Predelay"), await knobText("aurora", "Mix")];
-    await pick("aurora", "cloudseed");
-    const seed = [await knobs("aurora"), await knobText("aurora", "Decay"), await p.evaluate(() => document.querySelector("#aurora [data-role=credit]").textContent)];
+    await pick("aurora", "zita");
+    const zita = [await knobs("aurora"), await knobText("aurora", "Low X"), await p.evaluate(() => document.querySelector("#aurora [data-role=credit]").textContent)];
     await pick("aurora", "plate");
     check(`[${name}] Aurora is silent at load`, auroraIdle < 0.001, `(rms ${auroraIdle.toExponential(1)})`);
     check(`[${name}] Aurora: Plate's controls read in their units`, plate[0].join() === "Mix,Predelay,Decay,Damping,Diffusion,Tone" && plate[1] === "0.0 ms" && plate[2] === "35%", `(${plate.join(" | ")})`);
-    check(`[${name}] Aurora: Cloud Seed's controls and credit`, seed[0].join() === "Mix,Predelay,Size,Decay,Diffusion,Mod depth,Mod rate,Low cut,High cut" && seed[1] === "4.80 s" && /Ghost Note Audio/.test(seed[2]), `(${seed.join(" | ")})`);
+    check(`[${name}] Aurora: Zita's controls and credit`, zita[0].join() === "Mix,Predelay,Low decay,Mid decay,Low X,Damping" && zita[1] === "200 Hz" && /Adriaensen/.test(zita[2]), `(${zita.join(" | ")})`);
 
     await p.click("#ribbon35-hold");
     await press("#ribbon35-ribbon", 0.4, 150);

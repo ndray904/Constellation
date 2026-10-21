@@ -299,7 +299,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
   <header>
     <div>
       <h1>Constellation</h1>
-      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds 43 space reverbs from Airwindows' open-source code, and Aurora 13 more from the Faust standard library, Cloud Seed and Mutable Instruments' Eurorack firmware.</p>
+      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds 43 space reverbs from Airwindows' open-source code, and Aurora 8 more from the Faust standard library and Mutable Instruments' Eurorack firmware.</p>
     </div>
     <span class="status" id="status">Sound off · touch a ribbon</span>
   </header>
@@ -452,20 +452,20 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
           <tr><td>Zita</td><td class="part">Faust re.zita_rev1_stereo</td><td>Julius O. Smith III, after Fons Adriaensen's zita-rev1</td><td>STK-4.3</td></tr>
           <tr><td>JPverb, Greyhole</td><td class="part">Faust re.jpverb, re.greyhole</td><td>Julian Parker; Till Bovermann</td><td>MIT</td></tr>
           <tr><td>Freeverb</td><td class="part">Faust re.stereo_freeverb</td><td>Romain Michon, after Jezar</td><td>LGPL, with GRAME's exception for compiled code</td></tr>
-          <tr><td>Gemini, Centaurus, Sagittarius, Great Annihilator, Lyra, Virgo</td><td class="part">Faust re.valhallaSupermassive (copied into dsp/aurora/massive.lib)</td><td>David Braun</td><td>MIT</td></tr>
-          <tr><td>Cloud Seed</td><td class="part">CloudSeedCore (C++, unmodified)</td><td>Ghost Note Audio</td><td>MIT</td></tr>
+          <tr><td>Lyra, Virgo</td><td class="part">Faust re.valhallaSupermassive (copied into dsp/aurora/massive.lib)</td><td>David Braun</td><td>MIT</td></tr>
           <tr><td>Texture</td><td class="part">Rings reverb + stmlib (C++, unmodified)</td><td>Emilie Gillet</td><td>MIT</td></tr>
         </tbody>
       </table>
     </div>
-    <p>The six "Deep space" reverbs are David Braun's Faust models of six modes of Valhalla DSP's free ValhallaSupermassive. They take the plug-in's mode names, and Cloud Seed keeps its name as its README allows. Neither Valhalla DSP nor Ghost Note Audio made or endorses this project. Texture is the reverb from the Rings and Clouds Eurorack modules, renamed as the Mutable Instruments license asks of derivative works.</p>
-    <p>Cloud Seed starts from its core's one bundled program, Dark Plate, with nine of its 45 parameters on knobs. Texture is Rings' version, tuned for 48 kHz; at 44.1 kHz its delays run 9% longer. Plate keeps Dattorro's delay lengths in samples at 29.8 kHz, so at 48 kHz it is a smaller plate. Native builds of the two C++ reverbs match the browser's: Texture bit for bit, Cloud Seed to 136 dB.</p>
+    <p>The two "Deep space" reverbs, Lyra and Virgo, are David Braun's Faust models of two modes of Valhalla DSP's free ValhallaSupermassive, under the plug-in's mode names. Valhalla DSP did not make or endorse this project. Texture is the reverb from the Rings and Clouds Eurorack modules, renamed as the Mutable Instruments license asks of derivative works.</p>
+    <p>Texture is Rings' version, tuned for 48 kHz; at 44.1 kHz its delays run 9% longer. A native build of it matches the browser's bit for bit. Plate keeps Dattorro's delay lengths in samples at 29.8 kHz, so at 48 kHz it is a smaller plate.</p>
+    <p>Cloud Seed and four more Supermassive models (Gemini, Centaurus, Sagittarius, Great Annihilator) were here briefly. They were taken out because they cost the most to run (8–9% of a CPU core each) and to set up (up to 64 MB of delay lines each).</p>
     <p>Aurora's knobs glide rather than jump. A sudden change inside a reverb's feedback loop (a gain, a diffusion coefficient, a delay length) clicks. So gains and coefficients ease in over about 20 ms, and delay times slew like a tape delay's time knob, bending the pitch by at most 25% while they move.</p>
-    <p>Every reverb in Nebula and Aurora is made, and run once silently, before sound starts. Making one while playing stalls the audio for 3–25 ms: Chrome compiles WebAssembly on first use, and allocating or freeing a large reverb's memory (up to 64 MB) makes the browser stop for garbage collection. Both break up the sound. A reverb you switch away from rings out silently in the background, so switching back to it doesn't bring back an old tail.</p>
+    <p>Every reverb in Nebula and Aurora is made, and run once silently, before sound starts. Making one while playing stalls the audio for 3–25 ms: Chrome compiles WebAssembly on first use, and allocating or freeing a large reverb's memory makes the browser stop for garbage collection. Both break up the sound. A reverb you switch away from rings out silently in the background, so switching back to it doesn't bring back an old tail. With nothing playing into it and its tail gone, Nebula or Aurora sleeps and costs nothing.</p>
     <p>All the instruments and reverbs get their sines, exponentials and powers from <a href="https://musl.libc.org/" target="_blank" rel="noopener">musl</a>'s math library (MIT), compiled to WebAssembly along with them. Calling the browser's own <code>Math.sin</code> from WebAssembly creates a little garbage on every call. At several calls per sample, collecting it paused the audio often enough to crackle.</p>
     <details>
       <summary>Aurora licenses</summary>
-      <p><strong>MIT</strong>: Cloud Seed (Copyright (c) 2024 Ghost Note Audio / Ghost Note Engineering Ltd), Rings reverb and stmlib (Copyright 2012–2014 Emilie Gillet), JPverb and Greyhole (Julian Parker, Till Bovermann), the ValhallaSupermassive models (David Braun):</p>
+      <p><strong>MIT</strong>: Rings reverb and stmlib (Copyright 2012–2014 Emilie Gillet), JPverb and Greyhole (Julian Parker, Till Bovermann), the ValhallaSupermassive models (David Braun):</p>
       <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
       <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
       <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
@@ -678,18 +678,12 @@ const SPECS = {
       { module: "freeverb", label: "Freeverb", group: "Plates & halls", title: "Faust · re.stereo_freeverb", credit: "Jezar · Romain Michon · GRAME",
         about: "Jezar's classic 2000 Freeverb: eight combs and four allpasses per side.",
         knobs: ["Mix", "Room size", "Damping", "Width"] },
-      { module: "cloudseed", label: "Cloud Seed", group: "Clouds & textures", title: "C++ · Cloud Seed core", credit: "Ghost Note Audio · MIT · not affiliated",
-        about: "The open-source core of Ghost Note Audio's Cloud Seed: up to 12 modulated delay lines, starting from its Dark Plate program." },
       { module: "texture", label: "Texture", group: "Clouds & textures", title: "C++ · Eurorack reverb", credit: "Emilie Gillet · MIT",
         about: "The reverb in Emilie Gillet's Rings and Clouds Eurorack modules; its tank stores 16-bit samples, like the hardware." },
       { module: "greyhole", label: "Greyhole", group: "Clouds & textures", title: "Faust · re.greyhole", credit: "Julian Parker · MIT",
         about: "Julian Parker's diffuse delay: echoes that smear into a cloud. Near full Feedback it sustains.",
         knobs: ["Mix", "Delay", "Size", "Feedback", "Damping", "Diffusion", "Mod depth", "Mod rate"] },
       ...[
-        ["gemini", "Gemini", 0, "Sixteen modulated delays, scattered by a butterfly of rotations."],
-        ["centaurus", "Centaurus", 2, "Four four-channel matrix allpasses in series."],
-        ["sagittarius", "Sagittarius", 3, "Eight stereo matrix allpasses in series."],
-        ["annihilator", "Great Annihilator", 4, "Three matrix allpasses inside one global feedback loop; at full Feedback it sustains."],
         ["lyra", "Lyra", 6, "Four modulated delays with a four-channel scattering matrix."],
         ["virgo", "Virgo", 19, "Lyra, with its low and high cuts inside the feedback loop."],
       ].map(([module, label, mode, about]) => ({
@@ -701,12 +695,10 @@ const SPECS = {
       { name: "Plate",         algo: "plate", values: { Mix: 0.3, Decay: 0.55, Damping: 0.25 } },
       { name: "Concert hall",  algo: "zita", values: { Mix: 0.3, Predelay: 0.3, "Low decay": 0.67, "Mid decay": 0.53 } },
       { name: "Lush hall",     algo: "jpverb", values: { Mix: 0.4, Decay: 0.64, Size: 0.25, "Mod depth": 0.3 } },
-      { name: "Cloud Seed",    algo: "cloudseed", values: {} },
-      { name: "Vast seed",     algo: "cloudseed", values: { Mix: 0.5, Size: 0.8, Decay: 0.8 } },
       { name: "Eurorack",      algo: "texture", values: { Amount: 0.6, Time: 0.8 } },
       { name: "Black hole",    algo: "greyhole", values: { Mix: 0.6, Delay: 0.6, Size: 0.8, Feedback: 0.9 } },
-      { name: "Twin stars",    algo: "gemini", values: { Mix: 0.5, Delay: 0.79, Feedback: 0.8 } },
-      { name: "Annihilation",  algo: "annihilator", values: { Mix: 0.6, Delay: 0.72, Feedback: 0.97 } },
+      { name: "Constellation", algo: "lyra", values: { Mix: 0.45, Delay: 0.79, Feedback: 0.85, "Mod depth": 0.4 } },
+      { name: "Nebula drift",  algo: "virgo", values: { Mix: 0.5, Delay: 0.72, Feedback: 0.8 } },
     ],
   },
 };
@@ -1161,7 +1153,7 @@ class Effect extends Synth {
   }
 
   // A parameter's text: Faust controls in their own units; C modules (Airwindows,
-  // Texture, Cloud Seed) say it themselves, through an instance of the module
+  // Texture) say it themselves, through an instance of the module
   // on this thread. Airwindows' plain 0-1 readouts show as percent, like the knobs.
   paramText(a, i, v) {
     const m = this.mods[a], p = m.params[i];

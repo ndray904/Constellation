@@ -2,7 +2,6 @@
 #ifndef AURORA_SHIM_CMATH
 #define AURORA_SHIM_CMATH
 #include <math.h>
-#include <stdlib.h>
 namespace std {
 using ::sin; using ::cos; using ::tan; using ::exp; using ::log; using ::log10; using ::pow; using ::fmod;
 using ::floor; using ::ceil; using ::fabs; using ::sqrt; using ::fmax; using ::fmin; using ::tanh;
@@ -12,6 +11,5 @@ inline float pow(float x, float y) { return ::powf(x, y); }
 template <class A, class B> inline double pow(A x, B y) { return ::pow((double)x, (double)y); }   // mixed types promote to double
 inline float abs(float x) { return __builtin_fabsf(x); }
 inline double abs(double x) { return __builtin_fabs(x); }
-using ::rand;
 }
 #endif
