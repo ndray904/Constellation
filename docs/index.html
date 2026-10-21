@@ -457,7 +457,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
         <div class="presets" id="nebula-presets"></div>
       </div>
     </div>
-    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three, and any of them "To Nebula" for reverb. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down; double-click one to reset it. At full Peak a filter whistles on its own, without touching the ribbon.</p>
+    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three, and any of them "To Nebula" for reverb. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down. At full Peak a filter whistles on its own, without touching the ribbon.</p>
   </section>
 
   <section class="notes">
@@ -1152,7 +1152,6 @@ class Synth {
       const scale = e.shiftKey ? 600 : 180;
       this.setKnob(id, startV + ((startY - e.clientY) + (e.clientX - startX)) / scale);
     });
-    dial.addEventListener("dblclick", () => this.setKnob(id, k.value));
     dial.addEventListener("wheel", (e) => { e.preventDefault(); this.setKnob(id, this.params[id] - Math.sign(e.deltaY) * 0.02); }, { passive: false });
     dial.addEventListener("keydown", (e) => {
       const step = e.shiftKey ? 0.1 : 0.01;
