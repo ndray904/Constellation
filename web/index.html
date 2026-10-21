@@ -186,7 +186,7 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .slot::after { content: ""; position: absolute; inset: 0 1px; border-radius: 2px; background: var(--ribbon-key); }
 .slot.sharp::after { inset: 0 1px 40% 1px; background: var(--ribbon-mark); }
 .slot.sharp::before { content: ""; position: absolute; inset: 60% 1px 0 1px; background: var(--ribbon-key); border-radius: 2px; }
-.finger { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--silk); opacity: 0; box-shadow: 0 0 12px 2px rgba(239,230,210,0.45); pointer-events: none; }
+.finger { position: absolute; z-index: 2; top: 0; bottom: 0; width: 2px; margin-left: -1px;   /* above the keys, which come after it */ background: var(--silk); opacity: 0; box-shadow: 0 0 12px 2px rgba(239,230,210,0.45); pointer-events: none; }
 .finger.on { opacity: 0.9; }
 .slot.off-scale::after, .slot.off-scale::before { opacity: 0.28; }
 .ribbon:focus { outline: none; }
@@ -699,6 +699,7 @@ let ctx = null, starting = null, keyTarget = null, master = null, masterAnalyser
 const statusEl = document.getElementById("status");
 const css = getComputedStyle(document.documentElement);
 const scopeColors = { bg: css.getPropertyValue("--scope-bg").trim(), grid: css.getPropertyValue("--scope-grid").trim(), trace: css.getPropertyValue("--scope-trace").trim() };
+const displayFont = css.getPropertyValue("--font-display").trim() || "sans-serif";
 
 /* ---------- Cosmos skin: panel art for the three synths ---------- */
 // Each synth's panel is drawn here (a seeded starfield, then its namesake on
@@ -1231,7 +1232,22 @@ class Synth {
     g.strokeStyle = sc.grid; g.lineWidth = 1;
     for (let x = 0; x <= 8; x++) { g.beginPath(); g.moveTo(x * w / 8, 0); g.lineTo(x * w / 8, h); g.stroke(); }
     for (let y = 0; y <= 4; y++) { g.beginPath(); g.moveTo(0, y * h / 4); g.lineTo(w, y * h / 4); g.stroke(); }
-    if (this.analyser) {
+    if (audioState === "loading") {   // a gently pulsing label in the trace colour
+      const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 260);
+      g.font = `${Math.round(Math.min(h * 0.2, w * 0.07))}px ${displayFont}`;
+      if ("letterSpacing" in g) g.letterSpacing = `${Math.round(Math.min(h * 0.06, 10 * dpr))}px`;
+      g.textAlign = "center"; g.textBaseline = "middle";
+      // a dark band behind it, so it reads over the panel art seen through the glass
+      const tw = g.measureText("LOADING").width, th = Math.min(h * 0.2, w * 0.07);
+      const bw = tw + th * 1.6, bh = th * 2, bx = (w - bw) / 2, by = (h - bh) / 2;
+      g.fillStyle = "rgba(3,5,10,0.78)"; g.strokeStyle = sc.grid; g.lineWidth = dpr;
+      g.beginPath(); g.roundRect ? g.roundRect(bx, by, bw, bh, bh / 4) : g.rect(bx, by, bw, bh); g.fill(); g.stroke();
+      g.fillStyle = sc.trace; g.globalAlpha = pulse;
+      g.shadowColor = sc.trace; g.shadowBlur = 10 * dpr;
+      g.fillText("LOADING", w / 2, h / 2);
+      g.globalAlpha = 1; g.shadowBlur = 0;
+      if ("letterSpacing" in g) g.letterSpacing = "0px";
+    } else if (this.analyser) {
       const wave = this.wave;
       this.analyser.getFloatTimeDomainData(wave);
       let start = 0;
@@ -1446,8 +1462,12 @@ document.querySelectorAll("#seg-skin button").forEach((b) => b.addEventListener(
 setSkin((() => { try { return localStorage.getItem("constellation-skin") || "cosmos"; } catch (e) { return "cosmos"; } })());
 
 /* ---------- audio ---------- */
+// "off" until the first touch, "loading" while the nodes are built (the
+// scopes say so), then "on"
+let audioState = "off";
 function startAudio() {
   if (starting) return starting;
+  audioState = "loading";
   starting = (async () => {
     ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
     // Nothing plays until every node is built: the reverb units make all their
@@ -1470,10 +1490,12 @@ function startAudio() {
     for (const s of Object.values(synths)) for (const [t, g] of Object.entries(s.sends)) g.connect(synths[t].node);
     applyRouting();
     await ctx.resume();
+    audioState = "on";
     statusEl.textContent = "Sound on · " + ctx.sampleRate / 1000 + " kHz";
     statusEl.classList.add("on");
   })().catch((err) => {
     statusEl.textContent = "Audio could not start: " + err.message;
+    audioState = "off";
     starting = null;
   });
   return starting;
