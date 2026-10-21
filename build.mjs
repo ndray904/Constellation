@@ -101,3 +101,8 @@ ${page}
 `;
 writeFileSync(join(root, "dist/constellation-standalone.html"), standalone);
 console.log(`dist/constellation-standalone.html  ${(standalone.length / 1024).toFixed(1)} KB`);
+
+// GitHub Pages serves docs/ from main at https://ndray904.github.io/Constellation/.
+mkdirSync(join(root, "docs"), { recursive: true });
+writeFileSync(join(root, "docs/index.html"), standalone);
+writeFileSync(join(root, "docs/.nojekyll"), "");

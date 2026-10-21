@@ -9,6 +9,8 @@ his unmodified C++: eight space ones (Galactic, Galactic2, Galactic3, StarChild2
 Infinity2, kCosmos, kAlienSpaceship) and six classic ones (Ultralight, Ultralight2, VerbTiny,
 VerbThic, CreamCoat, CrunchCoat).
 
+Play it at **https://ndray904.github.io/Constellation/** (GitHub Pages, served from `docs/`).
+
 ## Layout
 
 | Path | What it is |
@@ -40,7 +42,7 @@ Needs Node 18+ and clang with the `wasm32` target and `wasm-ld` (e.g. Debian/Ubu
 
 ```sh
 npm install
-node build.mjs            # -> dist/constellation.html (artifact) and dist/constellation-standalone.html (open from disk)
+node build.mjs            # -> dist/constellation.html (artifact) and dist/constellation-standalone.html (open from disk), copied to docs/index.html for GitHub Pages
 node test/render.cjs      # optional arg: a folder to write WAV renders into
 node test/render-duo.cjs
 node test/render-delay.cjs
