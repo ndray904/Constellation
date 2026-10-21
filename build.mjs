@@ -6,7 +6,6 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRequire } from "node:module";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(join(root, p));
@@ -48,10 +47,9 @@ const mathEnv = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan",
 const reverbs = [];
 mkdirSync(join(root, "build/airwindows"), { recursive: true });
 const cstr = (x, ptr) => { const m = new Uint8Array(x.memory.buffer); let s = ""; while (m[ptr]) s += String.fromCharCode(m[ptr++]); return s; };
-// How a module takes a knob change without clicking (web/faust-worklet.js):
-// "clone" crossfades to a copy of the running reverb, so its state must be
-// small enough to copy every few milliseconds; "glide" modules smooth their
-// own controls (all the Aurora reverbs, see dsp/aurora/aurora.lib).
+// A knob change crossfades to a copy of the running reverb
+// (web/faust-worklet.js), so its state must be small enough to copy every few
+// milliseconds.
 const CLONE_LIMIT = 8 * 1048576;
 function cModule(name, out, extra = {}) {
   const bytes = read(out);
@@ -59,10 +57,9 @@ function cModule(name, out, extra = {}) {
   x.init(48000);
   const params = [];
   for (let i = 0; i < x.numParams(); i++) params.push({ name: cstr(x, x.paramName(i)), value: x.getParam(i) });
-  const declick = extra.declick || "clone";
-  if (declick === "clone" && x.memory.buffer.byteLength > CLONE_LIMIT) throw new Error(`${name}: too big to clone`);
-  console.log(`${out}  ${(bytes.length / 1024).toFixed(1)} KB, ${(x.memory.buffer.byteLength / 1048576).toFixed(1)} MB state, ${declick}  ${params.map((p) => p.name).join(", ")}`);
-  return { name, kind: "c", wasm: bytes.toString("base64"), params, ...extra, declick };
+  if (x.memory.buffer.byteLength > CLONE_LIMIT) throw new Error(`${name}: too big to copy per change`);
+  console.log(`${out}  ${(bytes.length / 1024).toFixed(1)} KB, ${(x.memory.buffer.byteLength / 1048576).toFixed(1)} MB state  ${params.map((p) => p.name).join(", ")}`);
+  return { name, wasm: bytes.toString("base64"), params, ...extra };
 }
 const CLANG = ["--target=wasm32", "-O3", "-std=c++17", "-ffreestanding", "-nostdlib", "-nostdinc++",
   "-fno-exceptions", "-fno-rtti", "-mnontrapping-fptoint", "-mbulk-memory", "-w"];
@@ -79,94 +76,10 @@ for (const name of REVERBS) {
   reverbs.push(cModule(name, out, { displayInit: true }));
 }
 
-// ---- Aurora: Faust standard-library reverbs and Texture --------------------
-// Faust: dsp/aurora/*.dsp. C++: unmodified sources in aurora/src behind the
-// wrappers in aurora/shim, built like the Airwindows plugins.
-// The end of a wasm module's data segments (Faust keeps its JSON description
-// there, at address 0, on top of where the DSP state lives).
-function dataEnd(bytes) {
-  let pos = 8, end = 0;
-  const leb = () => { let v = 0, shift = 0, b; do { b = bytes[pos++]; v |= (b & 0x7f) << shift; shift += 7; } while (b & 0x80); return v >>> 0; };
-  while (pos < bytes.length) {
-    const id = bytes[pos++], size = leb(), next = pos + size;
-    if (id === 11) {
-      for (let n = leb(); n > 0; n--) {
-        const kind = leb();
-        if (kind !== 0) throw new Error("unexpected data segment kind");
-        if (bytes[pos++] !== 0x41) throw new Error("data segment offset is not i32.const");
-        const offset = leb(); pos++;                    // i32.const offset, end
-        const len = leb();
-        end = Math.max(end, offset + len);
-        pos += len;
-      }
-    }
-    pos = next;
-  }
-  return end;
-}
-// A fresh instance skips Faust's full state clear (tens of milliseconds over a
-// reverb's delay lines, on the audio thread): it clears only the data segments.
-// Some constructs (smooth_init) start from non-zero values that only the full
-// clear writes; those bytes are recorded here as runs of [offset, [bytes]] and
-// written back (meta.initPatch). The result must equal a full init.
-const { FaustMono, setMathLibrary } = createRequire(import.meta.url)("./web/faust-runtime.js");
-setMathLibrary(libmBytes);
-function structOf(dsp, meta) { return Buffer.from(dsp.memory.buffer, 0, meta.size); }
-function initPatch(bytes, meta) {
-  const mod = new WebAssembly.Module(bytes);
-  const full = structOf(new FaustMono(mod, meta, 48000), meta);
-  const fresh = structOf(new FaustMono(mod, meta, 48000, 128, { fresh: true }), meta);
-  const runs = [];
-  for (let i = 0; i < full.length; i++) {
-    if (full[i] === fresh[i]) continue;
-    const last = runs[runs.length - 1];
-    if (last && last[0] + last[1].length === i) last[1].push(full[i]);
-    else runs.push([i, [full[i]]]);
-  }
-  meta.initPatch = runs;
-  const patched = structOf(new FaustMono(mod, meta, 48000, 128, { fresh: true }), meta);
-  if (Buffer.compare(full, patched) !== 0) throw new Error("fresh init doesn't match a full init");
-  return runs;
-}
-const AURORA_FAUST = ["plate", "jpverb", "greyhole", "zita", "freeverb", "lyra", "virgo"];
-const aurora = [];
-mkdirSync(join(root, "build/aurora"), { recursive: true });
-for (const name of AURORA_FAUST) {
-  execFileSync("npx", ["faust2wasm-ts", `dsp/aurora/${name}.dsp`, `build/aurora/${name}`, "-no-template"], { cwd: root, stdio: "inherit" });
-  const meta = JSON.parse(read(`build/aurora/${name}/dsp-meta.json`));
-  const sliders = [];
-  const walk = (items) => items.forEach((it) => (it.items ? walk(it.items) : sliders.push(it)));
-  walk(meta.ui);
-  const metaOf = (it, key) => ((it.meta || []).find((m) => key in m) || {})[key];
-  const controls = sliders.map((it) => ({ index: it.index, min: it.min, max: it.max, log: metaOf(it, "scale") === "log" }));
-  const params = sliders.map((it, i) => {
-    const c = controls[i];
-    const value = c.log ? Math.log(it.init / c.min) / Math.log(c.max / c.min) : (it.init - c.min) / (c.max - c.min);
-    return { name: it.label, value, min: c.min, max: c.max, log: c.log, unit: metaOf(it, "unit") || "" };
-  });
-  const declick = "glide";
-  const wasm = read(`build/aurora/${name}/dsp-module.wasm`);
-  const m = { size: meta.size, inputs: meta.inputs, outputs: meta.outputs, ui: meta.ui, dataEnd: dataEnd(wasm) };
-  const patch = initPatch(wasm, m);
-  aurora.push({ name, kind: "faust", wasm: wasm.toString("base64"), meta: m, controls, params, declick });
-  console.log(`build/aurora/${name}  ${(meta.size / 1048576).toFixed(1)} MB state, ${declick}, init patch ${patch.reduce((n, r) => n + r[1].length, 0)} bytes  ${params.map((p) => p.name).join(", ")}`);
-}
-const AURORA_C = {
-  texture: ["-DTEST", "-I", "aurora/src/mutable", "aurora/shim/texture.cpp"],
-};
-for (const [name, args] of Object.entries(AURORA_C)) {
-  const out = `build/aurora/${name}.wasm`;
-  execFileSync("clang++", [...CLANG, "-I", "aurora/shim", "-I", "airwindows/shim", ...args, ...LINK, "-o", out], { cwd: root, stdio: "inherit" });
-  aurora.push(cModule(name, out, { declick: "glide" }));   // the wrapper glides (see aurora/shim)
-}
-
-writeFileSync(join(root, "build/aurora/modules.json"), JSON.stringify(aurora));   // for test/aurora.cjs
-
 const assets = {
   libm: libmBytes.toString("base64"),
   synths,
   reverbs,
-  aurora,
   worklet: read("web/faust-runtime.js") + "\n" + read("web/faust-worklet.js"),
 };
 

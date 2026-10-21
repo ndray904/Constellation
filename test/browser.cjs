@@ -360,8 +360,6 @@ const shots = process.argv[2];
     const infinity = [await knobs("nebula"), await p.evaluate(() => document.querySelector("#nebula [data-role=title]").textContent)];
     await pick("nebula", "StarChild2");
     const starchild = await knobs("nebula");
-    await pick("nebula", "PocketVerbs");
-    const pocket = [await knobs("nebula"), await knobText("nebula", "Type")];
     await pick("nebula", "Galactic3");
     const remembered = await p.evaluate(() => synths.nebula.params.p0);
     await p.click("#nebula [data-step='1']");
@@ -369,11 +367,10 @@ const shots = process.argv[2];
     await p.click("#nebula [data-step='-1']");
     const count = await p.evaluate(() => document.querySelectorAll("#nebula-algo option").length);
     check(`[${name}] Nebula is silent at load`, nebulaIdle < 0.001, `(rms ${nebulaIdle.toExponential(1)})`);
-    check(`[${name}] Nebula offers all ${count} Airwindows reverbs`, count === 43);
+    check(`[${name}] Nebula offers its ${count} space reverbs`, count === 8);
     check(`[${name}] Nebula's selector loads each plugin's own controls`,
       galactic.join() === "Replace,Bright,Detune,Derez,Bigness,Dry/Wet" && infinity[0].join() === "Filter,Damping,Size,Dry/Wet"
       && infinity[1] === "Airwindows · Infinity" && starchild.join() === "Sustain,Grain,Dry/Wet", `(${galactic} | ${infinity[0]} | ${starchild})`);
-    check(`[${name}] Nebula shows a plugin's own readouts`, pocket[0].join() === "Type,Size,Gating,Dry/Wet" && pocket[1] === "Chamber", `(${pocket[0]}: Type ${pocket[1]})`);
     check(`[${name}] Nebula's step buttons move through the list`, stepped === "Galactic2", `(${stepped})`);
     check(`[${name}] Nebula keeps each reverb's settings`, Math.abs(remembered - 0.2) < 1e-6, `(${remembered})`);
 
@@ -408,49 +405,14 @@ const shots = process.argv[2];
     check(`[${name}] Nebula's tail rings on after release`, verbTail > 0.005, `(rms ${verbTail.toFixed(4)})`);
     await p.click("#ribbon35-send-nebula");
 
-    // ---- Aurora (Faust, Texture) ----
-    const auroraIdle = await loudest(() => rms(p, "aurora"));
-    const plate = [await knobs("aurora"), await knobText("aurora", "Predelay"), await knobText("aurora", "Mix")];
-    await pick("aurora", "zita");
-    const zita = [await knobs("aurora"), await knobText("aurora", "Low X"), await p.evaluate(() => document.querySelector("#aurora [data-role=credit]").textContent)];
-    await pick("aurora", "plate");
-    check(`[${name}] Aurora is silent at load`, auroraIdle < 0.001, `(rms ${auroraIdle.toExponential(1)})`);
-    check(`[${name}] Aurora: Plate's controls read in their units`, plate[0].join() === "Mix,Predelay,Decay,Damping,Diffusion,Tone" && plate[1] === "0.0 ms" && plate[2] === "35%", `(${plate.join(" | ")})`);
-    check(`[${name}] Aurora: Zita's controls and credit`, zita[0].join() === "Mix,Predelay,Low decay,Mid decay,Low X,Damping" && zita[1] === "200 Hz" && /Adriaensen/.test(zita[2]), `(${zita.join(" | ")})`);
-
-    await p.click("#ribbon35-hold");
-    await press("#ribbon35-ribbon", 0.4, 150);
-    await p.click("#ribbon35-send-aurora");
-    await p.waitForTimeout(700);
-    const aurora = { level: await loudest(() => rms(p, "aurora")), label: await p.evaluate(() => synths.aurora.lineInText.textContent) };
-    check(`[${name}] To Aurora: Pulsar plays through it`, aurora.level > 0.02 && aurora.label === "Line in ◂ Pulsar", `(rms ${aurora.level.toFixed(3)}, ${aurora.label})`);
-    const auroraQuiet = [];
-    const auroraModules = await p.evaluate(() => synths.aurora.spec.algorithms.map((a) => a.module));
-    for (const m of auroraModules) {
-      await pick("aurora", m);
-      await p.waitForTimeout(200);
-      if (await loudest(() => rms(p, "aurora")) < 0.005) auroraQuiet.push(m);
-    }
-    check(`[${name}] Aurora sounds on every reverb`, auroraQuiet.length === 0, `(quiet: ${auroraQuiet.join(", ") || "none"})`);
-    await p.click("#aurora-presets button:text-is(\"Black hole\")");
-    await p.waitForTimeout(300);
-    const preset = await p.evaluate(() => [synths.aurora.spec.algorithms[synths.aurora.params.mode].module, synths.aurora.params.p3]);
-    check(`[${name}] Aurora preset picks its reverb and settings`, preset[0] === "greyhole" && Math.abs(preset[1] - 0.9) < 1e-6, `(${preset})`);
-    await p.click("#ribbon35-hold");
-    await p.waitForTimeout(400);
-    const auroraTail = await loudest(() => rms(p, "aurora"));
-    check(`[${name}] Aurora's tail rings on after release`, auroraTail > 0.005, `(rms ${auroraTail.toFixed(4)})`);
-    await p.click("#ribbon35-send-aurora");
-
-    await p.click("#ribbon35-send-delay");                 // chain: Pulsar -> Singularity -> Nebula -> Aurora
+    await p.click("#ribbon35-send-delay");                 // chain: Pulsar -> Singularity -> Nebula
     await p.click("#delay-send-nebula");
-    await p.click("#nebula-send-aurora");
     await p.click("#ribbon35-hold");
     await press("#ribbon35-ribbon", 0.5, 150);
     await p.waitForTimeout(700);
-    const verbChain = [await p.evaluate(() => [synths.delay.lineInText.textContent, synths.nebula.lineInText.textContent, synths.aurora.lineInText.textContent]), await loudest(() => rms(p, "aurora")), await p.evaluate(() => synths.nebula.out.gain.value)];
-    check(`[${name}] chain Pulsar -> Singularity -> Nebula -> Aurora`, verbChain[0].join() === "Line in ◂ Pulsar,Line in ◂ Singularity,Line in ◂ Nebula" && verbChain[1] > 0.02 && verbChain[2] < 0.01, `(${verbChain[0]}, ${verbChain[1].toFixed(3)})`);
-    await p.click("#ribbon35-hold"); await p.click("#nebula-send-aurora"); await p.click("#delay-send-nebula"); await p.click("#ribbon35-send-delay");
+    const chain3 = [await p.evaluate(() => [synths.delay.lineInText.textContent, synths.nebula.lineInText.textContent]), await loudest(() => rms(p, "nebula"))];
+    check(`[${name}] chain Pulsar -> Singularity -> Nebula`, chain3[0][0] === "Line in ◂ Pulsar" && chain3[0][1] === "Line in ◂ Singularity" && chain3[1] > 0.02, `(${chain3[0]}, ${chain3[1].toFixed(3)})`);
+    await p.click("#ribbon35-hold"); await p.click("#delay-send-nebula"); await p.click("#ribbon35-send-delay");
 
     if (shots) await p.screenshot({ path: path.join(shots, `${name}.png`), fullPage: true });
     const overflow = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);

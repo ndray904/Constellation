@@ -70,7 +70,6 @@ const CASES = fs.readdirSync(path.join(root, "airwindows/src")).sort().flatMap((
   const moved = Array.from({ length: x.numParams() }, (_, i) => [i, Math.round((0.25 + 0.5 * ((i * 0.618034 + 0.3) % 1)) * 100) / 100]);
   return [[name, []], [name, moved]];
 });
-const GAIN_RIDERS = ["kPlateC"];
 let failed = 0;
 for (const [name, params] of CASES) {
   const w = runWasm(name, params), n = runNative(name, params);
@@ -80,15 +79,8 @@ for (const [name, params] of CASES) {
     sig += n[i] * n[i]; err += d * d; peak = Math.max(peak, Math.abs(n[i])); maxDiff = Math.max(maxDiff, Math.abs(d));
   }
   const db = 10 * Math.log10(sig / Math.max(err, 1e-300));
-  // kPlateC's output compressor branches on fabs(x*4) > 1 and then adds
-  // sin()*pow(), so a last-bit libm difference can flip the branch and step its
-  // gain while the input is loud. It sits after the tank, so once the gain
-  // settles back to 1 the output must be bit-identical again.
-  const rider = GAIN_RIDERS.includes(name);
-  let tailExact = true;
-  for (let i = Math.floor(1.5 * SR) * 2; i < w.length; i++) if (w[i] !== n[i]) { tailExact = false; break; }
-  const ok = w.length === n.length && w.every(Number.isFinite) && peak > 0.01 && (db > 100 || (rider && db > 40 && tailExact));
-  const match = err === 0 ? "bit-identical" : `to ${db.toFixed(0)} dB (max diff ${maxDiff.toExponential(1)})${rider ? (tailExact ? ", tail bit-identical" : ", tail differs") : ""}`;
+  const ok = w.length === n.length && w.every(Number.isFinite) && peak > 0.01 && db > 100;
+  const match = err === 0 ? "bit-identical" : `to ${db.toFixed(0)} dB (max diff ${maxDiff.toExponential(1)})`;
   console.log(`${ok ? "PASS" : "FAIL"}  ${name} ${params.length ? JSON.stringify(params) : "defaults"}: wasm = native ${match}, peak ${peak.toFixed(2)}`);
   if (!ok) failed++;
 }

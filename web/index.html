@@ -41,9 +41,6 @@
   --nebula-body: #3b2e52;
   --nebula-body-hi: #4c3d67;
   --nebula-body-edge: #211934;
-  --aurora-body: #23463f;
-  --aurora-body-hi: #2f5a51;
-  --aurora-body-edge: #122822;
 
   --font-display: "Michroma", "Eurostile", "Arial Black", sans-serif;
   --font-label: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
@@ -97,7 +94,6 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .device.duo { --body: var(--duo-body); --body-hi: var(--duo-body-hi); --body-edge: var(--duo-body-edge); }
 .device.delay { --body: var(--delay-body); --body-hi: var(--delay-body-hi); --body-edge: var(--delay-body-edge); }
 .device.nebula { --body: var(--nebula-body); --body-hi: var(--nebula-body-hi); --body-edge: var(--nebula-body-edge); }
-.device.aurora { --body: var(--aurora-body); --body-hi: var(--aurora-body-hi); --body-edge: var(--aurora-body-edge); --scope-trace: #9ff2b8; }
 .credit { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk-dim); }
 .controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px clamp(14px, 3vw, 30px); }
 .group { display: grid; gap: 8px; }
@@ -155,7 +151,7 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .switch-labels button[aria-checked="true"] { color: var(--silk); }
 .switch-labels button:focus-visible { outline: 1px solid var(--silk); outline-offset: 2px; }
 
-/* algorithm selector (Nebula, Aurora): a lit display with step buttons */
+/* algorithm selector (Nebula): a lit display with step buttons */
 .algo-group { flex: 0 1 260px; min-width: 0; }
 .algo { display: grid; gap: 8px; }
 .algo-row { display: flex; align-items: stretch; gap: 6px; }
@@ -299,7 +295,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
   <header>
     <div>
       <h1>Constellation</h1>
-      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds 43 space reverbs from Airwindows' open-source code, and Aurora 8 more from the Faust standard library and Mutable Instruments' Eurorack firmware.</p>
+      <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds eight space reverbs from Airwindows' open-source code.</p>
     </div>
     <span class="status" id="status">Sound off · touch a ribbon</span>
   </header>
@@ -357,12 +353,8 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
         <span>Nebula starting points</span>
         <div class="presets" id="nebula-presets"></div>
       </div>
-      <div class="field">
-        <span>Aurora starting points</span>
-        <div class="presets" id="aurora-presets"></div>
-      </div>
     </div>
-    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three, and any of them "To Nebula" or "To Aurora" for reverb; Nebula can feed Aurora too. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down; double-click one to reset it. At full Peak a filter whistles on its own, without touching the ribbon.</p>
+    <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three, and any of them "To Nebula" for reverb. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down; double-click one to reset it. At full Peak a filter whistles on its own, without touching the ribbon.</p>
   </section>
 
   <section class="notes">
@@ -431,48 +423,16 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
     </div>
 
     <h2>Nebula: where the code comes from</h2>
-    <p>Nebula runs all 42 reverbs in Airwindows' own Reverb category, plus StarChild2, all by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a> from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and compares: 81 of 86 test renders are bit-identical, and the rest match to 160 dB or better.</p>
-    <p>The selector's one-line descriptions are Chris Johnson's, from his Airwindopedia. Plugins that are fully wet by default start at 50% here, because an instrument patched in with "To Nebula" is heard only through Nebula. Knobs show each plugin's own readout where it has one (PocketVerbs' Type, kPlate's Damping); plain 0–1 controls show as percent. VerbSixes and VerbSevens are calibrated reference reverbs with no controls.</p>
-    <p>To keep knob moves from clicking, each change crossfades over 20 ms from the running reverb to an exact copy of it with the new setting.</p>
+    <p>Nebula runs eight space reverbs by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a>, from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and confirms the browser version's output matches it, bit for bit in almost every case.</p>
+    <p>The selector's one-line descriptions are Chris Johnson's, from his Airwindopedia. Plugins that are fully wet by default start at 50% here, because an instrument patched in with "To Nebula" is heard only through Nebula.</p>
+    <p>To keep knob moves from clicking, each change crossfades over 20 ms from the running reverb to an exact copy of it with the new setting. Every reverb is made, and run once silently, before sound starts: making one while playing would stall the audio. A reverb you switch away from rings out silently in the background, so switching back to it doesn't bring back an old tail. With nothing playing into it and its tail gone, Nebula sleeps and costs nothing.</p>
+    <p>All the instruments and reverbs get their sines, exponentials and powers from <a href="https://musl.libc.org/" target="_blank" rel="noopener">musl</a>'s math library (MIT), compiled to WebAssembly along with them. Calling the browser's own <code>Math.sin</code> from WebAssembly creates a little garbage on every call; at several calls per sample, collecting it paused the audio often enough to crackle.</p>
     <details>
-      <summary>Airwindows license (MIT)</summary>
-      <p>Copyright (c) 2018 Chris Johnson</p>
+      <summary>Licenses: Airwindows and musl (MIT)</summary>
+      <p>Airwindows: Copyright (c) 2018 Chris Johnson. musl libm: Copyright © 2005–2020 Rich Felker, et al., with parts from FreeBSD's msun, Sun Microsystems' fdlibm and Arm's optimized-routines under the permissive terms in musl's COPYRIGHT.</p>
       <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
       <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
       <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
-    </details>
-
-    <h2>Aurora: where the code comes from</h2>
-    <p>Aurora gathers permissively licensed reverbs from three places. Nothing here is GPL.</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Reverb</th><th>Source</th><th>Author</th><th>License</th></tr></thead>
-        <tbody>
-          <tr><td>Plate</td><td class="part">Faust re.dattorro_rev</td><td>Jakob Zerbian, after Jon Dattorro (1997)</td><td>STK-4.3</td></tr>
-          <tr><td>Zita</td><td class="part">Faust re.zita_rev1_stereo</td><td>Julius O. Smith III, after Fons Adriaensen's zita-rev1</td><td>STK-4.3</td></tr>
-          <tr><td>JPverb, Greyhole</td><td class="part">Faust re.jpverb, re.greyhole</td><td>Julian Parker; Till Bovermann</td><td>MIT</td></tr>
-          <tr><td>Freeverb</td><td class="part">Faust re.stereo_freeverb</td><td>Romain Michon, after Jezar</td><td>LGPL, with GRAME's exception for compiled code</td></tr>
-          <tr><td>Lyra, Virgo</td><td class="part">Faust re.valhallaSupermassive (copied into dsp/aurora/massive.lib)</td><td>David Braun</td><td>MIT</td></tr>
-          <tr><td>Texture</td><td class="part">Rings reverb + stmlib (C++, unmodified)</td><td>Emilie Gillet</td><td>MIT</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>The two "Deep space" reverbs, Lyra and Virgo, are David Braun's Faust models of two modes of Valhalla DSP's free ValhallaSupermassive, under the plug-in's mode names. Valhalla DSP did not make or endorse this project. Texture is the reverb from the Rings and Clouds Eurorack modules, renamed as the Mutable Instruments license asks of derivative works.</p>
-    <p>Texture is Rings' version, tuned for 48 kHz; at 44.1 kHz its delays run 9% longer. A native build of it matches the browser's bit for bit. Plate keeps Dattorro's delay lengths in samples at 29.8 kHz, so at 48 kHz it is a smaller plate.</p>
-    <p>Cloud Seed and four more Supermassive models (Gemini, Centaurus, Sagittarius, Great Annihilator) were here briefly. They were taken out because they cost the most to run (8–9% of a CPU core each) and to set up (up to 64 MB of delay lines each).</p>
-    <p>Aurora's knobs glide rather than jump. A sudden change inside a reverb's feedback loop (a gain, a diffusion coefficient, a delay length) clicks. So gains and coefficients ease in over about 20 ms, and delay times slew like a tape delay's time knob, bending the pitch by at most 25% while they move.</p>
-    <p>Every reverb in Nebula and Aurora is made, and run once silently, before sound starts. Making one while playing stalls the audio for 3–25 ms: Chrome compiles WebAssembly on first use, and allocating or freeing a large reverb's memory makes the browser stop for garbage collection. Both break up the sound. A reverb you switch away from rings out silently in the background, so switching back to it doesn't bring back an old tail. With nothing playing into it and its tail gone, Nebula or Aurora sleeps and costs nothing.</p>
-    <p>All the instruments and reverbs get their sines, exponentials and powers from <a href="https://musl.libc.org/" target="_blank" rel="noopener">musl</a>'s math library (MIT), compiled to WebAssembly along with them. Calling the browser's own <code>Math.sin</code> from WebAssembly creates a little garbage on every call. At several calls per sample, collecting it paused the audio often enough to crackle.</p>
-    <details>
-      <summary>Aurora licenses</summary>
-      <p><strong>MIT</strong>: Rings reverb and stmlib (Copyright 2012–2014 Emilie Gillet), JPverb and Greyhole (Julian Parker, Till Bovermann), the ValhallaSupermassive models (David Braun):</p>
-      <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
-      <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
-      <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
-      <p><strong>STK-4.3</strong>: Plate (Jakob Zerbian) and Zita (Copyright (C) 2003–2017 Julius O. Smith III), from the Faust standard library:</p>
-      <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. Any person wishing to distribute modifications to the Software is asked to send the modifications to the original developer so that they can be incorporated into the canonical version. This is, however, not a binding provision of this license. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
-      <p><strong>Freeverb</strong> (Copyright (C) 2003–2017 GRAME): LGPL 2.1 or later, with GRAME's exception that code generated by the Faust compiler from these libraries may be released under any license.</p>
-      <p><strong>musl libm</strong>, used by every instrument and reverb (Copyright © 2005–2020 Rich Felker, et al.; parts from FreeBSD's msun, Sun Microsystems' fdlibm and Arm's optimized-routines, under the permissive terms in musl's COPYRIGHT): MIT, as above.</p>
     </details>
   </section>
 </div>
@@ -511,10 +471,6 @@ function quantize(semis, scale) {
 
 const AW_GROUPS = [
   ["Space", ["Galactic3", "Galactic2", "Galactic", "StarChild2", "Infinity", "Infinity2", "kCosmos", "kAlienSpaceship"]],
-  ["Halls & cathedrals", ["kCathedral", "kCathedral2", "kCathedral3", "kCathedral4", "kCathedral5", "kBeyond", "kRockstar", "kRockstar2", "kGuitarHall", "kGuitarHall2", "kCyberCity"]],
-  ["Plates", ["kPlate140", "kPlate240", "kPlateA", "kPlateB", "kPlateC", "kPlateD"]],
-  ["Rooms & chambers", ["kStation", "kWoodRoom", "Chamber", "Chamber2", "Verbity", "Verbity2", "PocketVerbs"]],
-  ["Matrix & classic", ["MatrixVerb", "Reverb", "NonlinearSpace", "Ultralight", "Ultralight2", "VerbTiny", "VerbThic", "VerbSixes", "VerbSevens", "CreamCoat", "CrunchCoat"]],
 ];
 // Each plugin in Chris Johnson's words (his Airwindopedia).
 const AW_ABOUT = {
@@ -526,46 +482,11 @@ const AW_ABOUT = {
   Infinity2: "expands Infinity with more tone shaping and a much-requested kill-switch!",
   kCosmos: "is infinite space ambient, or titanic hall.",
   kAlienSpaceship: "is an unreal realistic reverb.",
-  kCathedral: "is a giant reverby space.",
-  kCathedral2: "is a giant reverby space modeled after the Bricasti Cathedral.",
-  kCathedral3: "is a giant cathedral-like space using Bezier undersampling.",
-  kCathedral4: "is the Cathedral sound expressed as distant space.",
-  kCathedral5: "lets you place yourself anywhere you like in the space.",
-  kBeyond: "is a recital hall.",
-  kRockstar: "is a realistic hall reverb that blends very well.",
-  kRockstar2: "is a realistic hall reverb using a new matrix!",
-  kGuitarHall: "accentuates loud midrange skronk!",
-  kGuitarHall2: "puts things in a Loud Room.",
-  kCyberCity: "brings live atmosphere to deep reverb.",
-  kPlate140: "is a next-generation Airwindows plate reverb.",
-  kPlate240: "is for the texture of smaller, gold foil reverb.",
-  kPlateA: "is a plate reverb, not unlike its namesake atop Abbey Road.",
-  kPlateB: "is a plate reverb, not unlike its namesake atop Abbey Road.",
-  kPlateC: "is a plate reverb, not unlike its namesake atop Abbey Road.",
-  kPlateD: "is a plate reverb, not unlike its namesake atop Abbey Road.",
-  kStation: "is a realistic small room modeled after David Bowie's vocal reverb.",
-  kWoodRoom: "is a small wooden performing space.",
-  Chamber: "is a feedforward reverb based on the golden ratio.",
-  Chamber2: "is a feedforward reverb, a blur delay, and a glitch topping!",
-  Verbity: "is a dual-mono reverb, which uses feedforward reverb topology.",
-  Verbity2: "adds stereo crossmodulation and expands Verbity's feedforward reverb topology.",
-  PocketVerbs: "is my popular old special effects reverbs plugin!",
-  MatrixVerb: "is a wildly adjustable, strangely colorful reverb for deep and flexible spaces.",
-  Reverb: "is simplified and tuned MatrixVerb, adjusting everything for each optimum verb size.",
-  NonlinearSpace: "is a flexible reverb plugin.",
-  Ultralight: "is the most low-CPU matrix reverb I can make.",
-  Ultralight2: "is more of the most low-CPU matrix reverb I can make.",
-  VerbTiny: "is a classic artificial reverb that expands reverb shape.",
-  VerbThic: "is a classic artificial reverb for being opaque and textured.",
-  VerbSixes: "is a calibrated reference reverb plugin for Householder matrices.",
-  VerbSevens: "is a calibrated reference reverb plugin for reverb matrices.",
-  CreamCoat: "is a swiss army knife reverb with soft undersampling.",
-  CrunchCoat: "is a cursed retro digital reverb!",
 };
 
 const SPECS = {
   ribbon35: {
-    brand: "PULSAR", short: "Pulsar", sub: "analogue ribbon synth model", theme: "", hold: true, sendTo: ["duo", "delay", "nebula", "aurora"],
+    brand: "PULSAR", short: "Pulsar", sub: "analogue ribbon synth model", theme: "", hold: true, sendTo: ["duo", "delay", "nebula"],
     semis: 18, modeTitle: "LFO target", modes: ["Standby", "Pitch", "Cutoff"], mode: 1,
     groups: [
       { title: "VCO", knobs: ["pitch"] },
@@ -590,7 +511,7 @@ const SPECS = {
     ],
   },
   duo: {
-    brand: "BINARY", short: "Binary", sub: "two-oscillator ribbon synth model", theme: "duo", hold: true, sendTo: ["delay", "nebula", "aurora"], lineIn: true,
+    brand: "BINARY", short: "Binary", sub: "two-oscillator ribbon synth model", theme: "duo", hold: true, sendTo: ["delay", "nebula"], lineIn: true,
     semis: 24, modeTitle: "Oscillators", modes: ["Standby", "VCO1", "VCO1+2"], mode: 2, scale: true,
     groups: [
       { title: "VCO1", knobs: ["pitch"] },
@@ -615,7 +536,7 @@ const SPECS = {
     ],
   },
   delay: {
-    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", sendTo: ["nebula", "aurora"], lineIn: true,
+    brand: "SINGULARITY", short: "Singularity", sub: "ribbon synth with space delay model", theme: "delay", sendTo: ["nebula"], lineIn: true,
     semis: 48, modeTitle: "LFO wave", modes: ["Standby", "Triangle", "Square"], mode: 1,
     groups: [
       { title: "LFO", knobs: ["lfo_rate", "lfo_int", "lfo_shape"], led: true },
@@ -641,7 +562,7 @@ const SPECS = {
     ],
   },
   nebula: {
-    brand: "NEBULA", short: "Nebula", sub: "space reverb", theme: "nebula", effect: true, lineIn: true, sendTo: ["aurora"],
+    brand: "NEBULA", short: "Nebula", sub: "space reverb", theme: "nebula", effect: true, lineIn: true,
     bank: "reverbs", modeTitle: "Reverb", mode: 0, knobs: {}, title: "Airwindows", credit: "Airwindows · Chris Johnson · MIT",
     // Airwindows plugins (airwindows/src), grouped; "start" overrides a plugin default.
     algorithms: AW_GROUPS.flatMap(([group, names]) => names.map((module) => ({
@@ -655,50 +576,7 @@ const SPECS = {
       { name: "Gong",          algo: "Infinity", values: { Filter: 0.6, Damping: 0.5, Size: 0.15, "Dry/Wet": 0.4 } },
       { name: "Space station", algo: "StarChild2", values: { Sustain: 1, Grain: 0.7, "Dry/Wet": 0.35 } },
       { name: "Cosmos",        algo: "kCosmos", values: { Regen: 0.7, "Dry/Wet": 0.45 } },
-      { name: "Cathedral",     algo: "kCathedral3", values: { Wetness: 0.35 } },
-      { name: "Plate",         algo: "kPlateD", values: { Wetness: 0.3 } },
-      { name: "Vocal room",    algo: "kStation", values: { "Dry/Wet": 0.35 } },
-    ],
-  },
-  aurora: {
-    brand: "AURORA", short: "Aurora", sub: "open-source reverbs", theme: "aurora", effect: true, lineIn: true,
-    bank: "aurora", modeTitle: "Reverb", mode: 0, knobs: {},
-    // Faust standard-library reverbs (dsp/aurora) and two C++ ones (aurora/src);
-    // "knobs" orders the controls.
-    algorithms: [
-      { module: "plate", label: "Plate", group: "Plates & halls", title: "Faust · re.dattorro_rev", credit: "Jakob Zerbian · STK-4.3",
-        about: "Jon Dattorro's 1997 plate: four input diffusers feeding a figure-eight tank.",
-        knobs: ["Mix", "Predelay", "Decay", "Damping", "Diffusion", "Tone"] },
-      { module: "zita", label: "Zita", group: "Plates & halls", title: "Faust · re.zita_rev1_stereo", credit: "Fons Adriaensen · J. O. Smith III · STK-4.3",
-        about: "Fons Adriaensen's zita-rev1 hall: eight feedback delay lines, with their own low and mid decay times.",
-        knobs: ["Mix", "Predelay", "Low decay", "Mid decay", "Low X", "Damping"] },
-      { module: "jpverb", label: "JPverb", group: "Plates & halls", title: "Faust · re.jpverb", credit: "Julian Parker · MIT",
-        about: "Julian Parker's smooth, modulated hall, first written for SuperCollider.",
-        knobs: ["Mix", "Decay", "Size", "Damping", "Diffusion", "Mod depth", "Mod rate"] },
-      { module: "freeverb", label: "Freeverb", group: "Plates & halls", title: "Faust · re.stereo_freeverb", credit: "Jezar · Romain Michon · GRAME",
-        about: "Jezar's classic 2000 Freeverb: eight combs and four allpasses per side.",
-        knobs: ["Mix", "Room size", "Damping", "Width"] },
-      { module: "texture", label: "Texture", group: "Clouds & textures", title: "C++ · Eurorack reverb", credit: "Emilie Gillet · MIT",
-        about: "The reverb in Emilie Gillet's Rings and Clouds Eurorack modules; its tank stores 16-bit samples, like the hardware." },
-      { module: "greyhole", label: "Greyhole", group: "Clouds & textures", title: "Faust · re.greyhole", credit: "Julian Parker · MIT",
-        about: "Julian Parker's diffuse delay: echoes that smear into a cloud. Near full Feedback it sustains.",
-        knobs: ["Mix", "Delay", "Size", "Feedback", "Damping", "Diffusion", "Mod depth", "Mod rate"] },
-      ...[
-        ["lyra", "Lyra", 6, "Four modulated delays with a four-channel scattering matrix."],
-        ["virgo", "Virgo", 19, "Lyra, with its low and high cuts inside the feedback loop."],
-      ].map(([module, label, mode, about]) => ({
-        module, label, group: "Deep space", title: `Faust · massive.lib mode ${mode}`, credit: "David Braun · MIT · models ValhallaSupermassive",
-        about, knobs: ["Mix", "Delay", "Warp", "Feedback", "Density", "Width", "Low cut", "High cut", "Mod rate", "Mod depth"],
-      })),
-    ],
-    presets: [
-      { name: "Plate",         algo: "plate", values: { Mix: 0.3, Decay: 0.55, Damping: 0.25 } },
-      { name: "Concert hall",  algo: "zita", values: { Mix: 0.3, Predelay: 0.3, "Low decay": 0.67, "Mid decay": 0.53 } },
-      { name: "Lush hall",     algo: "jpverb", values: { Mix: 0.4, Decay: 0.64, Size: 0.25, "Mod depth": 0.3 } },
-      { name: "Eurorack",      algo: "texture", values: { Amount: 0.6, Time: 0.8 } },
-      { name: "Black hole",    algo: "greyhole", values: { Mix: 0.6, Delay: 0.6, Size: 0.8, Feedback: 0.9 } },
-      { name: "Constellation", algo: "lyra", values: { Mix: 0.45, Delay: 0.79, Feedback: 0.85, "Mod depth": 0.4 } },
-      { name: "Nebula drift",  algo: "virgo", values: { Mix: 0.5, Delay: 0.72, Feedback: 0.8 } },
+      { name: "Alien",         algo: "kAlienSpaceship", values: { "Dry/Wet": 0.4 } },
     ],
   },
 };
@@ -1052,23 +930,11 @@ class Synth {
   }
 }
 
-// An effect unit (Nebula, Aurora): no ribbon or keys. The selector picks the
+// An effect unit (Nebula): no ribbon or keys. The selector picks the
 // algorithm, and the knobs are rebuilt from that module's own parameter list.
 const AW_MATH = Object.fromEntries(["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow"]
   .map((f) => [f, Math[f]]).concat([["fmod", (a, b) => a % b]]));
 const cString = (x, ptr) => { const m = new Uint8Array(x.memory.buffer); let t = ""; while (m[ptr]) t += String.fromCharCode(m[ptr++]); return t; };
-
-// A Faust control's knob position (0-1) as text in its own units.
-function controlText(p, v) {
-  const x = p.log ? p.min * (p.max / p.min) ** v : p.min + (p.max - p.min) * v;
-  switch (p.unit) {
-    case "%": return Math.round(x) + "%";
-    case "ms": return (x < 10 ? x.toFixed(1) : Math.round(x)) + " ms";
-    case "s": return x < 1 ? Math.round(x * 1000) + " ms" : (x < 10 ? x.toFixed(2) : x.toFixed(1)) + " s";
-    case "Hz": return x < 10 ? x.toFixed(2) + " Hz" : x < 1000 ? Math.round(x) + " Hz" : (x / 1000).toFixed(1) + " kHz";
-    default: return x.toFixed(2);
-  }
-}
 
 class Effect extends Synth {
   render(container) {
@@ -1152,12 +1018,10 @@ class Effect extends Synth {
     if (this.lineIn) updateLineIn();
   }
 
-  // A parameter's text: Faust controls in their own units; C modules (Airwindows,
-  // Texture) say it themselves, through an instance of the module
-  // on this thread. Airwindows' plain 0-1 readouts show as percent, like the knobs.
+  // A parameter's text, as the plugin itself gives it, through an instance of
+  // it on this thread. Plain 0-1 readouts show as percent, like the knobs.
   paramText(a, i, v) {
-    const m = this.mods[a], p = m.params[i];
-    if (m.kind === "faust") return controlText(p, v);
+    const m = this.mods[a];
     if (!this.display || this.display.index !== a) {
       const x = new WebAssembly.Instance(new WebAssembly.Module(base64ToBytes(m.wasm)), { env: AW_MATH }).exports;
       if (m.displayInit) x.init(48000);
@@ -1205,7 +1069,7 @@ class Effect extends Synth {
       processorOptions: {
         libm: base64ToBytes(ASSETS.libm),
         modules: this.mods.map((m, i) => ({
-          kind: m.kind, wasm: base64ToBytes(m.wasm), meta: m.meta, controls: m.controls, declick: m.declick, params: this.store[i],
+          wasm: base64ToBytes(m.wasm), params: this.store[i],
         })),
       },
     });

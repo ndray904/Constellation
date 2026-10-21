@@ -33,15 +33,8 @@ function faustEnv(module) {
 }
 
 class FaustMono {
-  // fresh: don't clear the whole DSP state on init (for a reverb's long delay
-  // lines that takes tens of milliseconds). Fresh wasm memory is zero except
-  // the module's data segments (meta.dataEnd bytes from 0: Faust's JSON, where
-  // the state goes), so only those are cleared, and the few non-zero starting
-  // values the full clear would write come from meta.initPatch (build.mjs).
-  // build.mjs and test/aurora.cjs check the state comes out exactly as init()
-  // leaves it.
-  constructor(wasmBytes, meta, sampleRate, blockSize = BLOCK, { fresh = false } = {}) {
-    const module = wasmBytes instanceof WebAssembly.Module ? wasmBytes : new WebAssembly.Module(wasmBytes);
+  constructor(wasmBytes, meta, sampleRate, blockSize = BLOCK) {
+    const module = new WebAssembly.Module(wasmBytes);
     this.instance = new WebAssembly.Instance(module, { env: faustEnv(module) });
     this.exports = this.instance.exports;
     this.memory = this.exports.memory;
@@ -78,15 +71,7 @@ class FaustMono {
     }
     this.inTable = inTable;
     this.outTable = outTable;
-    if (fresh) {
-      new Uint8Array(this.memory.buffer, 0, meta.dataEnd).fill(0);
-      this.exports.instanceConstants(0, sampleRate);
-      this.exports.instanceResetUserInterface(0);
-      const heap = new Uint8Array(this.memory.buffer);
-      for (const [offset, bytes] of meta.initPatch || []) heap.set(bytes, offset);
-    } else {
-      this.exports.init(0, sampleRate);
-    }
+    this.exports.init(0, sampleRate);
   }
 
   set(name, value) {

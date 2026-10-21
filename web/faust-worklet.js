@@ -78,45 +78,40 @@ class RecorderProcessor extends AudioWorkletProcessor {
 
 registerProcessor("recorder", RecorderProcessor);
 
-// Hosts the reverbs of Nebula (Airwindows) and Aurora. A module is either
-//   { kind: "c", wasm, params }                 C interface: airwindows/shim/wrapper.cpp, aurora/shim/wrapper.h
-//   { kind: "faust", wasm, meta, params, controls }   a Faust DSP; controls[i] = { index, min, max, log }
-// plus declick: "clone" (default) or "glide". params are the 0-1 knob values,
-// in the module's parameter order. processorOptions: { modules, libm }.
+// Hosts Nebula's reverbs: Airwindows plugins compiled to wasm, each behind the
+// C interface of airwindows/shim/wrapper.cpp.
+// processorOptions: { modules: [{ wasm, params }], libm }; params are the 0-1
+// knob values, in the plugin's parameter order.
 // Messages in: { algo: index } switches reverb (the new one crossfades in over
 // ~20 ms); { param: index, value } sets a parameter. Message out: { ready: true }
 // once constructed (the page starts sound only after that).
 //
-// Many reverbs apply parameters instantly; some (StarChild's Sustain and Grain,
+// The plugins apply parameters instantly; some (StarChild's Sustain and Grain,
 // Infinity's Size, Galactic's Bigness) move their delay taps, so a change is a
-// jump in the output: a click. So for "clone" modules a change goes to a copy
-// of the running reverb (same memory, so the same tank contents) and the output
-// crossfades to it over ~20 ms. Changes that arrive during a fade are applied
-// together at its end, so a knob drag becomes a run of short crossfades.
-// "glide" modules (Aurora's) smooth their own controls, so changes go straight in.
+// jump in the output: a click. So a change goes to a copy of the running
+// reverb (same memory, so the same tank contents) and the output crossfades to
+// it over ~20 ms. Changes that arrive during a fade are applied together at its
+// end, so a knob drag becomes a run of short crossfades.
 //
-// Every instance is made in the constructor (while the page holds the sound
-// off) and reused, never thrown away: one per module, two for "clone" ones.
-// Allocating or dropping a wasm memory while playing (up to 64 MB here) makes
-// V8 stop this thread for garbage collection, and a reverb's first block would
-// stall while Chrome compiles its code (it compiles wasm lazily, on first
-// call): pauses of 3-25 ms that break up the sound. So each instance also
-// runs one silent block up front. Untouched delay lines cost address space,
-// not memory. A reverb switched away from rings out on silence for up to 10 s
-// (the two most recent at a time), so selecting it again doesn't bring back
-// an old tail.
+// Every instance (two per plugin: the running one and a spare for the next
+// copy) is made in the constructor, while the page holds the sound off, and
+// reused, never thrown away. Allocating or dropping wasm memory while playing
+// makes V8 stop this thread for garbage collection, and a reverb's first block
+// would stall while Chrome compiles its code (it compiles wasm lazily, on first
+// call): pauses that break up the sound. So each instance also runs one silent
+// block up front. A reverb switched away from rings out on silence for up to
+// 10 s (the two most recent at a time), so selecting it again doesn't bring
+// back an old tail.
 //
 // With nothing coming in and its tail gone (1 s below -140 dB, nothing else
 // ringing out), the unit sleeps: it outputs silence without running anything,
 // until input arrives. An effect nobody has patched in costs nothing.
-// The C modules' math imports (see airwindows/shim/math.h): musl's libm in
-// wasm when loaded (see faust-runtime.js), Math.* otherwise.
+
+// The plugins' math imports (see airwindows/shim/math.h): musl's libm in wasm
+// when loaded (see faust-runtime.js), Math.* otherwise.
 const AW_MATH_NAMES = ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp", "log", "log10", "pow", "fmod"];
 const awEnv = () => Object.fromEntries(AW_MATH_NAMES.map((f) => [f, LIBM ? LIBM[f] : f === "fmod" ? (a, b) => a % b : Math[f]]));
 const RING_OUT_MAX = 2;
-
-// A knob's 0-1 position as a Faust slider value.
-const controlValue = (c, v) => (c.log ? c.min * (c.max / c.min) ** v : c.min + (c.max - c.min) * v);
 
 class ReverbProcessor extends AudioWorkletProcessor {
   constructor(options) {
@@ -124,13 +119,12 @@ class ReverbProcessor extends AudioWorkletProcessor {
     const { modules, libm } = options.processorOptions;
     if (libm) setMathLibrary(libm);
     this.env = awEnv();
-    // all compiled up front (about 20 ms for all of Nebula's and Aurora's), so
-    // switching never waits on the compiler
-    this.specs = modules.map((m) => ({ ...m, kind: m.kind || "c", declick: m.declick || "clone", module: new WebAssembly.Module(m.wasm) }));
+    // all compiled up front, so switching never waits on the compiler
+    this.modules = modules.map((m) => new WebAssembly.Module(m.wasm));
     this.params = modules.map((m) => m.params.slice());
     this.zeros = new Float32Array(BLOCK);
     this.fadeStep = 1 / (0.02 * sampleRate);
-    this.pool = this.specs.map((m, i) => Array.from({ length: m.declick === "clone" ? 2 : 1 }, () => {
+    this.pool = this.modules.map((m, i) => Array.from({ length: 2 }, () => {
       const fx = this.instance(i);
       this.run(fx, this.zeros, this.zeros);   // compiles its code now
       return fx;
@@ -150,8 +144,7 @@ class ReverbProcessor extends AudioWorkletProcessor {
         this.dirty = false;
       } else if (d.param !== undefined) {
         this.params[this.current.index][d.param] = d.value;
-        if (this.specs[this.current.index].declick === "glide") this.current.setParam(d.param, d.value);
-        else this.dirty = true;
+        this.dirty = true;
       }
     };
     this.port.postMessage({ ready: true });
@@ -159,17 +152,7 @@ class ReverbProcessor extends AudioWorkletProcessor {
 
   // A new running instance of module `index`.
   instance(index) {
-    const spec = this.specs[index];
-    if (spec.kind === "faust") {
-      const dsp = new FaustMono(spec.module, spec.meta, sampleRate, BLOCK, { fresh: true });
-      return {
-        index, dsp, memory: dsp.memory,
-        io: [dsp.inputs[0], dsp.inputs[1], dsp.outputs[0], dsp.outputs[1]],
-        setParam: (i, v) => dsp.exports.setParamValue(0, spec.controls[i].index, controlValue(spec.controls[i], v)),
-        process: () => dsp.compute(),
-      };
-    }
-    const x = new WebAssembly.Instance(spec.module, { env: this.env }).exports;
+    const x = new WebAssembly.Instance(this.modules[index], { env: this.env }).exports;
     x.init(sampleRate);
     const ptrs = [x.inL(), x.inR(), x.outL(), x.outR()];
     let mem = null, views = null;
@@ -210,12 +193,11 @@ class ReverbProcessor extends AudioWorkletProcessor {
     return fx;
   }
 
-  // A copy of fx with the same state: its plugin object (or DSP struct), delay
-  // lines and counters, in a pooled instance of the same module.
+  // A copy of fx with the same state: its plugin object, delay lines and
+  // counters, in the spare instance of the same plugin.
   clone(fx) {
     const copy = this.take(fx.index);
-    const spec = this.specs[fx.index];
-    const length = spec.kind === "faust" ? spec.meta.size : fx.memory.buffer.byteLength;
+    const length = fx.memory.buffer.byteLength;
     const missing = length - copy.memory.buffer.byteLength;
     if (missing > 0) copy.memory.grow(Math.ceil(missing / 65536));
     new Uint8Array(copy.memory.buffer).set(new Uint8Array(fx.memory.buffer, 0, length));

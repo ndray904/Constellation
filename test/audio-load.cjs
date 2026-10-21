@@ -5,7 +5,7 @@
 // STALL is one call of 3 ms or more (a 128-frame block lasts 2.7 ms at 48 kHz).
 // In a shared container, scattered 3-6 ms stalls that hit every processor
 // alike are the machine, not the page.
-// Usage: node test/audio-load.cjs start|aurora|nebula|drag|hold:<aurora|nebula>:<module>
+// Usage: node test/audio-load.cjs start|nebula|drag|hold:nebula:<plugin>
 //   TRACE_GC=1 DEBUG=pw:browser node test/audio-load.cjs ...   also prints V8's garbage collections
 const fs = require("fs"), http = require("http");
 const { chromium } = require(require.resolve("playwright", { paths: [process.execPath + "/../../lib/node_modules"] }));
@@ -39,7 +39,7 @@ const mode = process.argv[2] || "start";
   await p.evaluate(() => synths.ribbon35.setHold(true));
   const box = await p.locator("#ribbon35-ribbon").boundingBox();
   await p.mouse.click(box.x + box.width * 0.4, box.y + box.height / 2);     // starts audio, latches a note
-  await p.waitForFunction(() => synths.aurora.node);
+  await p.waitForFunction(() => synths.nebula.node);
   await p.evaluate(() => { const c = synths.ribbon35.node.context; window.__s = new AudioWorkletNode(c, "__stats"); window.__poll = () => new Promise((r) => { window.__s.port.onmessage = (e) => r(e.data); window.__s.port.postMessage(0); }); });
   const poll = () => p.evaluate(() => window.__poll());
   let last = await poll();
@@ -58,7 +58,7 @@ const mode = process.argv[2] || "start";
   } else if (mode === "drag") {
     // drag every knob of a few Nebula plugins (each change crossfades to a copy)
     await p.evaluate(() => setRoute(synths.ribbon35, "nebula"));
-    for (const m of ["Galactic3", "kPlateD", "PocketVerbs", "MatrixVerb", "kCathedral3"]) {
+    for (const m of ["Galactic3", "Infinity2", "StarChild2", "kCosmos"]) {
       await p.evaluate((m) => synths.nebula.setMode(synths.nebula.spec.algorithms.findIndex((a) => a.module === m)), m);
       await p.waitForTimeout(300); await report(m + " selected");
       for (const id of await p.evaluate(() => Object.keys(synths.nebula.spec.knobs))) {
@@ -77,7 +77,7 @@ const mode = process.argv[2] || "start";
     const mods = await p.evaluate((k) => synths[k].spec.algorithms.map((a) => a.module), mode);
     for (let i = 0; i < mods.length; i++) {
       await p.evaluate(([k, i]) => synths[k].setMode(i), [mode, i]);
-      await p.waitForTimeout(mode === "aurora" ? 1500 : 700);
+      await p.waitForTimeout(1000);
       await report(mods[i]);
     }
   }
