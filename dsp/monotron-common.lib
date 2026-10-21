@@ -4,7 +4,9 @@
 //
 // Building blocks from the Faust standard libraries (STK-4.3 / MIT-style):
 //   ve.korg35LPF  Korg 35 low-pass (Eric Tarr), used directly in "stdlib" mode
-//   ve.moogLadder Moog four-pole ladder (Dario Sanfilippo), the "Moog" mode
+//   ve.moogLadder, ve.moogHalfLadder, ve.diodeLadder, ve.oberheimLPF
+//                 Moog, Moog half ladder, TB-303 and Oberheim SEM filters
+//                 (Dario Sanfilippo, Eric Tarr), the extra filter models
 //   fi.*, no.*    one-pole filters, noise
 
 import("stdfaust.lib");
@@ -80,28 +82,61 @@ with {
   lp2(s1, s2, s3, k) = (u(s1, s2, s3, k) - s3) * alpha + s3;
 };
 
-// Not in the monotrons: a Moog four-pole ladder as a third choice. Same cutoff
-// mapping as ve.korg35LPF. Its loop runs out of the last stage, so the diode
-// limiter scales the loop gain by tanh(y)/y at the previous output sample:
-// the ladder's k = 4 oscillation edge is crossed near full PEAK and the tone
-// settles where the effective gain falls back to 4. A real ladder loses bass
-// as resonance rises (passband gain 1 / (1 + k)); sqrt(1 + K) makes up half
-// of that loss in dB, so the level stays near the Korg filter's.
-moogDiode(normFreq, K) = (\(yPrev, x).(ve.moogLadder(normFreq, Q(K * dg(yPrev)), x))) ~ _
-                       : *(sqrt(1 + K)) : diode
+// Not in the monotrons: other synths' filters from the Faust library, as
+// extra choices. All take the same normFreq as ve.korg35LPF. r is the loop
+// gain as a fraction of each filter's oscillation edge (r = 1 at Q = 25 for
+// the ladders).
+ladderQ(r) = (1 / sqrt(2)) + r * (25 - 1 / sqrt(2));
+
+// The ladders are linear in their loops, so the diode limiter scales r by
+// tanh(y)/y at the previous output sample: past the edge, the tone settles
+// where the effective gain falls back to 1, as with korg35Diode.
+diodeGain(y) = select2(abs(y) > 1e-4, 1, ma.tanh(y) / y);
+loopLimit(f, r) = (\(yPrev, x).(x : f(r * diodeGain(yPrev)))) ~ _;
+
+// Moog four-pole ladder (24 dB/oct). A real ladder loses bass as resonance
+// rises (passband gain 1 / (1 + 4r)); sqrt of that is made up, half the loss
+// in dB, so the level stays near the Korg filter's.
+moogDiode(normFreq, r) = loopLimit(\(rr).(ve.moogLadder(normFreq, ladderQ(rr))), r)
+                       : *(sqrt(1 + 4 * r)) : diode;
+
+// Moog half ladder: two poles (12 dB/oct), brighter than the full ladder.
+moogHalf(normFreq, r) = loopLimit(\(rr).(ve.moogHalfLadder(normFreq, ladderQ(rr))), r)
+                      : *(sqrt(1 + 2 * r)) : diode;
+
+// TB-303 style diode ladder. The library drives its input into a cubic
+// clipper at 100x gain; scaling by 1/100 first leaves a gentle soft clip at
+// unit level, and 1/1.5 undoes its output gain. Measured on this model: its
+// resonance sits about 10% below the nominal cutoff in the bass and rises to
+// meet it near 2 kHz, so the cutoff is raised by up to 0.048 (fitted so it
+// self-oscillates at the cutoff); the oscillation edge moves from Q 27 to 48
+// with cutoff (edge303 follows it); and the passband falls as 1 / (1 + k),
+// steeper than the Moog's, of which (1 + k)^0.7 is made up.
+tb303(normFreq, r) = *(0.01) : loopLimit(\(rr).(ve.diodeLadder(nf, q(rr))), r)
+                   : *(pow(1 + k(q(r)), 0.7) / 1.5) : diode
 with {
-  dg(y) = select2(abs(y) > 1e-4, 1, ma.tanh(y) / y);
-  Q(k)  = (1 / sqrt(2)) + k * (25 - 1 / sqrt(2)) / 4;
+  nf = normFreq + 0.048 * max(0, min(1, (0.7 - normFreq) / 0.35));
+  edge303 = 28 + 20 * max(0, min(1, (nf - 0.5) / 0.3)) - 11 * max(0, min(1, (nf - 0.8) / 0.1));
+  q(rr) = (1 / sqrt(2)) + rr * (edge303 - 1 / sqrt(2));
+  k(qq) = (17 - (nf ^ 10) * 9.7) * (qq - 1 / sqrt(2)) / (25 - 1 / sqrt(2));
 };
+
+// Oberheim SEM state-variable low-pass (12 dB/oct). Like the SEM it does not
+// self-oscillate: Q rises to 12 and its cubic stages saturate the peak.
+oberheimLP(normFreq, peakK) = ve.oberheimLPF(normFreq, 0.6 * 20 ^ peakK) : diode;
 
 // Whole VCF. peakK 0..1. The loop gain at cutoff is K/2, so K = 2 is the
 // oscillation edge; the diode model runs to 2.2 so it self-oscillates near full
 // PEAK. model: 0 = diodes in the loop, 1 = plain ve.korg35LPF (linear loop,
-// diode after), 2 = Moog ladder. Faust runs all three and picks one.
+// diode after), 2 = Moog ladder, 3 = Moog half ladder, 4 = Oberheim SEM,
+// 5 = TB-303. Faust runs all of them and picks one.
 vcf(normFreq, peakK, model) = _ <: korg35Diode(normFreq, peakK * 2.2),
                                    (ve.korg35LPF(normFreq, linQ) : diode),
-                                   moogDiode(normFreq, peakK * 4.4)
-                               : ba.selectn(3, model)
+                                   moogDiode(normFreq, peakK * 1.1),
+                                   moogHalf(normFreq, peakK * 1.1),
+                                   oberheimLP(normFreq, peakK),
+                                   tb303(normFreq, peakK * 1.1)
+                               : ba.selectn(6, model)
 with {
   linQ = (1 / sqrt(2)) + min(1.96, peakK * 2.08) * (10 - 1 / sqrt(2)) / 2;
 };

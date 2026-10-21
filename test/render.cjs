@@ -55,7 +55,6 @@ results.push(render("gate-off-silence", 1, (d) => { d.set("gate", 0); d.set("pea
 results.push(render("standby-silence", 1, (d) => { d.set("gate", 1); d.set("mode", 0); }));
 results.push(render("peak-max-self-osc", 1, (d) => { d.set("gate", 0); d.set("cutoff", 0.5); d.set("peak", 1); }));
 results.push(render("peak-max-stdlib", 1, (d) => { d.set("gate", 1); d.set("cutoff", 0.5); d.set("peak", 1); d.set("filter_model", 1); }));
-const moogOsc = render("peak-max-moog", 1, (d) => { d.set("gate", 0); d.set("cutoff", 0.5); d.set("peak", 1); d.set("filter_model", 2); });
 results.push(render("moog-open", 1, (d) => { note(0.5)(d); d.set("filter_model", 2); }));
 results.push(render("moog-mid-peak", 1, (d) => { note(0.3)(d); d.set("cutoff", 0.5); d.set("peak", 0.6); d.set("filter_model", 2); }));
 results.push(render("lfo-pitch-sweep", 2, (d) => { d.set("gate", 1); d.set("lfo_int", 1); d.set("lfo_rate", 0.2); d.set("cutoff", 0.8); }));
@@ -125,8 +124,14 @@ console.log(`lfo at min: ${(1 / lfoSlow).toFixed(2)} s/cycle   lfo at max: ${lfo
 // Pitch knob: 1 V/oct over 0..10 V from C0 = 16.35 Hz. Default 0.333 -> 3.33 V -> 164.4 Hz; ribbon 1 adds 18 semitones.
 const pitchHz = (k) => 16.3516 * Math.pow(2, k * 10);
 const expectLow = pitchHz(0.333);
-const moogBelow = render("moog-peak-0.85-no-gate", 1, (d) => { d.set("gate", 0); d.set("cutoff", 0.5); d.set("peak", 0.85); d.set("filter_model", 2); });
-const moogWobble = render("moog-lfo-cutoff-max-peak", 2, (d) => { d.set("gate", 1); d.set("mode", 2); d.set("lfo_int", 1); d.set("lfo_rate", 0.6); d.set("cutoff", 0.5); d.set("peak", 1); d.set("filter_model", 2); });
+// The extra filter models (2 Moog, 3 Moog half ladder, 4 Oberheim, 5 TB-303).
+const ladders = [[2, "Moog ladder"], [3, "Moog half ladder"], [5, "TB-303"]];
+const fm = (m, peak, gate) => (d) => { d.set("gate", gate); d.set("cutoff", 0.5); d.set("peak", peak); d.set("filter_model", m); };
+const ladderOsc = ladders.map(([m, n]) => render(`${n}-peak-max`, 1, fm(m, 1, 0)));
+const ladderBelow = ladders.map(([m, n]) => render(`${n}-peak-0.85`, 1, fm(m, 0.85, 0)));
+const wobble = (m, n) => render(`${n}-lfo-cutoff-max-peak`, 2, (d) => { fm(m, 1, 1)(d); d.set("mode", 2); d.set("lfo_int", 1); d.set("lfo_rate", 0.6); });
+const sweeps = [...ladders, [4, "Oberheim"]].map(([m, n]) => wobble(m, n));
+const oberheimOsc = render("Oberheim-peak-max", 1, fm(4, 1, 0));
 const knobCentre = render("pitch-knob-centre-5V", 1, (d) => { note(0)(d); d.set("pitch", 0.5); });
 const knob8V = render("pitch-knob-8V", 1, (d) => { note(0)(d); d.set("pitch", 0.8); });
 const checks = [
@@ -143,9 +148,10 @@ const checks = [
   ["silent in standby", results[3].peak < 1e-3],
   ["diode loop self-oscillates at max peak (no gate)", results[4].peak > 0.05],
   ["self-oscillation near cutoff (632 Hz)", results[4].hz > 400 && results[4].hz < 700],
-  ["Moog ladder self-oscillates at max peak, near cutoff", moogOsc.peak > 0.05 && moogOsc.hz > 400 && moogOsc.hz < 700],
-  ["Moog ladder stays quiet below the oscillation edge", moogBelow.peak < 1e-3],
-  ["Moog ladder stays bounded under audio-rate cutoff sweeps", !moogWobble.nan && moogWobble.peak <= 1.0001],
+  ...ladders.map(([, n], i) => [`${n} self-oscillates at max peak, near cutoff`, ladderOsc[i].peak > 0.05 && ladderOsc[i].hz > 580 && ladderOsc[i].hz < 680]),
+  ...ladders.map(([, n], i) => [`${n} stays quiet below the oscillation edge`, ladderBelow[i].peak < 1e-3]),
+  ["Oberheim SEM never self-oscillates", oberheimOsc.peak < 1e-3],
+  ["extra filter models stay bounded under audio-rate cutoff sweeps", sweeps.every((r) => !r.nan && r.peak <= 1.0001)],
 ];
 let failed = 0;
 for (const [label, ok] of checks) { console.log(`${ok ? "PASS" : "FAIL"}  ${label}`); if (!ok) failed++; }

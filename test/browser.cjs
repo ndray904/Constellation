@@ -200,6 +200,19 @@ const shots = process.argv[2];
     check(`[${name}] Hold armed first: silent until touched, then holds`, armedQuiet < 0.005 && armedHeld > 0.02, `(${armedQuiet.toFixed(4)}, ${armedHeld.toFixed(3)})`);
     check(`[${name}] space bar toggles Hold on the keys instrument`, spaceOff[0] === false && spaceOff[1] < 0.005, `(${spaceOff})`);
 
+    // ---- Filter model: every choice in the drop-down sounds and is sent ----
+    await p.click("#ribbon35-hold");
+    await press("#ribbon35-ribbon", 0.4, 120);
+    const models = [];
+    for (const v of ["1", "2", "3", "4", "5", "0"]) {
+      await p.selectOption("#filter-model", v);
+      await p.waitForTimeout(250);
+      models.push([await p.evaluate(() => synths.ribbon35.params.filter_model), await loudest(() => rms(p, "ribbon35"), 3)]);
+    }
+    check(`[${name}] every filter model sounds`, models.every(([v, r], i) => v === [1, 2, 3, 4, 5, 0][i] && r > 0.02), `(${models.map(([v, r]) => `${v}:${r.toFixed(3)}`).join(" ")})`);
+    await p.click("#ribbon35-hold");
+    await p.waitForTimeout(300);
+
     // ---- Routing: Pulsar through Singularity ----
     await p.click("#ribbon35-hold");
     await press("#ribbon35-ribbon", 0.4, 120);

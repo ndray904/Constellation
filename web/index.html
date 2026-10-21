@@ -239,13 +239,15 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .panel h2 { font-family: var(--font-label); font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 0; }
 .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 28px; }
 
-.field { display: grid; gap: 6px; }
+.field { display: grid; gap: 6px; align-content: start; }
 .field > span { font-size: 13px; color: var(--muted); }
 .seg { display: flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; width: fit-content; max-width: 100%; }
 .seg button { all: unset; cursor: pointer; padding: 6px 12px; font-size: 14px; color: var(--ink); }
 .seg button + button { border-left: 1px solid var(--rule); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pick { font: inherit; font-size: 14px; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; width: fit-content; max-width: 100%; }
+.pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .range { display: flex; align-items: center; gap: 10px; }
 .range input { flex: 1; accent-color: var(--accent); min-width: 0; }
 .range output { font-family: var(--font-mono); font-size: 13px; width: 3.5ch; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -409,14 +411,17 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
           <button id="out-speaker" data-value="1" aria-pressed="false">Built-in speaker</button>
         </div>
       </div>
-      <div class="field">
+      <label class="field">
         <span>Filter model</span>
-        <div class="seg" id="seg-filter">
-          <button id="flt-diode" data-value="0" aria-pressed="true" title="Korg 35 with the diodes in its resonance loop">Diodes</button>
-          <button id="flt-stdlib" data-value="1" aria-pressed="false" title="Faust's plain korg35LPF">Korg</button>
-          <button id="flt-moog" data-value="2" aria-pressed="false" title="Moog four-pole ladder">Moog</button>
-        </div>
-      </div>
+        <select class="pick" id="filter-model">
+          <option value="0" selected>Korg 35 + diodes (monotron)</option>
+          <option value="1">Korg 35, plain</option>
+          <option value="2">Moog ladder</option>
+          <option value="3">Moog half ladder</option>
+          <option value="4">Oberheim SEM</option>
+          <option value="5">TB-303 diode ladder</option>
+        </select>
+      </label>
       <div class="field">
         <span>MIDI keyboard</span>
         <div class="row"><button class="btn" id="midi-connect">Connect MIDI</button></div>
@@ -464,7 +469,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
           <tr><td>LFO shape</td><td class="part">C10, Q3, IC3E/D</td><td>Falling ramp (icon at R64), restarted on every touch through the C9/R24 "LFO reset" pulse. The snap back up is band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Filter key tracking</td><td class="part">R42 330k, R50 68k, R75</td><td>The ribbon voltage also feeds the cutoff. Relative to the cutoff knob's 0–0.6 VCC span it adds 0.34 of the knob's range.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Filter + resonance</td><td class="part">Q12–14, C20, C21, IC4C, D1/D2</td><td>Two-pole Korg 35 low-pass. The 1SS355 diodes in IC4C's feedback sit inside the resonance loop, so self-oscillation is soft-limited.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Filter model: Moog</td><td class="part">not on the monotron</td><td>The Output panel's Filter model can swap in a four-pole Moog ladder (24 dB/oct, darker and thicker) on all three synths, with the same diode limit in its loop, so it self-oscillates near full Peak like the Korg filter.</td><td></td></tr>
+          <tr><td>Filter model</td><td class="part">not on the monotron</td><td>The Output panel can swap in other synths' filters from the Faust library, on all three synths: Moog ladder (four-pole, darker), Moog half ladder (two-pole), Oberheim SEM (two-pole, smooth, never self-oscillates) and TB-303 diode ladder (four-pole, squelchy). The ladders get the same diode limit in their loops, so they self-oscillate near full Peak like the Korg filter.</td><td></td></tr>
           <tr><td>Speaker path</td><td class="part">C26, R80, R77, C27, R81, C30</td><td>High-pass at 231 Hz and 72 Hz, low-pass at 5.9 kHz: the thin, bright sound of the built-in speaker.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Headphone path</td><td class="part">C25, R79, R82, C32</td><td>High-pass at 2.3 Hz, otherwise flat.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Pitch knob range</td><td class="part">VR3A, R18, R20, R21</td><td>1 V/octave over 0–10 V: 5 V centre, ±5 octaves. With 0 V = C0 assumed, the bottom of the ribbon runs from 16.4 Hz to 16.7 kHz, with C5 at the centre.</td><td><span class="tag sch">hardware</span></td></tr>
@@ -1793,7 +1798,8 @@ function segmented(id, param) {
   }));
 }
 segmented("seg-speaker", "speaker");
-segmented("seg-filter", "filter_model");
+const filterModel = document.getElementById("filter-model");
+filterModel.addEventListener("change", () => setShared("filter_model", Number(filterModel.value)));
 
 for (const [key, synth] of Object.entries(synths)) {
   const row = document.getElementById(`${key}-presets`);
