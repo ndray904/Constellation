@@ -288,6 +288,82 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
   td.part { white-space: normal; color: var(--muted); }
 }
 @media (prefers-reduced-motion: reduce) { .switch-thumb { transition: none; } .btn.rec[aria-pressed="true"] .rec-dot { animation: none; } }
+
+/* ---------- Cosmos skin: space-art panels for the three synths ---------- */
+/* Each synth panel gets per-instrument accents; the art itself is a canvas
+   drawn by drawSkinArt(). Off unless .skin-cosmos is on the page wrapper. */
+.skin-art, .skin-head { display: none; }
+.skin-cosmos .device.skinned {
+  --silk: #e4eaf6; --silk-dim: #8c96ad; --body: #0a0d15; --body-edge: #05070c; --metal-hi: #3a4152; --metal-lo: #10131b;
+  position: relative; isolation: isolate; overflow: hidden;
+  background: #04060b; border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(150,175,230,0.16), 0 0 0 4px #0b0d12, 0 0 0 5px rgba(150,175,230,0.08), 0 24px 50px -22px #000;
+  padding-top: 16px;
+}
+.skin-cosmos .device.skinned::before {   /* rack screws */
+  content: ""; position: absolute; inset: 7px; pointer-events: none; z-index: 2;
+  background:
+    radial-gradient(circle, #9aa1b1 0 1.6px, #3a3f4b 2px 4px, #0d0f14 4.6px, transparent 5.6px) left top / 12px 12px no-repeat,
+    radial-gradient(circle, #9aa1b1 0 1.6px, #3a3f4b 2px 4px, #0d0f14 4.6px, transparent 5.6px) right top / 12px 12px no-repeat,
+    radial-gradient(circle, #9aa1b1 0 1.6px, #3a3f4b 2px 4px, #0d0f14 4.6px, transparent 5.6px) left bottom / 12px 12px no-repeat,
+    radial-gradient(circle, #9aa1b1 0 1.6px, #3a3f4b 2px 4px, #0d0f14 4.6px, transparent 5.6px) right bottom / 12px 12px no-repeat;
+}
+.skin-cosmos .skinned .skin-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.skin-cosmos .skinned .skin-head { display: flex; align-items: center; gap: clamp(12px, 2vw, 22px); padding-left: 8px; color: var(--acc); }
+.skin-cosmos .skinned .skin-head svg { height: clamp(26px, 4vw, 36px); width: auto; filter: drop-shadow(0 0 6px var(--acc)); }
+.skin-cosmos .skinned .skin-name {
+  font-family: var(--font-display); font-size: clamp(20px, 3.6vw, 34px); letter-spacing: 0.42em; line-height: 1;
+  color: var(--title); text-shadow: 0 0 14px var(--acc), 0 0 2px var(--acc);
+}
+.skin-cosmos .device.skinned.pulsar-skin { --acc: #3fb6ff; --acc2: #9fe0ff; --title: #dcf2ff; }
+.skin-cosmos .device.skinned.binary-skin { --acc: #4aa8ff; --acc2: #ffa040; --title: #f3f5fb; }
+.skin-cosmos .device.skinned.singularity-skin { --acc: #9d6bff; --acc2: #d4b8ff; --title: #dccbff; }
+.skin-cosmos .skinned .foot .brand { display: none; }
+/* control groups sit in brackets, titled in the accent colour */
+.skin-cosmos .skinned .controls > .group:not(.scope-group) {
+  border: 1px solid color-mix(in srgb, var(--acc) 50%, transparent); border-bottom-color: transparent;
+  border-radius: 10px 10px 0 0; padding: 6px 12px 4px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--acc) 7%, transparent), transparent 70%);
+}
+.skin-cosmos .binary-skin .controls > .group:not(.scope-group):nth-child(odd) { --acc: #ffa040; }
+.skin-cosmos .skinned .group-title { border: 0; justify-content: center; color: color-mix(in srgb, var(--acc) 55%, white); letter-spacing: 0.24em; }
+/* knobs: dark caps with a glowing pointer and a lit arc for the value */
+.skin-cosmos .skinned .knob-dial {
+  background:
+    conic-gradient(from -135deg, var(--acc) 0deg calc(var(--angle, -135deg) + 135deg), rgba(255,255,255,0.09) 0deg 270deg, transparent 0deg);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--acc) 60%, transparent));
+}
+.skin-cosmos .skinned .knob-cap {
+  inset: 5px; background: radial-gradient(circle at 40% 28%, #2c3242, #0c0e14 72%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 3px 7px rgba(0,0,0,0.8), 0 0 0 1px #000;
+}
+.skin-cosmos .skinned .knob-cap::after { width: 2.5px; height: 13px; top: 4px; margin-left: -1.25px; background: var(--acc2); box-shadow: 0 0 6px var(--acc), 0 0 2px var(--acc2); }
+.skin-cosmos .skinned .knob-label { color: #d3dae8; font-weight: 500; }
+/* the mode switch */
+.skin-cosmos .skinned .switch-track { background: #05070c; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 45%, transparent), inset 0 2px 6px #000; }
+.skin-cosmos .skinned .switch-thumb { background: linear-gradient(180deg, #2a3040, #0e1118); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 70%, transparent), 0 0 10px color-mix(in srgb, var(--acc) 55%, transparent); }
+.skin-cosmos .skinned .switch-thumb::after { content: ""; position: absolute; left: 3px; right: 3px; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: var(--acc2); box-shadow: 0 0 6px var(--acc); }
+.skin-cosmos .skinned .switch-labels button[aria-checked="true"] { color: var(--acc2); text-shadow: 0 0 8px var(--acc); }
+/* scope: tinted glass over the art */
+.skin-cosmos .skinned .scope-bezel::after { opacity: 0.45; }
+.skin-cosmos .skinned .scope-bezel { background: rgba(4,6,11,0.12); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 40%, transparent), 0 0 18px -6px var(--acc); }
+.skin-cosmos .skinned .scope-bezel canvas { background: transparent; }
+/* ribbon */
+.skin-cosmos .skinned .ribbon { background: rgba(2,3,7,0.82); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 40%, transparent), inset 0 2px 8px #000; }
+.skin-cosmos .skinned .slot::after { background: #10141f; }
+.skin-cosmos .skinned .slot.sharp::after { background: #1a2030; }
+.skin-cosmos .skinned .slot.sharp::before { background: #10141f; }
+.skin-cosmos .skinned .finger { background: var(--acc2); box-shadow: 0 0 14px 3px var(--acc); }
+/* push buttons: square caps with a bar that lights */
+.skin-cosmos .skinned .toggle .cap {
+  width: 26px; height: 22px; border-radius: 4px; position: relative;
+  background: linear-gradient(180deg, #1d2230, #0b0d13); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 5px #000, 0 0 0 1px #000;
+}
+.skin-cosmos .skinned .toggle .cap::after { content: ""; position: absolute; left: 7px; right: 7px; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: rgba(255,255,255,0.16); }
+.skin-cosmos .skinned .toggle[aria-pressed="true"] .cap::after { background: var(--acc2); box-shadow: 0 0 8px 1px var(--acc); }
+.skin-cosmos .skinned .toggle[aria-pressed="true"] { color: var(--silk); }
+.skin-cosmos .skinned .readout { color: var(--acc2); text-shadow: 0 0 8px color-mix(in srgb, var(--acc) 60%, transparent); }
+.skin-cosmos .skinned .scale-btn { box-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 0 2px #05070c, 0 0 0 3px color-mix(in srgb, var(--acc) 50%, transparent); }
 </style>
 
 
@@ -308,6 +384,13 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
       <div class="field">
         <span>Volume</span>
         <div class="range"><input type="range" id="volume" min="0" max="1" step="0.01" value="0.7"><output id="volume-out" for="volume">70</output></div>
+      </div>
+      <div class="field">
+        <span>Look</span>
+        <div class="seg" id="seg-skin">
+          <button data-skin="classic" aria-pressed="false">Classic</button>
+          <button data-skin="cosmos" aria-pressed="true">Cosmos</button>
+        </div>
       </div>
       <div class="field">
         <span>Listening through</span>
@@ -607,6 +690,180 @@ const statusEl = document.getElementById("status");
 const css = getComputedStyle(document.documentElement);
 const scopeColors = { bg: css.getPropertyValue("--scope-bg").trim(), grid: css.getPropertyValue("--scope-grid").trim(), trace: css.getPropertyValue("--scope-trace").trim() };
 
+/* ---------- Cosmos skin: panel art for the three synths ---------- */
+// Each synth's panel is drawn here (a seeded starfield, then its namesake on
+// the right), with its logo and accents; the CSS is under ".skin-cosmos".
+let skin = "cosmos";
+const SKINS = {
+  ribbon35: { art: "pulsar", acc: "#3fb6ff", acc2: "#9fe0ff",
+    scope: { bg: "rgba(3,6,12,0.12)", grid: "rgba(63,182,255,0.13)", trace: "#8fdcff" },
+    logo: `<svg viewBox="0 0 84 40"><polyline points="2,21 24,21 29,13 35,33 42,5 49,29 54,21 82,21" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>` },
+  duo: { art: "binary", acc: "#4aa8ff", acc2: "#ffa040",
+    scope: { bg: "rgba(6,5,10,0.12)", grid: "rgba(255,160,64,0.12)", trace: "#ffc27a" },
+    logo: `<svg viewBox="0 0 52 40"><circle cx="19" cy="20" r="12" fill="none" stroke="#5ab4ff" stroke-width="3"/><circle cx="33" cy="20" r="12" fill="none" stroke="#ff9a3c" stroke-width="3"/></svg>` },
+  delay: { art: "singularity", acc: "#9d6bff", acc2: "#d4b8ff",
+    scope: { bg: "rgba(5,3,12,0.12)", grid: "rgba(157,107,255,0.14)", trace: "#c9a6ff" },
+    logo: `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="11" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="20" r="3" fill="currentColor"/><path d="M20 1v7M20 32v7M1 20h7M32 20h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` },
+};
+
+function seeded(seed) {   // mulberry32
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+function glow(g, x, y, rad, col, a) {
+  const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+  gr.addColorStop(0, rgba(col, a)); gr.addColorStop(1, rgba(col, 0));
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
+}
+
+const SKIN_ART = {
+  // a neutron star: dipole field lines, two beams along the magnetic axis
+  pulsar(g, r, s, cx, cy, S) {
+    const a = -0.72, u = [Math.cos(a), Math.sin(a)], v = [-u[1], u[0]];
+    g.lineWidth = 0.8;
+    for (let i = 0; i < 10; i++) {
+      const L = S * (0.3 + i * 0.17);
+      for (const side of [1, -1]) {
+        g.strokeStyle = rgba(i % 3 ? s.acc : s.acc2, 0.42 / (1 + i * 0.35));
+        g.beginPath();
+        for (let k = 1; k < 80; k++) {
+          const th = (k / 80) * Math.PI, rr = L * Math.sin(th) ** 2;
+          const x = cx + rr * (Math.cos(th) * u[0] + side * Math.sin(th) * v[0]), y = cy + rr * (Math.cos(th) * u[1] + side * Math.sin(th) * v[1]);
+          k > 1 ? g.lineTo(x, y) : g.moveTo(x, y);
+        }
+        g.stroke();
+      }
+    }
+    for (const d of [1, -1]) {
+      const ex = cx + d * u[0] * S * 3, ey = cy + d * u[1] * S * 3;
+      for (const [wd, al, col] of [[18, 0.06, s.acc], [8, 0.14, s.acc], [3, 0.35, s.acc2], [1.2, 0.9, "#ffffff"]]) {
+        const gr = g.createLinearGradient(cx, cy, ex, ey);
+        gr.addColorStop(0, rgba(col, al)); gr.addColorStop(1, rgba(col, 0));
+        g.strokeStyle = gr; g.lineWidth = wd; g.beginPath(); g.moveTo(cx, cy); g.lineTo(ex, ey); g.stroke();
+      }
+      for (let i = 0; i < 220; i++) {   // plasma along the beam
+        const t = r() ** 0.8 * S * 2.8, off = (r() - 0.5) * (r() - 0.5) * S * 0.6 * (0.2 + t / S);
+        g.fillStyle = rgba(r() < 0.5 ? s.acc2 : "#ffffff", 0.5 * (1 - t / (S * 2.8)));
+        g.fillRect(cx + d * u[0] * t + v[0] * off, cy + d * u[1] * t + v[1] * off, 1.3, 1.3);
+      }
+    }
+    glow(g, cx, cy, S * 1.1, s.acc, 0.3);
+    glow(g, cx, cy, S * 0.4, s.acc2, 0.8);
+    glow(g, cx, cy, S * 0.13, "#ffffff", 1);
+    g.strokeStyle = "rgba(230,245,255,0.5)"; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(cx - S * 0.55, cy); g.lineTo(cx + S * 0.55, cy); g.moveTo(cx, cy - S * 0.55); g.lineTo(cx, cy + S * 0.55); g.stroke();
+  },
+  // two stars, blue and orange, on one tilted orbit through a ring of dust
+  binary(g, r, s, cx, cy, S) {
+    const rx = S * 1.3, ry = S * 0.42, tilt = -0.12, blue = s.acc, orange = s.acc2;
+    const pt = (t, k) => {
+      const x = Math.cos(t) * rx * k, y = Math.sin(t) * ry * k;
+      return [cx + x * Math.cos(tilt) - y * Math.sin(tilt), cy + x * Math.sin(tilt) + y * Math.cos(tilt)];
+    };
+    for (let i = 0; i < 3200; i++) {
+      const t = r() * Math.PI * 2, k = 1 + (r() - 0.5) * 0.5 * r(), [x, y] = pt(t, k);
+      g.fillStyle = rgba(r() < (Math.cos(t) + 1) / 2 ? orange : blue, 0.12 + 0.55 * r() ** 3);
+      g.fillRect(x, y, 1.3, 1.3);
+    }
+    for (let i = 0; i < 500; i++) {   // orange dust drifting off to the lower right
+      const x = cx + S * (0.3 + r() * 1.8), y = cy + S * (0.3 + r() * 1.4) * r();
+      g.fillStyle = rgba(orange, 0.25 * r() ** 2); g.fillRect(x, y, 1.2, 1.2);
+    }
+    for (const [k, al, wd] of [[1, 0.6, 1.6], [1.07, 0.2, 1], [0.94, 0.2, 1]]) {
+      const gr = g.createLinearGradient(cx - rx, cy, cx + rx, cy);
+      gr.addColorStop(0, rgba(blue, al)); gr.addColorStop(1, rgba(orange, al));
+      g.strokeStyle = gr; g.lineWidth = wd; g.beginPath();
+      for (let i = 0; i <= 180; i++) { const [x, y] = pt((i / 180) * Math.PI * 2, k); i ? g.lineTo(x, y) : g.moveTo(x, y); }
+      g.stroke();
+    }
+    for (const [t, col, rad] of [[Math.PI * 1.02, blue, S * 0.24], [Math.PI * 0.02, orange, S * 0.28]]) {
+      const [x, y] = pt(t, 0.6);
+      glow(g, x, y, rad * 3.4, col, 0.22);
+      glow(g, x, y, rad * 1.5, col, 0.65);
+      glow(g, x, y, rad * 0.8, "#ffffff", 0.85);
+      for (let i = 0; i < 300; i++) {   // a granulated surface
+        const an = r() * 7, d = Math.sqrt(r()) * rad;
+        g.fillStyle = rgba(col, 0.3 * r()); g.fillRect(x + Math.cos(an) * d, y + Math.sin(an) * d, 1.6, 1.6);
+      }
+    }
+  },
+  // a black hole: an edge-on accretion disk, lensed into a ring around the shadow
+  singularity(g, r, s, cx, cy, S) {
+    const R = S * 0.42;
+    for (let i = 0; i < 260; i++) {   // matter streaming in along the disk plane
+      const side = r() < 0.5 ? -1 : 1, y = cy + (r() - 0.5) * R * 1.8 * r(), x0 = cx + side * (R * 1.2 + r() * S * 2.4), len = (0.2 + r()) * S * 2.2;
+      const gr = g.createLinearGradient(x0, y, x0 + side * len, y);
+      gr.addColorStop(0, rgba(s.acc2, 0.3 * r())); gr.addColorStop(1, rgba(s.acc, 0));
+      g.strokeStyle = gr; g.lineWidth = 0.5 + r(); g.beginPath(); g.moveTo(x0, y); g.lineTo(x0 + side * len, y + (y - cy) * 0.6 * r()); g.stroke();
+    }
+    glow(g, cx, cy, S * 2.2, s.acc, 0.14);
+    for (let i = 0; i < 26; i++) {   // the far side of the disk, bent over and under the hole
+      const k = 1.06 + i * 0.03;
+      g.strokeStyle = rgba(i < 4 ? "#ffffff" : s.acc2, 0.55 / (1 + i * 0.35)); g.lineWidth = 1.2;
+      g.beginPath(); g.ellipse(cx, cy, R * k * 1.1, R * k, 0, 0, 7); g.stroke();
+    }
+    for (let i = 0; i < 40; i++) {
+      const k = 1.1 + i * 0.06;
+      g.strokeStyle = rgba(i < 6 ? "#f6eeff" : s.acc2, 0.5 / (1 + i * 0.22)); g.lineWidth = 1.1;
+      g.beginPath(); g.ellipse(cx, cy, R * k * 2.3, R * k * 0.2, 0, Math.PI, Math.PI * 2); g.stroke();
+    }
+    g.globalCompositeOperation = "source-over";   // the shadow of the event horizon
+    const hole = g.createRadialGradient(cx, cy, R * 0.82, cx, cy, R * 1.04);
+    hole.addColorStop(0, "#000"); hole.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = hole; g.beginPath(); g.arc(cx, cy, R * 1.05, 0, 7); g.fill();
+    g.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 40; i++) {   // the near side of the disk, in front of it
+      const k = 1.1 + i * 0.06;
+      g.strokeStyle = rgba(i < 6 ? "#ffffff" : s.acc2, 0.55 / (1 + i * 0.22)); g.lineWidth = 1.1;
+      g.beginPath(); g.ellipse(cx, cy, R * k * 2.3, R * k * 0.2, 0, 0, Math.PI); g.stroke();
+    }
+  },
+};
+
+// The feature is centred on the panel's scope, which is tinted glass in this
+// skin: the one area clear of controls at every width.
+function drawSkinArt(canvas, key, scope) {
+  const s = SKINS[key], dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  const box = canvas.getBoundingClientRect(), sc = scope.getBoundingClientRect();
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  const g = canvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const r = seeded(key.length * 7919 + 17);
+  const bg = g.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, "#03050a"); bg.addColorStop(1, "#070a14");
+  g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  const cx = sc.left - box.left + sc.width / 2, cy = sc.top - box.top + sc.height / 2;
+  const S = Math.max(40, Math.min(sc.width * 0.4, sc.height * 0.95, 170));
+  g.globalCompositeOperation = "lighter";
+  for (let i = 0; i < 8; i++) {   // haze
+    const x = cx + (r() - 0.5) * S * 5, y = cy + (r() - 0.5) * S * 2.5, rad = S * (0.8 + r() * 2);
+    glow(g, x, y, rad, key === "duo" && r() < 0.5 ? s.acc2 : s.acc, 0.09);
+  }
+  const n = Math.round((w * h) / 700);
+  for (let i = 0; i < n; i++) {   // stars, thicker toward the feature
+    const x = r() * w, y = r() * h, near = Math.exp(-((x - cx) ** 2 + (y - cy) ** 2) / (2 * (S * 2.4) ** 2));
+    const a = (0.12 + 0.6 * r() ** 2) * (0.3 + 0.7 * near + 0.3 * (x / w)), rad = 0.3 + 1.1 * r() ** 4;
+    g.fillStyle = r() < 0.2 ? rgba(s.acc2, a) : `rgba(225,235,255,${a})`;
+    g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
+  }
+  SKIN_ART[s.art](g, r, s, cx, cy, S);
+  g.globalCompositeOperation = "source-over";
+}
+
+function setSkin(name) {
+  skin = name;
+  document.querySelector(".wrap").classList.toggle("skin-cosmos", name === "cosmos");
+  document.querySelectorAll("#seg-skin button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.skin === name)));
+  try { localStorage.setItem("constellation-skin", name); } catch (e) {}
+  for (const sy of Object.values(window.synths || {})) if (sy.drawArt) sy.drawArt();
+}
+
 function base64ToBytes(b64) {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
@@ -677,11 +934,13 @@ class Synth {
   render(container) {
     const s = this.spec, k = this.key;
     const el = document.createElement("section");
-    el.className = "device " + s.theme;
+    el.className = "device " + s.theme + (SKINS[k] ? ` skinned ${SKINS[k].art}-skin` : "");
     el.id = k;
     el.setAttribute("aria-label", s.brand);
     el.style.setProperty("--slots", s.semis + 1);
     el.innerHTML = `
+      ${SKINS[k] ? `<canvas class="skin-art" data-role="skin-art" aria-hidden="true"></canvas>
+      <div class="skin-head" aria-hidden="true">${SKINS[k].logo}<span class="skin-name">${s.brand}</span></div>` : ""}
       <div class="controls">
         <div class="group">
           <div class="group-title">${s.modeTitle}</div>
@@ -802,7 +1061,17 @@ class Synth {
     };
     new ResizeObserver(fit).observe(this.canvas);
     fit();
+    this.art = q("skin-art");
+    if (this.art) {   // redrawn when the panel or its scope changes size (fonts loading, wrapping)
+      const ro = new ResizeObserver(() => this.drawArt());
+      ro.observe(this.art);
+      ro.observe(this.canvas.parentElement);
+    }
     this.updateReadout();
+  }
+
+  drawArt() {
+    if (this.art && skin === "cosmos") drawSkinArt(this.art, this.key, this.canvas.parentElement);
   }
 
   renderKnob(id) {
@@ -842,6 +1111,7 @@ class Synth {
     this.set(id, v);
     const el = this.knobEls[id];
     el.cap.style.setProperty("--angle", (-135 + 270 * v) + "deg");
+    el.dial.style.setProperty("--angle", (-135 + 270 * v) + "deg");   // the Cosmos skin's value arc
     el.dial.setAttribute("aria-valuenow", Math.round(v * 100));
     this.refreshKnobs();
   }
@@ -912,8 +1182,10 @@ class Synth {
 
   draw() {
     const c = this.canvas, g = this.g, w = c.width, h = c.height, dpr = window.devicePixelRatio || 1;
-    g.fillStyle = scopeColors.bg; g.fillRect(0, 0, w, h);
-    g.strokeStyle = scopeColors.grid; g.lineWidth = 1;
+    const sc = skin === "cosmos" && SKINS[this.key] ? SKINS[this.key].scope : scopeColors;
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = sc.bg; g.fillRect(0, 0, w, h);
+    g.strokeStyle = sc.grid; g.lineWidth = 1;
     for (let x = 0; x <= 8; x++) { g.beginPath(); g.moveTo(x * w / 8, 0); g.lineTo(x * w / 8, h); g.stroke(); }
     for (let y = 0; y <= 4; y++) { g.beginPath(); g.moveTo(0, y * h / 4); g.lineTo(w, y * h / 4); g.stroke(); }
     if (this.analyser) {
@@ -922,8 +1194,8 @@ class Synth {
       let start = 0;
       for (let i = 1; i < 2048; i++) if (wave[i - 1] < 0 && wave[i] >= 0) { start = i; break; }
       const span = 1536;
-      g.strokeStyle = scopeColors.trace; g.lineWidth = 1.75 * dpr; g.lineJoin = "round";
-      g.shadowColor = scopeColors.trace; g.shadowBlur = 8 * dpr; g.beginPath();
+      g.strokeStyle = sc.trace; g.lineWidth = 1.75 * dpr; g.lineJoin = "round";
+      g.shadowColor = sc.trace; g.shadowBlur = 8 * dpr; g.beginPath();
       for (let i = 0; i < span; i++) {
         const x = (i / (span - 1)) * w, y = h / 2 - wave[start + i] * h * 0.45;
         i ? g.lineTo(x, y) : g.moveTo(x, y);
@@ -1119,6 +1391,8 @@ const devicesEl = document.getElementById("devices");
 const synths = {};
 for (const [key, spec] of Object.entries(SPECS)) synths[key] = new (spec.effect ? Effect : Synth)(key, spec, devicesEl);
 window.synths = synths;
+document.querySelectorAll("#seg-skin button").forEach((b) => b.addEventListener("click", () => setSkin(b.dataset.skin)));
+setSkin((() => { try { return localStorage.getItem("constellation-skin") || "cosmos"; } catch (e) { return "cosmos"; } })());
 
 /* ---------- audio ---------- */
 function startAudio() {
