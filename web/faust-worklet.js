@@ -64,24 +64,27 @@ class FaustMonoProcessor extends AudioWorkletProcessor {
     if (input) this.dsp.inputs[0].set(input);
     else this.dsp.inputs[0].fill(0);
     this.dsp.compute();
-    let out = this.dsp.outputs[0];
+    const outs = this.dsp.outputs;            // one, or two with a stereo effect (chorus)
     if (this.next >= 0) {
       const incoming = this.dsps[this.next];
       incoming.inputs[0].set(this.dsp.inputs[0]);
       incoming.compute();
       const fade = this.step - PREROLL;
       if (fade >= 0) {                       // crossfade, sample by sample
-        const a = incoming.outputs[0], b = out, n = a.length;
-        for (let i = 0; i < n; i++) {
-          const g = Math.min(1, (fade * n + i + 1) / (FADE * n));
-          b[i] += (a[i] - b[i]) * g;
+        for (let c = 0; c < outs.length; c++) {
+          const a = incoming.outputs[c], b = outs[c], n = a.length;
+          for (let i = 0; i < n; i++) {
+            const g = Math.min(1, (fade * n + i + 1) / (FADE * n));
+            b[i] += (a[i] - b[i]) * g;
+          }
         }
       }
       if (++this.step >= PREROLL + FADE) {
         this.cur = this.next; this.dsp = incoming; this.next = -1;
       }
     }
-    for (const channel of outputs[0]) channel.set(out);
+    const channels = outputs[0];
+    for (let c = 0; c < channels.length; c++) channels[c].set(outs[Math.min(c, outs.length - 1)]);
     if (this.hasLed && ++this.blockCount >= this.ledEvery) {
       this.blockCount = 0;
       this.port.postMessage({ lfo: this.dsp.get("lfo_led") });

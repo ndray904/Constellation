@@ -213,6 +213,35 @@ const shots = process.argv[2];
     await p.click("#ribbon35-hold");
     await p.waitForTimeout(300);
 
+    // ---- Pulsar's chorus: stereo out, still mono-compatible into a line in ----
+    await p.click("#ribbon35-hold");
+    await press("#ribbon35-ribbon", 0.4, 120);
+    const sides = () => p.evaluate(() => {
+      const s = synths.ribbon35;
+      if (!s.split) {
+        s.split = ctx.createChannelSplitter(2); s.node.connect(s.split);
+        s.sideA = [0, 1].map((c) => { const a = ctx.createAnalyser(); a.fftSize = 2048; s.split.connect(a, c); return a; });
+      }
+      const [l, r] = s.sideA.map((a) => { const d = new Float32Array(2048); a.getFloatTimeDomainData(d); return d; });
+      let side = 0, mid = 0; for (let i = 0; i < 2048; i++) { side += (l[i] - r[i]) ** 2; mid += ((l[i] + r[i]) / 2) ** 2; }
+      return [Math.sqrt(side / 2048), Math.sqrt(mid / 2048)];
+    });
+    await p.waitForTimeout(300);
+    const chorusOff = await sides();
+    await p.click("#ribbon35-chorus");
+    await p.waitForTimeout(400);
+    const chorusOn = await sides();
+    const knobsLive = await p.evaluate(() => !document.getElementById("ribbon35-knob-chorus_rate").closest(".knob").classList.contains("idle"));
+    check(`[${name}] Pulsar's chorus spreads it into stereo`, chorusOff[0] < 0.001 && chorusOn[0] > 0.02 && chorusOn[1] > 0.05 && knobsLive, `(side off ${chorusOff[0].toFixed(4)}, on ${chorusOn[0].toFixed(3)}, mid ${chorusOn[1].toFixed(3)})`);
+    await p.click("#ribbon35-send-duo");
+    await p.waitForTimeout(400);
+    const intoDuo = await loudest(() => rms(p, "duo"), 3);
+    check(`[${name}] Pulsar with chorus plays through Binary`, intoDuo > 0.02, `(Binary ${intoDuo.toFixed(3)})`);
+    await p.click("#ribbon35-send-duo");
+    await p.click("#ribbon35-chorus");
+    await p.click("#ribbon35-hold");
+    await p.waitForTimeout(300);
+
     // ---- Singularity has a Hold button too ----
     await p.click("#delay-hold");
     await press("#delay-ribbon", 0.5, 120);

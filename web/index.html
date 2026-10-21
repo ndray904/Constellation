@@ -139,6 +139,15 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .knob-value { font-family: var(--font-mono); font-size: 11px; color: var(--silk-dim); font-variant-numeric: tabular-nums; min-height: 1.4em; }
 /* a knob whose effect is switched off by another control (LFO knobs at Int. 0) */
 .knob.idle .knob-dial { opacity: 0.55; }
+/* miniature knobs (Chorus) with its on switch beside them */
+.group.mini .group-row { align-items: center; gap: 10px 12px; }
+.group.mini .knob { width: 50px; gap: 4px; }
+.group.mini .knob-dial { width: 36px; height: 36px; }
+.group.mini .knob-cap { inset: 4px; }
+.group.mini .knob-cap::after { top: 3px; width: 2px; height: 8px; margin-left: -1px; }
+.group.mini .knob-label { font-size: 10px; }
+.group.mini .knob-value { font-size: 10px; }
+.group.mini .toggle { flex-direction: column; gap: 5px; }
 .knob.idle .knob-label, .knob.idle .knob-value { opacity: 0.5; }
 
 .led { width: 10px; height: 10px; border-radius: 50%; background: var(--led); opacity: 0.12; box-shadow: 0 0 10px 2px rgba(255,61,46,0.0); transition: none; }
@@ -351,6 +360,8 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
 }
 .skin-cosmos .skinned .knob-cap::after { width: 2.5px; height: 13px; top: 4px; margin-left: -1.25px; background: var(--acc2); box-shadow: 0 0 6px var(--acc), 0 0 2px var(--acc2); }
 .skin-cosmos .skinned .knob-label { color: #d3dae8; font-weight: 500; }
+.skin-cosmos .skinned .group.mini .knob-cap { inset: 4px; }
+.skin-cosmos .skinned .group.mini .knob-cap::after { top: 3px; width: 2px; height: 8px; margin-left: -1px; }
 /* the mode switch */
 .skin-cosmos .skinned .switch-track { background: #05070c; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 45%, transparent), inset 0 2px 6px #000; }
 .skin-cosmos .skinned .switch-thumb { background: linear-gradient(180deg, #2a3040, #0e1118); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 70%, transparent), 0 0 10px color-mix(in srgb, var(--acc) 55%, transparent); }
@@ -601,6 +612,7 @@ const SPECS = {
       { title: "VCO", knobs: ["pitch"] },
       { title: "LFO", knobs: ["lfo_rate", "lfo_int"], led: true },
       { title: "VCF", knobs: ["cutoff", "peak"] },
+      { title: "Chorus", knobs: ["chorus_rate", "chorus_depth"], toggle: "chorus", mini: true },
     ],
     knobs: {
       pitch:    { label: "Pitch",  value: 0.333, fmt: fmt.volts },
@@ -608,6 +620,9 @@ const SPECS = {
       lfo_int:  { label: "Int.",   value: 0,     fmt: fmt.pct },
       cutoff:   { label: "Cutoff", value: 0.6,   fmt: fmt.cutoff },
       peak:     { label: "Peak",   value: 0.3,   fmt: fmt.pct },
+      // not on the monotron: a stereo chorus after the amp (mc.chorus)
+      chorus_rate:  { label: "Rate",  value: 0.37, fmt: (v) => (0.1 * 80 ** v).toFixed(2) + " Hz", needs: "chorus" },
+      chorus_depth: { label: "Depth", value: 0.7,  fmt: fmt.pct, needs: "chorus" },
     },
     hz: (p) => pitchHz(p.pitch) * 2 ** (p.ribbon * 18 / 12),
     baseHz: (p) => pitchHz(p.pitch), modWheel: "lfo_int",
@@ -945,7 +960,7 @@ class Synth {
     this.params[name] = value;
     if (this.node) this.node.port.postMessage({ name, value });
     if (name === "ribbon" || name === "pitch" || name === "scale") this.updateReadout();
-    if (name === "mode" || name === "lfo_int") this.refreshKnobs();
+    if (name === "mode" || name === "lfo_int" || name === "chorus") this.refreshKnobs();
   }
 
   // Knob readouts can depend on other controls (Shape reads "rise" or "width"
@@ -958,7 +973,8 @@ class Synth {
       if (!k.needs) continue;
       const idle = this.params[k.needs] < 0.005;
       el.wrap.classList.toggle("idle", idle);
-      el.wrap.title = idle ? `Turn up ${this.spec.knobs[k.needs].label} to hear this` : "";
+      const needs = this.spec.knobs[k.needs];
+      el.wrap.title = !idle ? "" : needs ? `Turn up ${needs.label} to hear this` : "Switch it on to hear this";
     }
   }
 
@@ -966,7 +982,8 @@ class Synth {
     // One build per filter model; the worklet runs only the chosen one.
     const variants = ASSETS.synths[this.key].map(({ wasm, meta }) => ({ wasm: base64ToBytes(wasm), meta }));
     this.node = new AudioWorkletNode(ctx, "faust-mono", {
-      numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
+      // line in is mono: a stereo sender (Pulsar's chorus) is mixed down, (L + R) / 2
+      numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 1, channelCountMode: "explicit",
       processorOptions: { variants, model: shared.filter_model, libm: base64ToBytes(ASSETS.libm) },
     });
     for (const [name, value] of Object.entries({ ...this.params, ...shared })) this.node.port.postMessage({ name, value });
@@ -1005,9 +1022,9 @@ class Synth {
             </div>
           </div>
         </div>
-        ${s.groups.map((g) => `<div class="group">
+        ${s.groups.map((g) => `<div class="group${g.mini ? " mini" : ""}">
           <div class="group-title">${g.title}${g.led ? ' <span class="led" data-role="led" aria-hidden="true"></span>' : ""}</div>
-          <div class="group-row" data-knobs="${g.knobs.join(" ")}"></div>
+          <div class="group-row" data-knobs="${g.knobs.join(" ")}">${g.toggle ? `<button class="toggle" id="${k}-${g.toggle}" data-toggle="${g.toggle}" aria-pressed="false" aria-label="${g.title}"><span class="cap"></span><span class="led"></span>On</button>` : ""}</div>
         </div>`).join("")}
         <div class="group scope-group">
           <div class="group-title">Scope</div>
@@ -1052,6 +1069,17 @@ class Synth {
     el.querySelectorAll("[data-knobs]").forEach((row) => {
       row.dataset.knobs.split(" ").forEach((id) => { row.appendChild(this.renderKnob(id)); this.setKnob(id, this.params[id]); });
     });
+    // on/off switches for a group (Chorus)
+    el.querySelectorAll("[data-toggle]").forEach((b) => {
+      const name = b.dataset.toggle;
+      this.params[name] = 0;
+      b.addEventListener("click", () => {
+        const on = this.params[name] ? 0 : 1;
+        b.setAttribute("aria-pressed", String(!!on));
+        this.set(name, on);
+      });
+    });
+    this.refreshKnobs();
 
     // mode switch
     this.thumb = q("switch-thumb");
@@ -1196,7 +1224,7 @@ class Synth {
   applyPreset(p) {
     this.setMode(p.mode);
     if (this.spec.scale) this.setScale(p.scale);
-    for (const id of Object.keys(this.spec.knobs)) this.setKnob(id, p[id]);
+    for (const id of Object.keys(this.spec.knobs)) if (p[id] !== undefined) this.setKnob(id, p[id]);
   }
 
   ribbonFromX(clientX) {

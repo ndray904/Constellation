@@ -30,6 +30,9 @@ volK    = hslider("[8]volume", 0.7, 0, 1, 0.0001) : si.smoo;
 lineK   = hslider("[9]line in", 0, 0, 1, 0.0001) : si.smoo;
 speaker = checkbox("[10]speaker");        // 1 = internal speaker path, 0 = headphones
 fltModel = nentry("[11]filter model", 0, 0, 5, 1);  // see mc.vcf
+chorusOn = checkbox("[12]chorus");
+chRateK  = hslider("[13]chorus rate", 0.37, 0, 1, 0.0001) : si.smoo;
+chDepthK = hslider("[14]chorus depth", 0.7, 0, 1, 0.0001) : si.smoo;
 
 pitchMode  = mode == 1;
 cutoffMode = mode == 2;
@@ -96,4 +99,5 @@ vcfIn = vco * gateEnv * 0.8 + _ * lineK * 2 + mc.noiseFloor(active);
 //============================== AMP =======================================
 // TPA6111 speaker / headphone channels: see mc.amp.                [schematic]
 
-process = vcfIn : mc.vcf(cutNorm, peakK, fltModel) : mc.amp(speaker, volK, active) : ma.tanh : attach(_, lfoLed);
+process = vcfIn : mc.vcf(cutNorm, peakK, fltModel) : mc.amp(speaker, volK, active) : ma.tanh : attach(_, lfoLed)
+        : mc.chorus(chorusOn, chRateK, chDepthK);  // stereo out: see mc.chorus
