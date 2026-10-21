@@ -1224,6 +1224,29 @@ class Synth {
     this.readout.textContent = `${hz.toFixed(1)} Hz · ${NOTE_NAMES[((n % 12) + 12) % 12]}${Math.floor(n / 12) - 1} ${cents >= 0 ? "+" : "−"}${Math.abs(cents)}¢`;
   }
 
+  // A line of text across the scope in its trace colour, on a dark band so it
+  // reads over the panel art seen through the glass; sized to fit the screen.
+  scopeLabel(sc, text, alpha) {
+    const c = this.canvas, g = this.g, w = c.width, h = c.height, dpr = window.devicePixelRatio || 1;
+    let size = Math.min(h * 0.2, w * 0.07);
+    const setFont = () => {
+      g.font = `${Math.round(size)}px ${displayFont}`;
+      if ("letterSpacing" in g) g.letterSpacing = `${Math.round(size * 0.3)}px`;
+    };
+    setFont();
+    const fit = (w * 0.84) / (g.measureText(text).width + size);
+    if (fit < 1) { size *= fit; setFont(); }
+    const bw = g.measureText(text).width + size * 1.6, bh = size * 2, bx = (w - bw) / 2, by = (h - bh) / 2;
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillStyle = "rgba(3,5,10,0.78)"; g.strokeStyle = sc.grid; g.lineWidth = dpr;
+    g.beginPath(); g.roundRect ? g.roundRect(bx, by, bw, bh, bh / 4) : g.rect(bx, by, bw, bh); g.fill(); g.stroke();
+    g.fillStyle = sc.trace; g.globalAlpha = alpha;
+    g.shadowColor = sc.trace; g.shadowBlur = 10 * dpr;
+    g.fillText(text, w / 2, h / 2);
+    g.globalAlpha = 1; g.shadowBlur = 0;
+    if ("letterSpacing" in g) g.letterSpacing = "0px";
+  }
+
   draw() {
     const c = this.canvas, g = this.g, w = c.width, h = c.height, dpr = window.devicePixelRatio || 1;
     const sc = skin === "cosmos" && SKINS[this.key] ? SKINS[this.key].scope : scopeColors;
@@ -1232,21 +1255,9 @@ class Synth {
     g.strokeStyle = sc.grid; g.lineWidth = 1;
     for (let x = 0; x <= 8; x++) { g.beginPath(); g.moveTo(x * w / 8, 0); g.lineTo(x * w / 8, h); g.stroke(); }
     for (let y = 0; y <= 4; y++) { g.beginPath(); g.moveTo(0, y * h / 4); g.lineTo(w, y * h / 4); g.stroke(); }
-    if (audioState === "loading") {   // a gently pulsing label in the trace colour
-      const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 260);
-      g.font = `${Math.round(Math.min(h * 0.2, w * 0.07))}px ${displayFont}`;
-      if ("letterSpacing" in g) g.letterSpacing = `${Math.round(Math.min(h * 0.06, 10 * dpr))}px`;
-      g.textAlign = "center"; g.textBaseline = "middle";
-      // a dark band behind it, so it reads over the panel art seen through the glass
-      const tw = g.measureText("LOADING").width, th = Math.min(h * 0.2, w * 0.07);
-      const bw = tw + th * 1.6, bh = th * 2, bx = (w - bw) / 2, by = (h - bh) / 2;
-      g.fillStyle = "rgba(3,5,10,0.78)"; g.strokeStyle = sc.grid; g.lineWidth = dpr;
-      g.beginPath(); g.roundRect ? g.roundRect(bx, by, bw, bh, bh / 4) : g.rect(bx, by, bw, bh); g.fill(); g.stroke();
-      g.fillStyle = sc.trace; g.globalAlpha = pulse;
-      g.shadowColor = sc.trace; g.shadowBlur = 10 * dpr;
-      g.fillText("LOADING", w / 2, h / 2);
-      g.globalAlpha = 1; g.shadowBlur = 0;
-      if ("letterSpacing" in g) g.letterSpacing = "0px";
+    if (audioState !== "on") {   // before sound: a hint, then a pulsing "LOADING"
+      if (audioState === "off") this.scopeLabel(sc, "Touch a ribbon to start.", 0.9);
+      else this.scopeLabel(sc, "LOADING", 0.55 + 0.45 * Math.sin(performance.now() / 260));
     } else if (this.analyser) {
       const wave = this.wave;
       this.analyser.getFloatTimeDomainData(wave);
@@ -1462,8 +1473,8 @@ document.querySelectorAll("#seg-skin button").forEach((b) => b.addEventListener(
 setSkin((() => { try { return localStorage.getItem("constellation-skin") || "cosmos"; } catch (e) { return "cosmos"; } })());
 
 /* ---------- audio ---------- */
-// "off" until the first touch, "loading" while the nodes are built (the
-// scopes say so), then "on"
+// "off" until the first touch, "loading" while the nodes are built, then
+// "on"; the scopes show a hint, then "LOADING", until sound is on
 let audioState = "off";
 function startAudio() {
   if (starting) return starting;
