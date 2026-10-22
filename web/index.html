@@ -102,7 +102,7 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .group { display: grid; gap: 8px; }
 .group-title { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--silk-dim); border-bottom: 1px solid rgba(239,230,210,0.35); padding-bottom: 3px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 /* scope screen set into the panel: fills whatever width the knobs leave */
-.scope-group { flex: 1 1 220px; min-width: 0; display: grid; gap: 8px; grid-template-rows: auto 1fr; align-self: stretch; }
+.scope-group { flex: 1 1 100%; min-width: 0; display: grid; gap: 8px; grid-template-rows: auto 1fr; align-self: stretch; }
 .scope-bezel {
   position: relative; min-height: 100px; border-radius: 8px; padding: 5px;
   background: var(--body-edge);
@@ -148,6 +148,21 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .group.mini .knob-label { font-size: 10px; }
 .group.mini .knob-value { font-size: 10px; }
 .group.mini .toggle { flex-direction: column; gap: 5px; }
+/* small vertical faders (Envelope): a slot with a sliding cap at --pos */
+.group.faders .group-row { gap: 10px 6px; flex-wrap: nowrap; }
+.knob.fader { width: 40px; gap: 5px; }
+.knob.fader .knob-dial {
+  width: 12px; height: 64px; border-radius: 6px; cursor: pointer; touch-action: none;
+  background: #0e1513; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.08);
+}
+.knob.fader .knob-cap {
+  inset: auto; left: 50%; width: 24px; height: 11px; margin-left: -12px; border-radius: 3px;
+  top: calc((1 - var(--pos, 0)) * (100% - 11px)); transform: none;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
+}
+.knob.fader .knob-cap::after { top: 4.5px; left: 3px; width: 18px; height: 2px; margin-left: 0; }
+.knob.fader .knob-label { font-size: 11px; }
+.knob.fader .knob-value { font-size: 10px; white-space: nowrap; }
 .knob.idle .knob-label, .knob.idle .knob-value { opacity: 0.5; }
 
 .led { width: 10px; height: 10px; border-radius: 50%; background: var(--led); opacity: 0.12; box-shadow: 0 0 10px 2px rgba(255,61,46,0.0); transition: none; }
@@ -360,6 +375,16 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
 }
 .skin-cosmos .skinned .knob-cap::after { width: 2.5px; height: 13px; top: 4px; margin-left: -1.25px; background: var(--acc2); box-shadow: 0 0 6px var(--acc), 0 0 2px var(--acc2); }
 .skin-cosmos .skinned .knob-label { color: #d3dae8; font-weight: 500; }
+.skin-cosmos .skinned .knob.fader .knob-dial {
+  background: linear-gradient(to top, var(--acc) 0 calc(var(--pos, 0) * 100%), rgba(255,255,255,0.09) 0);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+}
+.skin-cosmos .skinned .knob.fader .knob-cap {
+  inset: auto; left: 50%; width: 24px; height: 11px; margin-left: -12px; border-radius: 3px;
+  top: calc((1 - var(--pos, 0)) * (100% - 11px));
+  background: linear-gradient(180deg, #2c3242, #0c0e14);
+}
+.skin-cosmos .skinned .knob.fader .knob-cap::after { top: 4.5px; left: 3px; width: 18px; height: 2px; margin-left: 0; }
 .skin-cosmos .skinned .group.mini .knob-cap { inset: 4px; }
 .skin-cosmos .skinned .group.mini .knob-cap::after { top: 3px; width: 2px; height: 8px; margin-left: -1px; }
 /* the mode switch */
@@ -604,6 +629,17 @@ const AW_ABOUT = {
   CrunchCoat: "is a cursed retro digital reverb!",
 };
 
+// Not on the monotrons: an ADSR on the gate (mc.adsr), as small faders. Times
+// are 3 s x k^3. At A 0, D 0, S 100, R 0 it is the hardware's plain gate.
+// Presets that don't name them put them back to that.
+const envTime = (v) => { const t = 3 * v ** 3; return t < 1 ? Math.round(t * 1000) + " ms" : t.toFixed(2) + " s"; };
+const ENV_GROUP = { title: "Envelope", knobs: ["attack", "decay", "sustain", "release"], fader: true };
+const ENV_KNOBS = {
+  attack:  { label: "A", name: "Attack",  value: 0, fmt: envTime, reset: true },
+  decay:   { label: "D", name: "Decay",   value: 0, fmt: envTime, reset: true },
+  sustain: { label: "S", name: "Sustain", value: 1, fmt: fmt.pct, reset: true },
+  release: { label: "R", name: "Release", value: 0, fmt: envTime, reset: true },
+};
 // Not on the monotrons: a stereo chorus after the amp (mc.chorus), on Pulsar and Binary.
 const CHORUS_GROUP = { title: "Chorus", knobs: ["chorus_rate", "chorus_depth"], toggle: "chorus", mini: true };
 const CHORUS_KNOBS = {
@@ -618,6 +654,7 @@ const SPECS = {
       { title: "VCO", knobs: ["pitch"] },
       { title: "LFO", knobs: ["lfo_rate", "lfo_int"], led: true },
       { title: "VCF", knobs: ["cutoff", "peak"] },
+      ENV_GROUP,
       CHORUS_GROUP,
     ],
     knobs: {
@@ -626,6 +663,7 @@ const SPECS = {
       lfo_int:  { label: "Int.",   value: 0,     fmt: fmt.pct },
       cutoff:   { label: "Cutoff", value: 0.6,   fmt: fmt.cutoff },
       peak:     { label: "Peak",   value: 0.3,   fmt: fmt.pct },
+      ...ENV_KNOBS,
       ...CHORUS_KNOBS,
     },
     hz: (p) => pitchHz(p.pitch) * 2 ** (p.ribbon * 18 / 12),
@@ -645,6 +683,7 @@ const SPECS = {
       { title: "VCO1", knobs: ["pitch"] },
       { title: "VCO2", knobs: ["xmod_int", "vco2_pitch"] },
       { title: "VCF", knobs: ["cutoff", "peak"] },
+      ENV_GROUP,
       CHORUS_GROUP,
     ],
     knobs: {
@@ -653,6 +692,7 @@ const SPECS = {
       vco2_pitch: { label: "Pitch",  value: 0.137, fmt: fmt.octaves },
       cutoff:     { label: "Cutoff", value: 0.6,   fmt: fmt.cutoff },
       peak:       { label: "Peak",   value: 0.3,   fmt: fmt.pct },
+      ...ENV_KNOBS,
       ...CHORUS_KNOBS,
     },
     hz: (p) => pitchHz(p.pitch) * 2 ** (quantize(p.ribbon * 24, p.scale) / 12),
@@ -1028,9 +1068,9 @@ class Synth {
             </div>
           </div>
         </div>
-        ${s.groups.map((g) => `<div class="group${g.mini ? " mini" : ""}">
+        ${s.groups.map((g) => `<div class="group${g.mini ? " mini" : ""}${g.fader ? " faders" : ""}">
           <div class="group-title">${g.title}${g.led ? ' <span class="led" data-role="led" aria-hidden="true"></span>' : ""}</div>
-          <div class="group-row" data-knobs="${g.knobs.join(" ")}">${g.toggle ? `<button class="toggle" id="${k}-${g.toggle}" data-toggle="${g.toggle}" aria-pressed="false" aria-label="${g.title}"><span class="cap"></span><span class="led"></span>On</button>` : ""}</div>
+          <div class="group-row" data-knobs="${g.knobs.join(" ")}"${g.fader ? " data-fader" : ""}>${g.toggle ? `<button class="toggle" id="${k}-${g.toggle}" data-toggle="${g.toggle}" aria-pressed="false" aria-label="${g.title}"><span class="cap"></span><span class="led"></span>On</button>` : ""}</div>
         </div>`).join("")}
         <div class="group scope-group">
           <div class="group-title">Scope</div>
@@ -1073,7 +1113,7 @@ class Synth {
     // knobs
     this.knobEls = {};
     el.querySelectorAll("[data-knobs]").forEach((row) => {
-      row.dataset.knobs.split(" ").forEach((id) => { row.appendChild(this.renderKnob(id)); this.setKnob(id, this.params[id]); });
+      row.dataset.knobs.split(" ").forEach((id) => { row.appendChild(this.renderKnob(id, "fader" in row.dataset)); this.setKnob(id, this.params[id]); });
     });
     // on/off switches for a group (Chorus)
     el.querySelectorAll("[data-toggle]").forEach((b) => {
@@ -1163,23 +1203,29 @@ class Synth {
     if (this.art && skin === "cosmos") drawSkinArt(this.art, this.key, this.canvas.parentElement);
   }
 
-  renderKnob(id) {
+  // A knob, or with fader set a small vertical slider (Envelope): same element
+  // roles, so dragging, the wheel, keys and setKnob work alike. A fader also
+  // jumps to where it is touched.
+  renderKnob(id, fader = false) {
     const k = this.spec.knobs[id];
     const wrap = document.createElement("div");
-    wrap.className = "knob";
-    wrap.innerHTML = `<div class="knob-dial" id="${this.key}-knob-${id}" role="slider" tabindex="0" aria-label="${k.label}" aria-valuemin="0" aria-valuemax="100"><div class="knob-cap"></div></div>
+    wrap.className = fader ? "knob fader" : "knob";
+    wrap.innerHTML = `<div class="knob-dial" id="${this.key}-knob-${id}" role="slider" tabindex="0" aria-label="${k.name || k.label}" aria-valuemin="0" aria-valuemax="100"><div class="knob-cap"></div></div>
       <div class="knob-label">${k.label}</div><div class="knob-value"></div>`;
     const dial = wrap.querySelector(".knob-dial");
     this.knobEls[id] = { wrap, dial, cap: wrap.querySelector(".knob-cap"), value: wrap.querySelector(".knob-value") };
 
     let startY = 0, startX = 0, startV = 0;
+    const faderAt = (e) => { const r = dial.getBoundingClientRect(); return 1 - (e.clientY - r.top) / r.height; };
     dial.addEventListener("pointerdown", (e) => {
       dial.setPointerCapture(e.pointerId);
+      if (fader && !e.shiftKey) this.setKnob(id, faderAt(e));
       startY = e.clientY; startX = e.clientX; startV = this.params[id];
       e.preventDefault();
     });
     dial.addEventListener("pointermove", (e) => {
       if (!dial.hasPointerCapture(e.pointerId)) return;
+      if (fader && !e.shiftKey) { this.setKnob(id, faderAt(e)); return; }
       const scale = e.shiftKey ? 600 : 180;
       this.setKnob(id, startV + ((startY - e.clientY) + (e.clientX - startX)) / scale);
     });
@@ -1200,6 +1246,7 @@ class Synth {
     const el = this.knobEls[id];
     el.cap.style.setProperty("--angle", (-135 + 270 * v) + "deg");
     el.dial.style.setProperty("--angle", (-135 + 270 * v) + "deg");   // the Cosmos skin's value arc
+    el.dial.style.setProperty("--pos", v);                             // a fader's cap
     el.dial.setAttribute("aria-valuenow", Math.round(v * 100));
     this.refreshKnobs();
   }
@@ -1231,7 +1278,10 @@ class Synth {
   applyPreset(p) {
     this.setMode(p.mode);
     if (this.spec.scale) this.setScale(p.scale);
-    for (const id of Object.keys(this.spec.knobs)) if (p[id] !== undefined) this.setKnob(id, p[id]);
+    for (const [id, k] of Object.entries(this.spec.knobs)) {
+      if (p[id] !== undefined) this.setKnob(id, p[id]);
+      else if (k.reset) this.setKnob(id, k.value);
+    }
   }
 
   ribbonFromX(clientX) {

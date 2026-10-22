@@ -33,6 +33,10 @@ fltModel = nentry("[11]filter model", 0, 0, 5, 1);  // see mc.vcf
 chorusOn = checkbox("[12]chorus");
 chRateK  = hslider("[13]chorus rate", 0.37, 0, 1, 0.0001) : si.smoo;
 chDepthK = hslider("[14]chorus depth", 0.35, 0, 1, 0.0001) : si.smoo;
+envA     = hslider("[15]attack", 0, 0, 1, 0.0001);
+envD     = hslider("[16]decay", 0, 0, 1, 0.0001);
+envS     = hslider("[17]sustain", 1, 0, 1, 0.0001) : si.smoo;
+envR     = hslider("[18]release", 0, 0, 1, 0.0001);
 
 pitchMode  = mode == 1;
 cutoffMode = mode == 2;
@@ -42,7 +46,7 @@ active     = mode > 0;                    // SW1B: standby position cuts power
 // IC2C compares the ribbon voltage against R13/R14 to make the gate. The gate
 // drives Q10 ("VCO enable" / "VCF gate") through R51 1k into C16 0.1u || R52 10k:
 // attack ~ 1k*0.1u = 0.1 ms, release ~ 10k*0.1u = 1 ms.          [schematic]
-gateEnv = mc.gateEnv(gate * active);
+gateEnv = mc.gateEnv(mc.adsr(envA, envD, envS, envR, gate) * active);   // ADSR: see mc.adsr
 
 // C9 0.01u / R24 100k differentiates the gate into the "LFO reset" pulse.
 lfoReset = (gate > gate') & active;                                // [schematic]

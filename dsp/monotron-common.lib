@@ -43,6 +43,17 @@ with {
   kRel = 1 - exp(-1 / (0.001 * ma.SR));
 };
 
+// ADSR (not on the monotrons): en.adsre's exponential segments shape the gate
+// before the R/C above, so at its defaults (A 0, D 0, S 1, R 0) it is the gate
+// itself and the instrument sounds as the hardware does. Times run 0-3 s on a
+// cubic taper (0.25 = 47 ms, 0.5 = 375 ms). en.adsre counts each as a 60 dB
+// change, which is right for decay and release (time until it has faded) but
+// reaches 95% of an attack in 0.43 of the time, so attack is scaled by 2.3 to
+// mean time to full level. The VCOs keep running after the gate closes, so
+// the release tail keeps the last pitch.
+envTime(k) = 3 * k * k * k;
+adsr(aK, dK, sK, rK, g) = en.adsre(2.3 * envTime(aK), envTime(dK), sK, envTime(rK), g);
+
 // A -80 dB noise floor stands in for circuit noise, so a self-oscillating
 // filter starts on its own as it does on the hardware.
 noiseFloor(active) = no.noise * 0.0001 * active;

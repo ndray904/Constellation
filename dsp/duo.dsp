@@ -35,6 +35,10 @@ fltModel = nentry("[12]filter model", 0, 0, 5, 1);  // see mc.vcf
 chorusOn = checkbox("[13]chorus");
 chRateK  = hslider("[14]chorus rate", 0.37, 0, 1, 0.0001) : si.smoo;
 chDepthK = hslider("[15]chorus depth", 0.35, 0, 1, 0.0001) : si.smoo;
+envA     = hslider("[16]attack", 0, 0, 1, 0.0001);
+envD     = hslider("[17]decay", 0, 0, 1, 0.0001);
+envS     = hslider("[18]sustain", 1, 0, 1, 0.0001) : si.smoo;
+envR     = hslider("[19]release", 0, 0, 1, 0.0001);
 
 // SW1A "PATCH SELECT": STANDBY / VCO1 / VCO1+2. In the standby position SW1B
 // cuts power; the third position connects SQR2 to the mixer.       [schematic]
@@ -45,7 +49,7 @@ vco2On  = mode == 2;
 // The MSP430 drives "gate" (P1.3). It holds the VCO flip-flops through
 // D3/D6, and opens the VCF through Q10 / R63 1k / C27 0.1u / R71 10k. [schematic]
 gateOn  = gate * active;
-gateEnv = mc.gateEnv(gateOn);
+gateEnv = mc.gateEnv(mc.adsr(envA, envD, envS, envR, gate) * active);   // ADSR: see mc.adsr
 gateRise = gateOn > gateOn';
 
 //============================== Ribbon / scale =============================

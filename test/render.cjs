@@ -132,6 +132,19 @@ const ladderBelow = ladders.map(([m, n]) => render(`${n}-peak-0.85`, 1, fm(m, 0.
 const wobble = (m, n) => render(`${n}-lfo-cutoff-max-peak`, 2, (d) => { fm(m, 1, 1)(d); d.set("mode", 2); d.set("lfo_int", 1); d.set("lfo_rate", 0.6); });
 const sweeps = [...ladders, [4, "Oberheim"]].map(([m, n]) => wobble(m, n));
 const oberheimOsc = render("Oberheim-peak-max", 1, fm(4, 1, 0));
+// ADSR: level in 50 ms windows over 1 s of gate then 1 s without.
+const envWindows = (set) => {
+  const d = new FaustMono(wasm, meta, SR); d.set("ribbon", 0.4); d.set("cutoff", 1); d.set("peak", 0); set(d);
+  const win = []; let acc = 0, n = 0;
+  for (let b = 0; b < 2 * SR / 128; b++) {
+    d.set("gate", b < SR / 128 ? 1 : 0); d.compute();
+    for (const v of d.outputs[0]) { acc += v * v; n++; }
+    if (n >= SR / 20) { win.push(Math.sqrt(acc / n)); acc = 0; n = 0; }
+  }
+  return win;
+};
+const envPlain = envWindows(() => {}), envAttack = envWindows((d) => d.set("attack", 0.5));
+const envDecay = envWindows((d) => { d.set("decay", 0.5); d.set("sustain", 0.3); }), envRelease = envWindows((d) => d.set("release", 0.5));
 const knobCentre = render("pitch-knob-centre-5V", 1, (d) => { note(0)(d); d.set("pitch", 0.5); });
 const knob8V = render("pitch-knob-8V", 1, (d) => { note(0)(d); d.set("pitch", 0.8); });
 const checks = [
@@ -152,6 +165,11 @@ const checks = [
   ...ladders.map(([, n], i) => [`${n} stays quiet below the oscillation edge`, ladderBelow[i].peak < 1e-3]),
   ["Oberheim SEM never self-oscillates", oberheimOsc.peak < 1e-3],
   ["extra filter models stay bounded under audio-rate cutoff sweeps", sweeps.every((r) => !r.nan && r.peak <= 1.0001)],
+  ["ADSR at its defaults is the plain gate (silent 50 ms after release)", envPlain[21] < 0.002 && envPlain[10] > 0.15],
+  ["ADSR attack 375 ms rises slowly, then reaches full level", envAttack[1] < 0.6 * envPlain[1] && Math.abs(envAttack[15] / envPlain[15] - 1) < 0.02],
+  // the output's soft saturation lifts a 30% sustain to about 34%
+  ["ADSR decay falls to the sustain level (0.3)", envDecay[15] / envPlain[15] > 0.27 && envDecay[15] / envPlain[15] < 0.4],
+  ["ADSR release rings on after the gate, then fades out", envRelease[20] > 0.3 * envPlain[15] && envRelease[30] < 0.002],
 ];
 let failed = 0;
 for (const [label, ok] of checks) { console.log(`${ok ? "PASS" : "FAIL"}  ${label}`); if (!ok) failed++; }

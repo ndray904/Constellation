@@ -242,6 +242,22 @@ const shots = process.argv[2];
     await p.click("#ribbon35-hold");
     await p.waitForTimeout(300);
 
+    // ---- Envelope faders: Release keeps Pulsar sounding after the touch ----
+    await p.click("#ribbon35-presets button:text-is(\"Init\")");
+    const fader = p.locator("#ribbon35-knob-release"); await fader.scrollIntoViewIfNeeded();
+    const fb = await fader.boundingBox();
+    await p.mouse.click(fb.x + fb.width / 2, fb.y + fb.height * 0.3);   // tap at 70%: 1.03 s
+    const relSet = await p.evaluate(() => synths.ribbon35.params.release);
+    await press("#ribbon35-ribbon", 0.4, 300);
+    await p.waitForTimeout(150);
+    const ringing = await rms(p, "ribbon35");
+    await p.click("#ribbon35-presets button:text-is(\"Init\")");   // presets put the envelope back
+    const relReset = await p.evaluate(() => synths.ribbon35.params.release);
+    await press("#ribbon35-ribbon", 0.4, 300);
+    await p.waitForTimeout(150);
+    const plain = await rms(p, "ribbon35");
+    check(`[${name}] Release fader rings a note on; Init resets it`, Math.abs(relSet - 0.7) < 0.03 && ringing > 0.02 && relReset === 0 && plain < 0.005, `(release ${relSet.toFixed(2)}, ringing ${ringing.toFixed(3)}, after Init ${plain.toFixed(4)})`);
+
     // ---- Binary's chorus, patched into Singularity ----
     await p.click("#duo-hold");
     await press("#duo-ribbon", 0.4, 120);
