@@ -32,7 +32,7 @@ speaker = checkbox("[10]speaker");        // 1 = internal speaker path, 0 = head
 fltModel = nentry("[11]filter model", 0, 0, 5, 1);  // see mc.vcf
 chorusOn = checkbox("[12]chorus");
 chRateK  = hslider("[13]chorus rate", 0.37, 0, 1, 0.0001) : si.smoo;
-chDepthK = hslider("[14]chorus depth", 0.7, 0, 1, 0.0001) : si.smoo;
+chDepthK = hslider("[14]chorus depth", 0.35, 0, 1, 0.0001) : si.smoo;
 
 pitchMode  = mode == 1;
 cutoffMode = mode == 2;

@@ -162,8 +162,10 @@ amp(speaker, vol, active) = _ <: speakerEQ, headphoneEQ : select2(1 - speaker) :
 // its output, so whatever it is patched into (Singularity's echo, Nebula)
 // comes after it. Two short delay lines are swept by one triangle LFO in
 // opposite directions, one per side, each mixed with the dry signal. The
-// Juno's delays sweep about 1.66-5.35 ms, so full Depth here swings 1.85 ms
-// either side of 3.5 ms; its modes run the LFO at 0.51 Hz (I) and 0.86 Hz (II).
+// Juno's delays sweep about 1.66-5.35 ms (+/-1.85 ms; its modes run the LFO at
+// 0.51 Hz (I) and 0.86 Hz (II)). Depth here goes past that, to +/-5 ms for a
+// deep vibrato; the shortest delay stays at 1.6 ms, so the centre moves out
+// as the swing grows (Depth 0.37 is the Juno's sweep).
 // The wet paths are rolled off above 9 kHz, as the BBD's clock filters do.
 // on fades in over ~20 ms, so switching it does not click. Faust computes the
 // chorus while it is off too; it costs two delay reads per side.
@@ -172,7 +174,8 @@ with {
   g      = on : si.smoo;
   rateHz = 0.1 * 80 ^ rateK;                        // 0.1-8 Hz
   lfo    = os.lf_triangle(rateHz);
-  delayS(s) = (3.5 + 1.85 * depthK * lfo * s) * ma.SR / 1000;
-  wet(s) = de.fdelay(1024, delayS(s)) : fi.lowpass(2, 9000);
+  swingMs   = 5 * depthK;
+  delayS(s) = (1.6 + swingMs + swingMs * lfo * s) * ma.SR / 1000;   // 1.6-11.6 ms
+  wet(s) = de.fdelay(2048, delayS(s)) : fi.lowpass(2, 9000);       // 2048: 11.6 ms at 96 kHz
   side(s, x) = x + g * (0.65 * (x + wet(s, x)) - x);
 };

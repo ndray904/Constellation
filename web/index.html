@@ -622,7 +622,7 @@ const SPECS = {
       peak:     { label: "Peak",   value: 0.3,   fmt: fmt.pct },
       // not on the monotron: a stereo chorus after the amp (mc.chorus)
       chorus_rate:  { label: "Rate",  value: 0.37, fmt: (v) => (0.1 * 80 ** v).toFixed(2) + " Hz", needs: "chorus" },
-      chorus_depth: { label: "Depth", value: 0.7,  fmt: fmt.pct, needs: "chorus" },
+      chorus_depth: { label: "Depth", value: 0.35, fmt: (v) => "±" + (5 * v).toFixed(1) + " ms", needs: "chorus" },
     },
     hz: (p) => pitchHz(p.pitch) * 2 ** (p.ribbon * 18 / 12),
     baseHz: (p) => pitchHz(p.pitch), modWheel: "lfo_int",
