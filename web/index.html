@@ -147,7 +147,7 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .group.mini .knob-cap::after { top: 3px; width: 2px; height: 8px; margin-left: -1px; }
 .group.mini .knob-label { font-size: 10px; }
 .group.mini .knob-value { font-size: 10px; }
-.group.mini .toggle { flex-direction: column; gap: 5px; }
+.group-title .led.on { opacity: 1; box-shadow: 0 0 10px 2px rgba(255,61,46,0.6); }
 /* small vertical faders (Envelope): a slot with a sliding cap at --pos */
 .group.faders .group-row { gap: 10px 6px; flex-wrap: nowrap; }
 .knob.fader { width: 40px; gap: 5px; }
@@ -415,18 +415,19 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
 /* Phones: every knob at the Chorus panel's small size, with tighter panels,
    so control groups pair up instead of each taking a row. */
 @media (max-width: 600px) {
-  .controls { gap: 14px 8px; }
-  .group-row, .group.mini .group-row { gap: 8px 8px; }
+  .controls { gap: 14px 6px; }
   .device { padding-left: 10px; padding-right: 10px; }
-  .knob:not(.fader) { width: 46px; gap: 4px; }
+  .group-row, .group.mini .group-row { gap: 8px 8px; }
+  .knob:not(.fader), .group.mini .knob { width: auto; min-width: 42px; gap: 4px; }   /* wider only for long text */
   .knob:not(.fader) .knob-dial { width: 36px; height: 36px; }
   .knob:not(.fader) .knob-cap { inset: 4px; }
   .knob:not(.fader) .knob-cap::after { top: 3px; width: 2px; height: 8px; margin-left: -1px; }
-  .knob-label { font-size: 10px; letter-spacing: 0.08em; }
-  .knob-value { font-size: 10px; white-space: nowrap; }
-  .knob.fader { width: 28px; }
-  .group.faders .group-row { gap: 8px 2px; }
-  .skin-cosmos .skinned .controls > .group:not(.scope-group) { padding: 6px 8px 4px; }
+  .knob-label { font-size: 10px; letter-spacing: 0.06em; }
+  .knob-value { font-size: 10px; letter-spacing: -0.03em; white-space: nowrap; }
+  .knob.fader { width: 24px; }
+  .knob.fader .knob-value { font-size: 9px; }
+  .group.faders .group-row { gap: 8px 3px; }
+  .skin-cosmos .skinned .controls > .group:not(.scope-group) { padding: 6px 5px 4px; }
   .skin-cosmos .skinned .group-title { letter-spacing: 0.16em; }
   .skin-cosmos .skinned .knob:not(.fader) .knob-cap { inset: 4px; }
   .skin-cosmos .skinned .knob:not(.fader) .knob-cap::after { top: 3px; width: 2px; height: 8px; margin-left: -1px; }
@@ -660,10 +661,11 @@ const ENV_KNOBS = {
   release: { label: "R", name: "Release", value: 0, fmt: envTime, reset: true },
 };
 // Not on the monotrons: a stereo chorus after the amp (mc.chorus), on Pulsar and Binary.
-const CHORUS_GROUP = { title: "Chorus", knobs: ["chorus_rate", "chorus_depth"], toggle: "chorus", mini: true };
+// Depth 0 is off; the dot in the title lights while Depth is up.
+const CHORUS_GROUP = { title: "Chorus", knobs: ["chorus_rate", "chorus_depth"], ledOn: "chorus_depth", mini: true };
 const CHORUS_KNOBS = {
-  chorus_rate:  { label: "Rate",  value: 0.37, fmt: (v) => (0.1 * 80 ** v).toFixed(2) + " Hz", needs: "chorus" },
-  chorus_depth: { label: "Depth", value: 0.35, fmt: (v) => "±" + (5 * v).toFixed(1) + " ms", needs: "chorus" },
+  chorus_rate:  { label: "Rate",  value: 0.37, fmt: (v) => (0.1 * 80 ** v).toFixed(2) + " Hz", needs: "chorus_depth" },
+  chorus_depth: { label: "Depth", value: 0,    fmt: (v) => v < 0.005 ? "off" : "±" + (5 * v).toFixed(1) + "ms" },
 };
 const SPECS = {
   ribbon35: {
@@ -1025,12 +1027,13 @@ class Synth {
     this.params[name] = value;
     if (this.node) this.node.port.postMessage({ name, value });
     if (name === "ribbon" || name === "pitch" || name === "scale") this.updateReadout();
-    if (name === "mode" || name === "lfo_int" || name === "chorus") this.refreshKnobs();
+    if (name === "mode" || name === "lfo_int") this.refreshKnobs();
   }
 
   // Knob readouts can depend on other controls (Shape reads "rise" or "width"
   // by LFO wave), and LFO knobs dim while Int. is at 0 because they do nothing.
   refreshKnobs() {
+    for (const led of this.ledsOn || []) led.classList.toggle("on", this.params[led.dataset.ledOn] >= 0.005);
     for (const [id, el] of Object.entries(this.knobEls || {})) {
       const k = this.spec.knobs[id], text = k.fmt(this.params[id], this.params);
       el.value.textContent = text;
@@ -1039,7 +1042,7 @@ class Synth {
       const idle = this.params[k.needs] < 0.005;
       el.wrap.classList.toggle("idle", idle);
       const needs = this.spec.knobs[k.needs];
-      el.wrap.title = !idle ? "" : needs ? `Turn up ${needs.label} to hear this` : "Switch it on to hear this";
+      el.wrap.title = idle ? `Turn up ${needs.label} to hear this` : "";
     }
   }
 
@@ -1088,8 +1091,8 @@ class Synth {
           </div>
         </div>
         ${s.groups.map((g) => `<div class="group${g.mini ? " mini" : ""}${g.fader ? " faders" : ""}">
-          <div class="group-title">${g.title}${g.led ? ' <span class="led" data-role="led" aria-hidden="true"></span>' : ""}</div>
-          <div class="group-row" data-knobs="${g.knobs.join(" ")}"${g.fader ? " data-fader" : ""}>${g.toggle ? `<button class="toggle" id="${k}-${g.toggle}" data-toggle="${g.toggle}" aria-pressed="false" aria-label="${g.title}"><span class="cap"></span><span class="led"></span>On</button>` : ""}</div>
+          <div class="group-title">${g.title}${g.led ? ' <span class="led" data-role="led" aria-hidden="true"></span>' : ""}${g.ledOn ? ` <span class="led" data-led-on="${g.ledOn}" aria-hidden="true"></span>` : ""}</div>
+          <div class="group-row" data-knobs="${g.knobs.join(" ")}"${g.fader ? " data-fader" : ""}></div>
         </div>`).join("")}
         <div class="group scope-group">
           <div class="group-title">Scope</div>
@@ -1134,16 +1137,7 @@ class Synth {
     el.querySelectorAll("[data-knobs]").forEach((row) => {
       row.dataset.knobs.split(" ").forEach((id) => { row.appendChild(this.renderKnob(id, "fader" in row.dataset)); this.setKnob(id, this.params[id]); });
     });
-    // on/off switches for a group (Chorus)
-    el.querySelectorAll("[data-toggle]").forEach((b) => {
-      const name = b.dataset.toggle;
-      this.params[name] = 0;
-      b.addEventListener("click", () => {
-        const on = this.params[name] ? 0 : 1;
-        b.setAttribute("aria-pressed", String(!!on));
-        this.set(name, on);
-      });
-    });
+    this.ledsOn = [...el.querySelectorAll("[data-led-on]")];
     this.refreshKnobs();
 
     // mode switch

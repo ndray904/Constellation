@@ -228,17 +228,20 @@ const shots = process.argv[2];
     }, key);
     await p.waitForTimeout(300);
     const chorusOff = await sides();
-    await p.click("#ribbon35-chorus");
+    const ledBefore = await p.evaluate(() => document.querySelector("#ribbon35-knob-chorus_rate").closest(".group").querySelector(".led").classList.contains("on"));
+    await p.focus("#ribbon35-knob-chorus_depth");                  // Depth up from 0 switches it on
+    for (let i = 0; i < 4; i++) await p.keyboard.press("Shift+ArrowUp");
     await p.waitForTimeout(400);
     const chorusOn = await sides();
-    const knobsLive = await p.evaluate(() => !document.getElementById("ribbon35-knob-chorus_rate").closest(".knob").classList.contains("idle"));
-    check(`[${name}] Pulsar's chorus spreads it into stereo`, chorusOff[0] < 0.001 && chorusOn[0] > 0.02 && chorusOn[1] > 0.05 && knobsLive, `(side off ${chorusOff[0].toFixed(4)}, on ${chorusOn[0].toFixed(3)}, mid ${chorusOn[1].toFixed(3)})`);
+    const knobsLive = await p.evaluate(() => !document.getElementById("ribbon35-knob-chorus_rate").closest(".knob").classList.contains("idle")
+      && document.querySelector("#ribbon35-knob-chorus_rate").closest(".group").querySelector(".led").classList.contains("on"));
+    check(`[${name}] Pulsar's chorus (Depth up) spreads it into stereo and lights its dot`, !ledBefore && chorusOff[0] < 0.001 && chorusOn[0] > 0.02 && chorusOn[1] > 0.05 && knobsLive, `(side off ${chorusOff[0].toFixed(4)}, on ${chorusOn[0].toFixed(3)}, mid ${chorusOn[1].toFixed(3)})`);
     await p.click("#ribbon35-send-duo");
     await p.waitForTimeout(400);
     const intoDuo = await loudest(() => rms(p, "duo"), 3);
     check(`[${name}] Pulsar with chorus plays through Binary`, intoDuo > 0.02, `(Binary ${intoDuo.toFixed(3)})`);
     await p.click("#ribbon35-send-duo");
-    await p.click("#ribbon35-chorus");
+    await p.focus("#ribbon35-knob-chorus_depth"); await p.keyboard.press("Home");
     await p.click("#ribbon35-hold");
     await p.waitForTimeout(300);
 
@@ -263,7 +266,8 @@ const shots = process.argv[2];
     await press("#duo-ribbon", 0.4, 120);
     await p.waitForTimeout(300);
     const duoOff = await sides("duo");
-    await p.click("#duo-chorus");
+    await p.focus("#duo-knob-chorus_depth");
+    for (let i = 0; i < 4; i++) await p.keyboard.press("Shift+ArrowUp");
     await p.waitForTimeout(400);
     const duoOn = await sides("duo");
     check(`[${name}] Binary's chorus spreads it into stereo`, duoOff[0] < 0.001 && duoOn[0] > 0.02 && duoOn[1] > 0.05, `(side off ${duoOff[0].toFixed(4)}, on ${duoOn[0].toFixed(3)}, mid ${duoOn[1].toFixed(3)})`);
@@ -272,7 +276,7 @@ const shots = process.argv[2];
     const intoDelay = await loudest(() => rms(p, "delay"), 3);
     check(`[${name}] Binary with chorus plays through Singularity`, intoDelay > 0.02, `(Singularity ${intoDelay.toFixed(3)})`);
     await p.click("#duo-send-delay");
-    await p.click("#duo-chorus");
+    await p.focus("#duo-knob-chorus_depth"); await p.keyboard.press("Home");
     await p.click("#duo-hold");
     await p.waitForTimeout(2500);                          // let Singularity's echoes die away
 

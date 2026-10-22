@@ -178,11 +178,13 @@ amp(speaker, vol, active) = _ <: speakerEQ, headphoneEQ : select2(1 - speaker) :
 // deep vibrato; the shortest delay stays at 1.6 ms, so the centre moves out
 // as the swing grows (Depth 0.37 is the Juno's sweep).
 // The wet paths are rolled off above 9 kHz, as the BBD's clock filters do.
-// on fades in over ~20 ms, so switching it does not click. Faust computes the
-// chorus while it is off too; it costs two delay reads per side.
-chorus(on, rateK, depthK) = _ <: side(1), side(-1)
+// Depth 0 is off (dry). The wet mix rises with Depth over its first tenth, so
+// turning it up from 0 fades the chorus in rather than switching it on with a
+// click. Faust computes the chorus while it is off too; it costs two delay
+// reads per side.
+chorus(rateK, depthK) = _ <: side(1), side(-1)
 with {
-  g      = on : si.smoo;
+  g      = min(1, depthK * 10);
   rateHz = 0.1 * 80 ^ rateK;                        // 0.1-8 Hz
   lfo    = os.lf_triangle(rateHz);
   swingMs   = 5 * depthK;
