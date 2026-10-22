@@ -1120,6 +1120,7 @@ class Synth {
     const lift = (e) => { this.touches.delete(e.pointerId); this.ribbonUpdate(); };
     this.ribbon.addEventListener("pointerup", lift);
     this.ribbon.addEventListener("pointercancel", lift);
+    this.ribbon.addEventListener("lostpointercapture", (e) => { if (this.touches.has(e.pointerId)) lift(e); });
 
     // scale button
     if (s.scale) {
@@ -1305,15 +1306,19 @@ class Synth {
       this.analyser.getFloatTimeDomainData(wave);
       let start = 0;
       for (let i = 1; i < 2048; i++) if (wave[i - 1] < 0 && wave[i] >= 0) { start = i; break; }
-      const span = 1536;
-      g.strokeStyle = sc.trace; g.lineWidth = 1.75 * dpr; g.lineJoin = "round";
-      g.shadowColor = sc.trace; g.shadowBlur = 8 * dpr; g.beginPath();
-      for (let i = 0; i < span; i++) {
+      // About one point per 0.7 CSS pixel, and the glow is two wide faint strokes
+      // under the line: Safari draws shadowBlur in software, which on a phone
+      // at 3x took enough of the main thread to delay touches.
+      const span = 1536, step = Math.max(1, Math.floor(span / (1.5 * w / dpr)));
+      g.beginPath();
+      for (let i = 0; i < span; i += step) {
         const x = (i / (span - 1)) * w, y = h / 2 - wave[start + i] * h * 0.45;
         i ? g.lineTo(x, y) : g.moveTo(x, y);
       }
-      g.stroke();
-      g.shadowBlur = 0;
+      g.strokeStyle = sc.trace; g.lineJoin = "round";
+      g.globalAlpha = 0.08; g.lineWidth = 9 * dpr; g.stroke();
+      g.globalAlpha = 0.16; g.lineWidth = 4.5 * dpr; g.stroke();
+      g.globalAlpha = 1; g.lineWidth = 1.75 * dpr; g.stroke();
     }
     if (this.led) {
       const lit = this.params.mode > 0 && this.node ? this.lfo : 0;
@@ -1651,6 +1656,20 @@ window.addEventListener("keyup", (e) => {
   if (!held.length && midiHeld.length) midiPlay();
   else keyTarget.ribbonUpdate(held.length ? held[held.length - 1] : null);
 });
+// iOS sometimes loses a ribbon's pointerup (several fingers down, or a touch
+// that becomes a system gesture), which left a ghost finger holding the note.
+// Any lifted pointer, and the last finger leaving the screen, clears them.
+const liftEverywhere = (e) => {
+  for (const s of Object.values(synths)) if (s.touches && s.touches.delete(e.pointerId)) s.ribbonUpdate();
+};
+document.addEventListener("pointerup", liftEverywhere, { capture: true });
+document.addEventListener("pointercancel", liftEverywhere, { capture: true });
+const lastFinger = (e) => {
+  if (e.touches.length) return;
+  for (const s of Object.values(synths)) if (s.touches && s.touches.size) { s.touches.clear(); s.ribbonUpdate(); }
+};
+document.addEventListener("touchend", lastFinger, { capture: true });
+document.addEventListener("touchcancel", lastFinger, { capture: true });
 window.addEventListener("blur", () => {
   held.length = 0;
   for (const s of Object.values(synths)) { s.touches.clear(); s.ribbonUpdate(); }
@@ -1882,8 +1901,14 @@ for (const [key, synth] of Object.entries(synths)) {
 }
 
 /* ---------- scopes + LED ---------- */
+// Only the scopes on screen are drawn (a phone shows one or two at a time).
+const onScreen = new Set();
+const scopeWatch = new IntersectionObserver((entries) => {
+  for (const e of entries) e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target);
+});
+for (const s of Object.values(synths)) scopeWatch.observe(s.canvas);
 (function frame() {
-  for (const s of Object.values(synths)) s.draw();
+  for (const s of Object.values(synths)) if (onScreen.has(s.canvas)) s.draw();
   requestAnimationFrame(frame);
 })();
 </script>
