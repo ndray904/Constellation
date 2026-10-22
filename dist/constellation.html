@@ -412,6 +412,25 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
 .skin-cosmos .skinned .toggle[aria-pressed="true"] { color: var(--silk); }
 .skin-cosmos .skinned .readout { color: var(--acc2); text-shadow: 0 0 8px color-mix(in srgb, var(--acc) 60%, transparent); }
 .skin-cosmos .skinned .scale-btn { box-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 0 2px #05070c, 0 0 0 3px color-mix(in srgb, var(--acc) 50%, transparent); }
+/* Phones: every knob at the Chorus panel's small size, with tighter panels,
+   so control groups pair up instead of each taking a row. */
+@media (max-width: 600px) {
+  .controls { gap: 14px 8px; }
+  .group-row, .group.mini .group-row { gap: 8px 8px; }
+  .device { padding-left: 10px; padding-right: 10px; }
+  .knob:not(.fader) { width: 46px; gap: 4px; }
+  .knob:not(.fader) .knob-dial { width: 36px; height: 36px; }
+  .knob:not(.fader) .knob-cap { inset: 4px; }
+  .knob:not(.fader) .knob-cap::after { top: 3px; width: 2px; height: 8px; margin-left: -1px; }
+  .knob-label { font-size: 10px; letter-spacing: 0.08em; }
+  .knob-value { font-size: 10px; white-space: nowrap; }
+  .knob.fader { width: 28px; }
+  .group.faders .group-row { gap: 8px 2px; }
+  .skin-cosmos .skinned .controls > .group:not(.scope-group) { padding: 6px 8px 4px; }
+  .skin-cosmos .skinned .group-title { letter-spacing: 0.16em; }
+  .skin-cosmos .skinned .knob:not(.fader) .knob-cap { inset: 4px; }
+  .skin-cosmos .skinned .knob:not(.fader) .knob-cap::after { top: 3px; width: 2px; height: 8px; margin-left: -1px; }
+}
 </style>
 
 
@@ -632,7 +651,7 @@ const AW_ABOUT = {
 // Not on the monotrons: an ADSR on the gate (mc.adsr), as small faders. Times
 // are 3 s x k^3. At A 0, D 0, S 100, R 0 it is the hardware's plain gate.
 // Presets that don't name them put them back to that.
-const envTime = (v) => { const t = 3 * v ** 3; return t < 1 ? Math.round(t * 1000) + " ms" : t.toFixed(2) + " s"; };
+const envTime = (v) => { const t = 3 * v ** 3; return t < 1 ? Math.round(t * 1000) + "ms" : t.toFixed(2) + "s"; };
 const ENV_GROUP = { title: "Envelope", knobs: ["attack", "decay", "sustain", "release"], fader: true };
 const ENV_KNOBS = {
   attack:  { label: "A", name: "Attack",  value: 0, fmt: envTime, reset: true },
