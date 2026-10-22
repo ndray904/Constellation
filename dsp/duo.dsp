@@ -32,6 +32,9 @@ volK    = hslider("[9]volume", 0.7, 0, 1, 0.0001) : si.smoo;
 lineK   = hslider("[10]line in", 0, 0, 1, 0.0001) : si.smoo;
 speaker = checkbox("[11]speaker");        // 1 = internal speaker path, 0 = headphones
 fltModel = nentry("[12]filter model", 0, 0, 5, 1);  // see mc.vcf
+chorusOn = checkbox("[13]chorus");
+chRateK  = hslider("[14]chorus rate", 0.37, 0, 1, 0.0001) : si.smoo;
+chDepthK = hslider("[15]chorus depth", 0.35, 0, 1, 0.0001) : si.smoo;
 
 // SW1A "PATCH SELECT": STANDBY / VCO1 / VCO1+2. In the standby position SW1B
 // cuts power; the third position connects SQR2 to the mixer.       [schematic]
@@ -106,4 +109,5 @@ cutNorm = mc.cutoffNorm(cutK) : max(0) : min(0.97);
 
 vcfIn = vcoMix * gateEnv + _ * lineK * 2 + mc.noiseFloor(active);
 
-process = vcfIn : mc.vcf(cutNorm, peakK, fltModel) : mc.amp(speaker, volK, active) : ma.tanh;
+process = vcfIn : mc.vcf(cutNorm, peakK, fltModel) : mc.amp(speaker, volK, active) : ma.tanh
+        : mc.chorus(chorusOn, chRateK, chDepthK);  // stereo out: see mc.chorus

@@ -604,6 +604,12 @@ const AW_ABOUT = {
   CrunchCoat: "is a cursed retro digital reverb!",
 };
 
+// Not on the monotrons: a stereo chorus after the amp (mc.chorus), on Pulsar and Binary.
+const CHORUS_GROUP = { title: "Chorus", knobs: ["chorus_rate", "chorus_depth"], toggle: "chorus", mini: true };
+const CHORUS_KNOBS = {
+  chorus_rate:  { label: "Rate",  value: 0.37, fmt: (v) => (0.1 * 80 ** v).toFixed(2) + " Hz", needs: "chorus" },
+  chorus_depth: { label: "Depth", value: 0.35, fmt: (v) => "±" + (5 * v).toFixed(1) + " ms", needs: "chorus" },
+};
 const SPECS = {
   ribbon35: {
     brand: "PULSAR", short: "Pulsar", sub: "analogue ribbon synth model", theme: "", hold: true, sendTo: ["duo", "delay", "nebula"],
@@ -612,7 +618,7 @@ const SPECS = {
       { title: "VCO", knobs: ["pitch"] },
       { title: "LFO", knobs: ["lfo_rate", "lfo_int"], led: true },
       { title: "VCF", knobs: ["cutoff", "peak"] },
-      { title: "Chorus", knobs: ["chorus_rate", "chorus_depth"], toggle: "chorus", mini: true },
+      CHORUS_GROUP,
     ],
     knobs: {
       pitch:    { label: "Pitch",  value: 0.333, fmt: fmt.volts },
@@ -620,9 +626,7 @@ const SPECS = {
       lfo_int:  { label: "Int.",   value: 0,     fmt: fmt.pct },
       cutoff:   { label: "Cutoff", value: 0.6,   fmt: fmt.cutoff },
       peak:     { label: "Peak",   value: 0.3,   fmt: fmt.pct },
-      // not on the monotron: a stereo chorus after the amp (mc.chorus)
-      chorus_rate:  { label: "Rate",  value: 0.37, fmt: (v) => (0.1 * 80 ** v).toFixed(2) + " Hz", needs: "chorus" },
-      chorus_depth: { label: "Depth", value: 0.35, fmt: (v) => "±" + (5 * v).toFixed(1) + " ms", needs: "chorus" },
+      ...CHORUS_KNOBS,
     },
     hz: (p) => pitchHz(p.pitch) * 2 ** (p.ribbon * 18 / 12),
     baseHz: (p) => pitchHz(p.pitch), modWheel: "lfo_int",
@@ -641,6 +645,7 @@ const SPECS = {
       { title: "VCO1", knobs: ["pitch"] },
       { title: "VCO2", knobs: ["xmod_int", "vco2_pitch"] },
       { title: "VCF", knobs: ["cutoff", "peak"] },
+      CHORUS_GROUP,
     ],
     knobs: {
       pitch:      { label: "Pitch",  value: 0.333, fmt: fmt.volts },
@@ -648,6 +653,7 @@ const SPECS = {
       vco2_pitch: { label: "Pitch",  value: 0.137, fmt: fmt.octaves },
       cutoff:     { label: "Cutoff", value: 0.6,   fmt: fmt.cutoff },
       peak:       { label: "Peak",   value: 0.3,   fmt: fmt.pct },
+      ...CHORUS_KNOBS,
     },
     hz: (p) => pitchHz(p.pitch) * 2 ** (quantize(p.ribbon * 24, p.scale) / 12),
     baseHz: (p) => pitchHz(p.pitch), modWheel: "xmod_int",

@@ -15,7 +15,7 @@ Play it at **https://ndray904.github.io/Constellation/** (GitHub Pages, served f
 
 | Path | What it is |
 |---|---|
-| `dsp/monotron-common.lib` | Circuits both schematics share part for part: gate timing, Korg 35 filter with diode-limited resonance, optional Moog, Moog half ladder, Oberheim SEM and TB-303 filters, speaker/headphone amp paths, PolyBLEP helpers. |
+| `dsp/monotron-common.lib` | Circuits both schematics share part for part: gate timing, Korg 35 filter with diode-limited resonance, optional Moog, Moog half ladder, Oberheim SEM and TB-303 filters, speaker/headphone amp paths, the Juno-style stereo chorus on Pulsar and Binary, PolyBLEP helpers. |
 | `dsp/monotron.dsp` | Pulsar: sawtooth VCO, ramp LFO, ribbon-tracking cutoff. Every constant cites its schematic part, tagged `[schematic]`, `[hardware]` or `[estimate]`. |
 | `dsp/duo.dsp` | Binary: two square VCOs, X-MOD, VCO1/VCO1+2 switch, scale quantizer (Chromatic / Major / Minor / Off). |
 | `dsp/delay.dsp` | Singularity: sawtooth VCO, triangle/square LFO, fixed-resonance VCF, PT2399 echo fed back into the filter. |

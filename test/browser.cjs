@@ -216,8 +216,8 @@ const shots = process.argv[2];
     // ---- Pulsar's chorus: stereo out, still mono-compatible into a line in ----
     await p.click("#ribbon35-hold");
     await press("#ribbon35-ribbon", 0.4, 120);
-    const sides = () => p.evaluate(() => {
-      const s = synths.ribbon35;
+    const sides = (key = "ribbon35") => p.evaluate((key) => {
+      const s = synths[key];
       if (!s.split) {
         s.split = ctx.createChannelSplitter(2); s.node.connect(s.split);
         s.sideA = [0, 1].map((c) => { const a = ctx.createAnalyser(); a.fftSize = 2048; s.split.connect(a, c); return a; });
@@ -225,7 +225,7 @@ const shots = process.argv[2];
       const [l, r] = s.sideA.map((a) => { const d = new Float32Array(2048); a.getFloatTimeDomainData(d); return d; });
       let side = 0, mid = 0; for (let i = 0; i < 2048; i++) { side += (l[i] - r[i]) ** 2; mid += ((l[i] + r[i]) / 2) ** 2; }
       return [Math.sqrt(side / 2048), Math.sqrt(mid / 2048)];
-    });
+    }, key);
     await p.waitForTimeout(300);
     const chorusOff = await sides();
     await p.click("#ribbon35-chorus");
@@ -241,6 +241,24 @@ const shots = process.argv[2];
     await p.click("#ribbon35-chorus");
     await p.click("#ribbon35-hold");
     await p.waitForTimeout(300);
+
+    // ---- Binary's chorus, patched into Singularity ----
+    await p.click("#duo-hold");
+    await press("#duo-ribbon", 0.4, 120);
+    await p.waitForTimeout(300);
+    const duoOff = await sides("duo");
+    await p.click("#duo-chorus");
+    await p.waitForTimeout(400);
+    const duoOn = await sides("duo");
+    check(`[${name}] Binary's chorus spreads it into stereo`, duoOff[0] < 0.001 && duoOn[0] > 0.02 && duoOn[1] > 0.05, `(side off ${duoOff[0].toFixed(4)}, on ${duoOn[0].toFixed(3)}, mid ${duoOn[1].toFixed(3)})`);
+    await p.click("#duo-send-delay");
+    await p.waitForTimeout(400);
+    const intoDelay = await loudest(() => rms(p, "delay"), 3);
+    check(`[${name}] Binary with chorus plays through Singularity`, intoDelay > 0.02, `(Singularity ${intoDelay.toFixed(3)})`);
+    await p.click("#duo-send-delay");
+    await p.click("#duo-chorus");
+    await p.click("#duo-hold");
+    await p.waitForTimeout(2500);                          // let Singularity's echoes die away
 
     // ---- Singularity has a Hold button too ----
     await p.click("#delay-hold");
