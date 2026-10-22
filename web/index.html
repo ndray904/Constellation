@@ -342,6 +342,12 @@ kbd { font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--ru
 .skin-cosmos .skinned .flip-thumb { background: linear-gradient(180deg, #2c3242, #0c0e14); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 70%, transparent), 0 0 8px color-mix(in srgb, var(--acc) 55%, transparent); }
 .skin-cosmos .skinned .preset select { color: var(--acc2); background-color: rgba(3,4,9,0.75); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 45%, transparent), inset 0 2px 6px #000; }
 .skin-cosmos .skinned .master-presets > .group-title { color: color-mix(in srgb, var(--acc) 55%, white); }
+/* Phones: scrolling settles on a unit's top when it stops near one (gentle
+   "proximity" snapping: units taller than the screen still scroll freely). */
+@media (max-width: 900px), (max-height: 639px) {
+  html { scroll-snap-type: y proximity; scroll-padding-top: 8px; }
+  .devices > .device, #master { scroll-snap-align: start; }
+}
 @media (max-width: 600px) {   /* phones: presets as a 2 x 2 grid of labelled menus */
   .master-presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
   .master-presets > .group-title { grid-column: 1 / -1; }
@@ -363,6 +369,15 @@ kbd { font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--ru
 .notes { display: grid; gap: 12px; }
 .notes h2 { font-family: var(--font-label); font-weight: 600; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 0; }
 .notes p { margin: 0; max-width: 70ch; }
+.notes-part { display: block; }
+.notes-part[open] { padding-bottom: 8px; }
+.notes-part > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.notes-part > summary::-webkit-details-marker { display: none; }
+.notes-part > summary::before { content: "▸"; color: var(--muted); font-size: 12px; transition: transform 0.15s; }
+.notes-part[open] > summary::before { transform: rotate(90deg); }
+.notes-part > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.notes-part > :not(summary) { margin-top: 12px; }
+.notes-part > h2 { margin-top: 28px; }
 .table-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; }
 table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
 th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
@@ -582,82 +597,82 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
   </section>
 
   <section class="notes">
-    <h2>Pulsar: where the numbers come from</h2>
-    <p>Each stage follows the parts on the monotron schematic. Values tagged <span class="tag sch">schematic</span> are read or derived from it. <span class="tag sch">hardware</span> values come from the real unit's specification. Values tagged <span class="tag">estimate</span> need a real unit to calibrate.</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
-        <tbody>
-          <tr><td>Ribbon span</td><td class="part">Q1 IMX9, note at VR1</td><td>"Whole ribbon Vbe offset 26.29 mV @ 20 °C" with Vt = 25.26 mV gives a 2.83× span: 18 semitones across the ribbon.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>VCO shape</td><td class="part">C11, F2, IC3C/B</td><td>Falling sawtooth (waveform icon at TP8), band-limited with <code>os.sawtooth</code>.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Gate</td><td class="part">IC2C, R51, C16, R52</td><td>Touch detection drives the VCO/VCF gate: 0.1 ms attack (1k × 0.1 µF), 1 ms release (10k × 0.1 µF).</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>LFO shape</td><td class="part">C10, Q3, IC3E/D</td><td>Falling ramp (icon at R64), restarted on every touch through the C9/R24 "LFO reset" pulse. The snap back up is band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Filter key tracking</td><td class="part">R42 330k, R50 68k, R75</td><td>The ribbon voltage also feeds the cutoff. Relative to the cutoff knob's 0–0.6 VCC span it adds 0.34 of the knob's range.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Filter + resonance</td><td class="part">Q12–14, C20, C21, IC4C, D1/D2</td><td>Two-pole Korg 35 low-pass. The 1SS355 diodes in IC4C's feedback sit inside the resonance loop, so self-oscillation is soft-limited.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Filter model</td><td class="part">not on the monotron</td><td>The Master unit's Filter model can swap in other synths' filters from the Faust library, on all three synths: Moog ladder (four-pole, darker), Moog half ladder (two-pole), Oberheim SEM (two-pole, smooth, never self-oscillates) and TB-303 diode ladder (four-pole, squelchy). The ladders get the same diode limit in their loops, so they self-oscillate near full Peak like the Korg filter.</td><td></td></tr>
-          <tr><td>Speaker path</td><td class="part">C26, R80, R77, C27, R81, C30</td><td>High-pass at 231 Hz and 72 Hz, low-pass at 5.9 kHz: the thin, bright sound of the built-in speaker.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Headphone path</td><td class="part">C25, R79, R82, C32</td><td>High-pass at 2.3 Hz, otherwise flat.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Pitch knob range</td><td class="part">VR3A, R18, R20, R21</td><td>1 V/octave over 0–10 V: 5 V centre, ±5 octaves. With 0 V = C0 assumed, the bottom of the ribbon runs from 16.4 Hz to 16.7 kHz, with C5 at the centre.</td><td><span class="tag sch">hardware</span></td></tr>
-          <tr><td>LFO rate range</td><td class="part">VR4A, R28, Q4/Q6</td><td>From 14 seconds per cycle (0.07 Hz) up to about 900 Hz, swept exponentially. The top of the range is well into audio rate. Below 1 Hz the knob shows seconds per cycle.</td><td><span class="tag sch">hardware</span></td></tr>
-          <tr><td>LFO depth</td><td class="part">R4 2.2k, R44 10k, VR5A</td><td>Up to 4 octaves of pitch, or most of the cutoff range.</td><td><span class="tag">estimate</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h2>Binary: where the numbers come from</h2>
-    <p>From the monotron DUO schematic. Its ribbon goes through an MSP430 microcontroller whose firmware isn't public, so the ribbon's range and scale snapping follow KORG's published feature list.</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
-        <tbody>
-          <tr><td>Oscillators switch</td><td class="part">SW1A, R67 470k, R58 820k</td><td>Standby, VCO1, or VCO1+2. VCO2 joins the mixer through 820k against VCO1's 470k, so it sits at 0.57 of VCO1's level.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>VCO shape</td><td class="part">C13/C21, IC4, Q5–Q8</td><td>Each core runs at twice the pitch and toggles a transistor flip-flop, giving 50% squares at SQR1 and SQR2. Band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>VCO2 pitch</td><td class="part">VR4A, R76, R62, R77</td><td>0–130 mV on Q3's base (VCC = 5 V, set by R4/R8): from unison up to +7.3 octaves above VCO1.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>X-Mod</td><td class="part">R54, R59, VR3A, R55, R60</td><td>SQR2 lifts VCO1's pitch while it is high: up to 3.1 octaves at full X-Mod Int. This is square-wave cross modulation.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Filter tracking</td><td class="part">R70 (NU)</td><td>The ribbon-to-cutoff resistor is marked not fitted, so on Binary the cutoff doesn't follow the ribbon.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Filter, gate, amp</td><td class="part">Q11–13, D7/D8, Q10, IC6</td><td>Same parts and values as the monotron, so both models share one filter, gate and amp.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Scale button</td><td class="part">SW2A, IC2</td><td>Cycles Chromatic, Major, Minor and Off. The bottom of the ribbon is the key note.</td><td><span class="tag sch">hardware</span></td></tr>
-          <tr><td>Scale snapping</td><td class="part">IC2 firmware</td><td>Snaps to the nearest note of the scale (natural minor for Minor).</td><td><span class="tag">estimate</span></td></tr>
-          <tr><td>Ribbon range</td><td class="part">IC2 firmware</td><td>Two octaves across the ribbon.</td><td><span class="tag">estimate</span></td></tr>
-          <tr><td>VCO1 pitch knob</td><td class="part">VR2A, R22</td><td>Same 1 V/octave law as the monotron's Pitch knob.</td><td><span class="tag">estimate</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h2>Singularity: where the numbers come from</h2>
-    <p>From the monotron DELAY schematic. The echo is a PT2399 delay chip, so its timing comes from the chip's datasheet. <span class="tag sch">datasheet</span> values come from there.</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
-        <tbody>
-          <tr><td>Echo routing</td><td class="part">VR7A, C20, R58 10k, IC4D</td><td>The echo never goes straight to the amp. It returns through the Feedback knob into the filter's input mixer, at 10× the VCO's gain (R58 10k vs R55 100k). So Feedback sets both echo level and repeats, and every repeat goes back through the filter.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Delay time</td><td class="part">IC5 PT2399, R80 1k, VR6A 100k</td><td>Electric Druid's fit to the datasheet, ms = 11.46 × R(kΩ) + 29.7, gives 41 ms to 1.19 s. The time glides when you turn the knob, so echoes bend in pitch like tape.</td><td><span class="tag sch">datasheet</span></td></tr>
-          <tr><td>Echo tone</td><td class="part">R74–R77, R82, C24, C25, C29, C31</td><td>Two-pole filters at about 8.5 kHz either side of the chip.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Echo darkening</td><td class="part">PT2399 clock</td><td>Longer delays run the chip's clock slower, so long echoes get darker: about 15 kHz at the shortest time, falling to 400 Hz at the longest.</td><td><span class="tag">estimate</span></td></tr>
-          <tr><td>Feedback amount</td><td class="part">VR7A</td><td>Loop gain 1.5 × Feedback: repeats build into runaway past about two-thirds of the knob. The filter's diodes keep it bounded.</td><td><span class="tag">estimate</span></td></tr>
-          <tr><td>No filter gate</td><td class="part">Q10, R50 (NU)</td><td>Not fitted, so the filter stays open between notes and echoes ring on after you let go.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Fixed resonance</td><td class="part">R78 3.3k, R73 5.6k</td><td>No Peak knob. Against the monotron's Peak pot plus R78 2.2k, this is 0.88 of full Peak's loop gain, where full Peak is the point of self-oscillation: strongly resonant, but it won't whistle on its own.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Cutoff knob</td><td class="part">VR5A, R72 0 Ω, R48 68k</td><td>The knob spans 0–VCC instead of the monotron's 0–0.6 VCC into the same circuit, so it covers 1.67× more range. The filter is wide open from about 60% up. The ribbon adds 0.21 of the knob's span through R45 330k.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>LFO</td><td class="part">C9, F1, IC3D/E, SW1A</td><td>Triangle or square, sent to pitch only, free-running.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>LFO shape</td><td class="part">VR1 500k (rear trimmer)</td><td>Skews the triangle or sets the square's width.</td><td><span class="tag sch">hardware</span></td></tr>
-          <tr><td>Ribbon range</td><td class="part">R6 470k, R10 47k, R11, R15</td><td>Four octaves, per KORG's spec. If the ribbon swung the full 5 V as on the monotron, these resistors would give about 11.6 octaves.</td><td><span class="tag sch">hardware</span></td></tr>
-          <tr><td>Bottom of ribbon</td><td class="part">R22, R23, R24 (no pitch knob)</td><td>55 Hz, so the ribbon runs from A1 to A5.</td><td><span class="tag">estimate</span></td></tr>
-          <tr><td>LFO rate and depth</td><td class="part">VR3A, VR4A, R7 47k</td><td>0.08–80 Hz, up to 3 octaves of pitch.</td><td><span class="tag">estimate</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h2>Nebula: where the code comes from</h2>
-    <p>Nebula runs fourteen reverbs by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a>, from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and confirms the browser version's output matches it, bit for bit in almost every case.</p>
-    <p>The selector's one-line descriptions are Chris Johnson's, from his Airwindopedia. Plugins that are fully wet by default start at 50% here, because an instrument patched in with "To Nebula" is heard only through Nebula.</p>
-    <p>To keep knob moves from clicking, each change crossfades over 20 ms from the running reverb to an exact copy of it with the new setting. Every reverb is made, and run once silently, before sound starts: making one while playing would stall the audio. A reverb you switch away from rings out silently in the background, so switching back to it doesn't bring back an old tail. With nothing playing into it and its tail gone, Nebula sleeps and costs nothing.</p>
-    <p>All the instruments and reverbs get their sines, exponentials and powers from <a href="https://musl.libc.org/" target="_blank" rel="noopener">musl</a>'s math library (MIT), compiled to WebAssembly along with them. Calling the browser's own <code>Math.sin</code> from WebAssembly creates a little garbage on every call; at several calls per sample, collecting it paused the audio often enough to crackle.</p>
-    <details>
-      <summary>Licenses: Airwindows and musl (MIT)</summary>
-      <p>Airwindows: Copyright (c) 2018 Chris Johnson. musl libm: Copyright © 2005–2020 Rich Felker, et al., with parts from FreeBSD's msun, Sun Microsystems' fdlibm and Arm's optimized-routines under the permissive terms in musl's COPYRIGHT.</p>
-      <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
-      <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
-      <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+    <details class="notes-part">
+      <summary><h2>Specifications</h2></summary>
+      <h2>Pulsar: where the numbers come from</h2>
+      <p>Each stage follows the parts on the monotron schematic. Values tagged <span class="tag sch">schematic</span> are read or derived from it. <span class="tag sch">hardware</span> values come from the real unit's specification. Values tagged <span class="tag">estimate</span> need a real unit to calibrate.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td>Ribbon span</td><td class="part">Q1 IMX9, note at VR1</td><td>"Whole ribbon Vbe offset 26.29 mV @ 20 °C" with Vt = 25.26 mV gives a 2.83× span: 18 semitones across the ribbon.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>VCO shape</td><td class="part">C11, F2, IC3C/B</td><td>Falling sawtooth (waveform icon at TP8), band-limited with <code>os.sawtooth</code>.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Gate</td><td class="part">IC2C, R51, C16, R52</td><td>Touch detection drives the VCO/VCF gate: 0.1 ms attack (1k × 0.1 µF), 1 ms release (10k × 0.1 µF).</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>LFO shape</td><td class="part">C10, Q3, IC3E/D</td><td>Falling ramp (icon at R64), restarted on every touch through the C9/R24 "LFO reset" pulse. The snap back up is band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Filter key tracking</td><td class="part">R42 330k, R50 68k, R75</td><td>The ribbon voltage also feeds the cutoff. Relative to the cutoff knob's 0–0.6 VCC span it adds 0.34 of the knob's range.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Filter + resonance</td><td class="part">Q12–14, C20, C21, IC4C, D1/D2</td><td>Two-pole Korg 35 low-pass. The 1SS355 diodes in IC4C's feedback sit inside the resonance loop, so self-oscillation is soft-limited.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Filter model</td><td class="part">not on the monotron</td><td>The Master unit's Filter model can swap in other synths' filters from the Faust library, on all three synths: Moog ladder (four-pole, darker), Moog half ladder (two-pole), Oberheim SEM (two-pole, smooth, never self-oscillates) and TB-303 diode ladder (four-pole, squelchy). The ladders get the same diode limit in their loops, so they self-oscillate near full Peak like the Korg filter.</td><td></td></tr>
+            <tr><td>Speaker path</td><td class="part">C26, R80, R77, C27, R81, C30</td><td>High-pass at 231 Hz and 72 Hz, low-pass at 5.9 kHz: the thin, bright sound of the built-in speaker.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Headphone path</td><td class="part">C25, R79, R82, C32</td><td>High-pass at 2.3 Hz, otherwise flat.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Pitch knob range</td><td class="part">VR3A, R18, R20, R21</td><td>1 V/octave over 0–10 V: 5 V centre, ±5 octaves. With 0 V = C0 assumed, the bottom of the ribbon runs from 16.4 Hz to 16.7 kHz, with C5 at the centre.</td><td><span class="tag sch">hardware</span></td></tr>
+            <tr><td>LFO rate range</td><td class="part">VR4A, R28, Q4/Q6</td><td>From 14 seconds per cycle (0.07 Hz) up to about 900 Hz, swept exponentially. The top of the range is well into audio rate. Below 1 Hz the knob shows seconds per cycle.</td><td><span class="tag sch">hardware</span></td></tr>
+            <tr><td>LFO depth</td><td class="part">R4 2.2k, R44 10k, VR5A</td><td>Up to 4 octaves of pitch, or most of the cutoff range.</td><td><span class="tag">estimate</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Binary: where the numbers come from</h2>
+      <p>From the monotron DUO schematic. Its ribbon goes through an MSP430 microcontroller whose firmware isn't public, so the ribbon's range and scale snapping follow KORG's published feature list.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td>Oscillators switch</td><td class="part">SW1A, R67 470k, R58 820k</td><td>Standby, VCO1, or VCO1+2. VCO2 joins the mixer through 820k against VCO1's 470k, so it sits at 0.57 of VCO1's level.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>VCO shape</td><td class="part">C13/C21, IC4, Q5–Q8</td><td>Each core runs at twice the pitch and toggles a transistor flip-flop, giving 50% squares at SQR1 and SQR2. Band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>VCO2 pitch</td><td class="part">VR4A, R76, R62, R77</td><td>0–130 mV on Q3's base (VCC = 5 V, set by R4/R8): from unison up to +7.3 octaves above VCO1.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>X-Mod</td><td class="part">R54, R59, VR3A, R55, R60</td><td>SQR2 lifts VCO1's pitch while it is high: up to 3.1 octaves at full X-Mod Int. This is square-wave cross modulation.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Filter tracking</td><td class="part">R70 (NU)</td><td>The ribbon-to-cutoff resistor is marked not fitted, so on Binary the cutoff doesn't follow the ribbon.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Filter, gate, amp</td><td class="part">Q11–13, D7/D8, Q10, IC6</td><td>Same parts and values as the monotron, so both models share one filter, gate and amp.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Scale button</td><td class="part">SW2A, IC2</td><td>Cycles Chromatic, Major, Minor and Off. The bottom of the ribbon is the key note.</td><td><span class="tag sch">hardware</span></td></tr>
+            <tr><td>Scale snapping</td><td class="part">IC2 firmware</td><td>Snaps to the nearest note of the scale (natural minor for Minor).</td><td><span class="tag">estimate</span></td></tr>
+            <tr><td>Ribbon range</td><td class="part">IC2 firmware</td><td>Two octaves across the ribbon.</td><td><span class="tag">estimate</span></td></tr>
+            <tr><td>VCO1 pitch knob</td><td class="part">VR2A, R22</td><td>Same 1 V/octave law as the monotron's Pitch knob.</td><td><span class="tag">estimate</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Singularity: where the numbers come from</h2>
+      <p>From the monotron DELAY schematic. The echo is a PT2399 delay chip, so its timing comes from the chip's datasheet. <span class="tag sch">datasheet</span> values come from there.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Stage</th><th>Parts</th><th>What the model does</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td>Echo routing</td><td class="part">VR7A, C20, R58 10k, IC4D</td><td>The echo never goes straight to the amp. It returns through the Feedback knob into the filter's input mixer, at 10× the VCO's gain (R58 10k vs R55 100k). So Feedback sets both echo level and repeats, and every repeat goes back through the filter.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Delay time</td><td class="part">IC5 PT2399, R80 1k, VR6A 100k</td><td>Electric Druid's fit to the datasheet, ms = 11.46 × R(kΩ) + 29.7, gives 41 ms to 1.19 s. The time glides when you turn the knob, so echoes bend in pitch like tape.</td><td><span class="tag sch">datasheet</span></td></tr>
+            <tr><td>Echo tone</td><td class="part">R74–R77, R82, C24, C25, C29, C31</td><td>Two-pole filters at about 8.5 kHz either side of the chip.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Echo darkening</td><td class="part">PT2399 clock</td><td>Longer delays run the chip's clock slower, so long echoes get darker: about 15 kHz at the shortest time, falling to 400 Hz at the longest.</td><td><span class="tag">estimate</span></td></tr>
+            <tr><td>Feedback amount</td><td class="part">VR7A</td><td>Loop gain 1.5 × Feedback: repeats build into runaway past about two-thirds of the knob. The filter's diodes keep it bounded.</td><td><span class="tag">estimate</span></td></tr>
+            <tr><td>No filter gate</td><td class="part">Q10, R50 (NU)</td><td>Not fitted, so the filter stays open between notes and echoes ring on after you let go.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Fixed resonance</td><td class="part">R78 3.3k, R73 5.6k</td><td>No Peak knob. Against the monotron's Peak pot plus R78 2.2k, this is 0.88 of full Peak's loop gain, where full Peak is the point of self-oscillation: strongly resonant, but it won't whistle on its own.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>Cutoff knob</td><td class="part">VR5A, R72 0 Ω, R48 68k</td><td>The knob spans 0–VCC instead of the monotron's 0–0.6 VCC into the same circuit, so it covers 1.67× more range. The filter is wide open from about 60% up. The ribbon adds 0.21 of the knob's span through R45 330k.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>LFO</td><td class="part">C9, F1, IC3D/E, SW1A</td><td>Triangle or square, sent to pitch only, free-running.</td><td><span class="tag sch">schematic</span></td></tr>
+            <tr><td>LFO shape</td><td class="part">VR1 500k (rear trimmer)</td><td>Skews the triangle or sets the square's width.</td><td><span class="tag sch">hardware</span></td></tr>
+            <tr><td>Ribbon range</td><td class="part">R6 470k, R10 47k, R11, R15</td><td>Four octaves, per KORG's spec. If the ribbon swung the full 5 V as on the monotron, these resistors would give about 11.6 octaves.</td><td><span class="tag sch">hardware</span></td></tr>
+            <tr><td>Bottom of ribbon</td><td class="part">R22, R23, R24 (no pitch knob)</td><td>55 Hz, so the ribbon runs from A1 to A5.</td><td><span class="tag">estimate</span></td></tr>
+            <tr><td>LFO rate and depth</td><td class="part">VR3A, VR4A, R7 47k</td><td>0.08–80 Hz, up to 3 octaves of pitch.</td><td><span class="tag">estimate</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Nebula: where the code comes from</h2>
+      <p>Nebula runs fourteen reverbs by Chris Johnson of <a href="https://www.airwindows.com/" target="_blank" rel="noopener">Airwindows</a>, from his MIT-licensed <a href="https://github.com/airwindows/airwindows" target="_blank" rel="noopener">source code</a>. Each plugin's original C++ is compiled to WebAssembly unchanged, with a small stand-in for the VST plugin framework. A test builds the same C++ natively and confirms the browser version's output matches it, bit for bit in almost every case.</p>
+      <p>The selector's one-line descriptions are Chris Johnson's, from his Airwindopedia. Plugins that are fully wet by default start at 50% here, because an instrument patched in with "To Nebula" is heard only through Nebula.</p>
+      <p>To keep knob moves from clicking, each change crossfades over 20 ms from the running reverb to an exact copy of it with the new setting. Every reverb is made, and run once silently, before sound starts: making one while playing would stall the audio. A reverb you switch away from rings out silently in the background, so switching back to it doesn't bring back an old tail. With nothing playing into it and its tail gone, Nebula sleeps and costs nothing.</p>
+      <p>All the instruments and reverbs get their sines, exponentials and powers from <a href="https://musl.libc.org/" target="_blank" rel="noopener">musl</a>'s math library (MIT), compiled to WebAssembly along with them. Calling the browser's own <code>Math.sin</code> from WebAssembly creates a little garbage on every call; at several calls per sample, collecting it paused the audio often enough to crackle.</p>
+      <details>
+        <summary>Licenses: Airwindows and musl (MIT)</summary>
+        <p>Airwindows: Copyright (c) 2018 Chris Johnson. musl libm: Copyright © 2005–2020 Rich Felker, et al., with parts from FreeBSD's msun, Sun Microsystems' fdlibm and Arm's optimized-routines under the permissive terms in musl's COPYRIGHT.</p>
+        <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+        <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+        <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+      </details>
     </details>
   </section>
 </div>
@@ -667,6 +682,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
 
 const NOTE_NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
 const SCALE_NAMES = ["Chromatic", "Major", "Minor", "Off"];
+const SCALE_SHORT = ["Chromatic", "Maj", "Min", "Off"];   // on the panel, so the readout beside them fits
 const SCALE_DEGREES = [null, [0, 2, 4, 5, 7, 9, 11], [0, 2, 3, 5, 7, 8, 10], null];
 const KEYS = ["a", "w", "s", "e", "d", "f", "t", "g", "y", "h", "u", "j", "k", "o", "l", "p", ";", "'", "]"];
 
@@ -1179,7 +1195,7 @@ class Synth {
         <div class="brand">${s.brand}<small>${s.sub}</small></div>
         ${s.scale ? `<div class="scale">
           <button class="scale-btn" id="${k}-scale" aria-label="Scale: Chromatic. Press to change"></button>
-          <ul class="scale-list" aria-hidden="true">${SCALE_NAMES.map((n) => `<li><span class="led"></span>${n}</li>`).join("")}</ul>
+          <ul class="scale-list" aria-hidden="true">${SCALE_SHORT.map((n) => `<li><span class="led"></span>${n}</li>`).join("")}</ul>
         </div>` : ""}
         ${s.hold || s.sendTo ? `<div class="toggles">
           ${s.hold ? `<button class="toggle" id="${k}-hold" aria-pressed="false"><span class="cap"></span><span class="led"></span>Hold</button>` : ""}
