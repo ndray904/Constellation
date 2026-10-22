@@ -348,13 +348,15 @@ kbd { font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--ru
   .preset { flex-direction: column; align-items: stretch; gap: 4px; }
   .preset select { max-width: none; width: 100%; }
 }
-/* Computers: the Master unit stays at the top of the screen, slimmer once the
-   page scrolls under it (no logo row). Phones: it scrolls with the page. */
+/* Computers: the Master unit stays at the top of the screen, down to its
+   controls row once the page scrolls under it. Phones: it scrolls with the page. */
 @media (min-width: 901px) and (min-height: 640px) {
   .device.master.skinned.master-skin { position: sticky; top: 8px; z-index: 20; }   /* outranks the Cosmos skin's position */
-  html { scroll-padding-top: 200px; }   /* scrolling to a control keeps it out from under the unit */
-  .device.master.stuck .skin-head, .device.master.stuck .master-foot { display: none; }
+  .device.master.stuck .skin-head, .device.master.stuck .master-presets, .device.master.stuck .master-foot { display: none; }
   .skin-cosmos .device.master.stuck { padding-top: 12px; padding-bottom: 12px; }
+  /* Scrolling to a control (keyboard focus) keeps it out from under the unit;
+     --pin is the unit's compact height, set by the page. */
+  html { scroll-padding-top: var(--pin, 140px); }
 }
 
 /* ---------- notes ---------- */
@@ -2088,10 +2090,61 @@ function drawMeter() {
   meterLeds.forEach((led, i) => led.classList.toggle("on", i < lit));
 }
 
-// On computers the unit is pinned (CSS); it slims down once the page scrolls.
+// On computers the unit is pinned (CSS) and slims to its controls row once the
+// page scrolls under it. The space it gives up becomes margin, so the page
+// below doesn't move: otherwise the browser's scroll anchoring shifts the page
+// back up, which un-slims it, and the two fight (a jitter at the switch).
 const masterEl = document.getElementById("master");
-new IntersectionObserver(([e]) => masterEl.classList.toggle("stuck", !e.isIntersecting && e.boundingClientRect.top < 0))
+const pinned = matchMedia("(min-width: 901px) and (min-height: 640px)");
+function setStuck(on) {
+  on = on && pinned.matches;
+  if (on === masterEl.classList.contains("stuck")) return;
+  if (on) {
+    const full = masterEl.offsetHeight;
+    masterEl.classList.add("stuck");
+    masterEl.style.marginBottom = (full - masterEl.offsetHeight) + "px";
+  } else {
+    masterEl.classList.remove("stuck");
+    masterEl.style.marginBottom = "";
+  }
+}
+// Units snap to just below the slim unit: measure it once per layout.
+function measurePin() {
+  const was = masterEl.classList.contains("stuck");
+  masterEl.classList.add("stuck");
+  document.documentElement.style.setProperty("--pin", (masterEl.offsetHeight + 8 + 14) + "px");
+  if (!was) masterEl.classList.remove("stuck");
+}
+measurePin();
+addEventListener("resize", measurePin);
+pinned.addEventListener("change", () => { setStuck(false); measurePin(); });
+new IntersectionObserver(([e]) => setStuck(!e.isIntersecting && e.boundingClientRect.top < 0))
   .observe(document.querySelector(".master-sentinel"));
+
+// The wheel, on computers, moves one unit at a time: from the top of the page
+// to Pulsar, Binary, Singularity, Nebula and the How to play panel, each landing
+// just below the pinned unit; below that the notes scroll freely. One gesture
+// is one step: wheel events are swallowed until they pause for 200 ms, so a
+// trackpad swipe and its inertia don't skip units. Knobs take the wheel first.
+{
+  let lockedUntil = 0;
+  const stops = () => {
+    const pin = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pin")) || 0;
+    return [0, ...[...document.querySelectorAll(".devices > .device, .panel.how")].map((el) => Math.round(el.getBoundingClientRect().top + scrollY - pin))];
+  };
+  addEventListener("wheel", (e) => {
+    if (!pinned.matches || e.defaultPrevented || e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY) || !e.deltaY) return;
+    const now = performance.now();
+    if (now < lockedUntil) { e.preventDefault(); lockedUntil = Math.max(lockedUntil, now + 200); return; }
+    const list = stops(), last = list[list.length - 1], y = scrollY;
+    if (e.deltaY > 0 ? y >= last - 2 : y > last + 2) return;   // in the notes: scroll freely
+    const target = e.deltaY > 0 ? list.find((t) => t > y + 2) : [...list].reverse().find((t) => t < y - 2);
+    if (target === undefined) return;
+    e.preventDefault();
+    lockedUntil = now + 450;
+    scrollTo({ top: target, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }, { passive: false });
+}
 
 /* ---------- scopes + LED ---------- */
 // Only the scopes on screen are drawn (a phone shows one or two at a time).

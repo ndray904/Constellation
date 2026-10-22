@@ -30,7 +30,12 @@ const shots = process.argv[2];
     await p.goto(url);
     // Presets are menus on the Master unit. Choosing "—" first means the same
     // preset can be chosen again (as after editing a knob).
-    const preset = async (key, label) => { await p.selectOption(`#${key}-presets`, ""); await p.selectOption(`#${key}-presets`, { label }); };
+    // On a computer the compact (pinned) unit hides them: go back to the top first.
+    const preset = async (key, label) => {
+      await p.evaluate(() => scrollTo(0, 0));
+      await p.waitForFunction(() => !document.getElementById("master").classList.contains("stuck"));
+      await p.selectOption(`#${key}-presets`, ""); await p.selectOption(`#${key}-presets`, { label });
+    };
 
     // ---- Pulsar (ribbon35) ----
     let box = await p.locator("#ribbon35-ribbon").boundingBox();
@@ -544,6 +549,32 @@ const shots = process.argv[2];
     const pin = await p.evaluate(() => { const m = document.getElementById("master"); return [Math.round(m.getBoundingClientRect().top), m.classList.contains("stuck")]; });
     if (name === "desktop") check(`[desktop] Master unit stays pinned at the top, slimmed`, pin[0] >= 0 && pin[0] <= 12 && pin[1], `(top ${pin[0]}, stuck ${pin[1]})`);
     else check(`[phone] Master unit scrolls away with the page`, pin[0] < -100, `(top ${pin[0]})`);
+
+    if (name === "desktop") {
+      // the wheel steps one unit at a time, each landing below the pinned unit
+      const landed = () => p.evaluate(() => {
+        const pin = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pin"));
+        const at = [...document.querySelectorAll(".devices > .device")].find((el) => Math.abs(el.getBoundingClientRect().top - pin) < 3);
+        return at ? at.querySelector(".skin-name").textContent : "-";
+      });
+      await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(300);
+      await p.mouse.move(600, 1200);
+      const seen = [];
+      for (const dy of [100, 100, -100]) { await p.mouse.wheel(0, dy); await p.waitForTimeout(900); seen.push(await landed()); }
+      check(`[desktop] Wheel steps unit by unit (down, down, up)`, seen.join(",") === "PULSAR,BINARY,PULSAR", `(${seen})`);
+      // compacting the unit must not move the page (it used to jitter)
+      await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(200);
+      const sentinel = await p.evaluate(() => document.querySelector(".master-sentinel").getBoundingClientRect().top + scrollY);
+      let switches = 0, last = false, back = 0, prev = -1;
+      for (let yy = sentinel - 30; yy < sentinel + 40; yy += 2) {
+        await p.evaluate((yy) => scrollTo(0, yy), yy); await p.waitForTimeout(20);
+        const [sy, st] = await p.evaluate(() => [scrollY, document.getElementById("master").classList.contains("stuck")]);
+        if (st !== last) { switches++; last = st; }
+        if (sy < prev) back++;
+        prev = sy;
+      }
+      check(`[desktop] Master unit compacts once, without moving the page`, switches === 1 && back === 0, `(switches ${switches}, jumps back ${back})`);
+    }
 
     if (shots) await p.screenshot({ path: path.join(shots, `${name}.png`), fullPage: true });
     const overflow = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
