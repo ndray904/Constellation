@@ -274,15 +274,9 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .seg button + button { border-left: 1px solid var(--rule); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.pick { font: inherit; font-size: 14px; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; width: fit-content; max-width: 100%; }
-.pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .range { display: flex; align-items: center; gap: 10px; }
 .range input { flex: 1; accent-color: var(--accent); min-width: 0; }
 .range output { font-family: var(--font-mono); font-size: 13px; width: 3.5ch; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
-.presets { display: flex; flex-wrap: wrap; gap: 8px; }
-.presets button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--rule); font-size: 14px; }
-.presets button:hover { border-color: var(--accent); color: var(--accent); }
-.presets button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .hint { font-size: 13px; color: var(--muted); margin: 0; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .btn { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 8px; font-size: 14px; color: var(--ink); }
@@ -296,6 +290,76 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .rec-time { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4ch; }
 .note { font-size: 13px; color: var(--muted); }
 kbd { font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+
+/* ---------- Master unit ---------- */
+.master-sentinel { height: 1px; margin-bottom: -29px; }   /* marks where pinning starts; no extra gap */
+.device.master { --body: #2c3135; --body-hi: #3b4247; --body-edge: #16191c; gap: 14px; }
+.master-controls { align-items: flex-start; gap: 12px; }
+.master .knob { width: 56px; }
+.master-vol .group-row { align-items: center; gap: 10px; }
+.meter { display: flex; flex-direction: column-reverse; gap: 2px; padding: 4px 3px; border-radius: 4px; background: var(--body-edge); box-shadow: inset 0 1px 3px rgba(0,0,0,0.7); }
+.meter i { width: 8px; height: 3px; border-radius: 1px; background: rgba(255,255,255,0.08); }
+.meter i.on { background: #5fd38d; box-shadow: 0 0 4px rgba(95,211,141,0.6); }
+.meter i.on:nth-child(n+9) { background: #ffc24a; box-shadow: 0 0 4px rgba(255,194,74,0.6); }
+.meter i.on:nth-child(n+11) { background: var(--led); box-shadow: 0 0 4px rgba(255,61,46,0.7); }
+/* two-position switch between two icons; either icon or the switch picks */
+.flip { display: flex; align-items: center; gap: 4px; height: 52px; }
+.flip-icon { all: unset; cursor: pointer; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 6px; color: var(--silk-dim); opacity: 0.5; }
+.flip-icon svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.flip-icon[aria-checked="true"] { color: var(--silk); opacity: 1; }
+.flip-icon:focus-visible { outline: 2px solid var(--silk); outline-offset: 1px; }
+.flip-track { position: relative; width: 34px; height: 18px; border-radius: 9px; cursor: pointer; background: var(--body-edge); box-shadow: inset 0 1px 3px rgba(0,0,0,0.7); }
+.flip-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(180deg, var(--metal-hi), var(--metal-lo)); box-shadow: 0 1px 2px rgba(0,0,0,0.6); transition: left 0.12s; }
+.flip[data-pos="1"] .flip-thumb { left: 18px; }
+.master-filter { flex: 0 1 172px; min-width: 0; }
+.filter-pick { display: flex; align-items: center; height: 52px; }
+.preset.filter-pick select { flex: 1; min-width: 0; max-width: none; font-size: 13px; padding: 7px 24px 7px 10px; }
+.master .group > .toggle { height: 52px; }
+.toggle.rec[aria-pressed="true"] .led { animation: rec-blink 1s steps(2, start) infinite; }
+.master-rec .row { height: 52px; gap: 8px 10px; flex-wrap: nowrap; }
+.master .rec-time { color: var(--silk-dim); }
+.algo-step.save { width: auto; height: 26px; padding: 0 10px; font-family: var(--font-label); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+.algo-step:disabled { opacity: 0.4; cursor: default; }
+.master-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.master-presets > .group-title { border: 0; padding: 0; }
+.preset { display: flex; align-items: center; gap: 6px; font-family: var(--font-label); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--silk-dim); }
+.preset select {
+  appearance: none; -webkit-appearance: none; margin: 0; cursor: pointer; max-width: 9.5em;
+  font-family: var(--font-mono); font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--scope-trace);
+  border: 0; border-radius: 6px; padding: 5px 22px 5px 8px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+  background: var(--scope-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239aa' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 8px center / 9px 6px;
+}
+.preset select:focus-visible { outline: 2px solid var(--silk); outline-offset: 2px; }
+.preset select option { color: #1b2320; background: #f4f6f4; }
+.master-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.master .status { border-color: rgba(255,255,255,0.18); color: var(--silk-dim); font-size: 11px; }
+.master .status.on { color: var(--scope-trace); border-color: currentColor; }
+.master-msg { font-size: 12px; color: var(--silk-dim); }
+.skin-cosmos .device.skinned.master-skin {
+  --acc: #9fb4ff; --acc2: #e3e9ff; --title: #eef2ff;
+  background:
+    radial-gradient(1px 1px at 12% 30%, #fff8, transparent), radial-gradient(1px 1px at 36% 78%, #fff6, transparent),
+    radial-gradient(1.5px 1.5px at 58% 22%, #fff9, transparent), radial-gradient(1px 1px at 81% 64%, #fff7, transparent),
+    radial-gradient(1px 1px at 93% 18%, #fff6, transparent), radial-gradient(ellipse at 70% 0%, #1a2340 0, transparent 60%), #04060b;
+}
+.skin-cosmos .skinned .flip-icon[aria-checked="true"] { color: var(--acc2); filter: drop-shadow(0 0 5px var(--acc)); }
+.skin-cosmos .skinned .flip-thumb { background: linear-gradient(180deg, #2c3242, #0c0e14); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 70%, transparent), 0 0 8px color-mix(in srgb, var(--acc) 55%, transparent); }
+.skin-cosmos .skinned .preset select { color: var(--acc2); background-color: rgba(3,4,9,0.75); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acc) 45%, transparent), inset 0 2px 6px #000; }
+.skin-cosmos .skinned .master-presets > .group-title { color: color-mix(in srgb, var(--acc) 55%, white); }
+@media (max-width: 600px) {   /* phones: presets as a 2 x 2 grid of labelled menus */
+  .master-presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+  .master-presets > .group-title { grid-column: 1 / -1; }
+  .preset { flex-direction: column; align-items: stretch; gap: 4px; }
+  .preset select { max-width: none; width: 100%; }
+}
+/* Computers: the Master unit stays at the top of the screen, slimmer once the
+   page scrolls under it (no logo row). Phones: it scrolls with the page. */
+@media (min-width: 901px) and (min-height: 640px) {
+  .device.master.skinned.master-skin { position: sticky; top: 8px; z-index: 20; }   /* outranks the Cosmos skin's position */
+  html { scroll-padding-top: 200px; }   /* scrolling to a control keeps it out from under the unit */
+  .device.master.stuck .skin-head, .device.master.stuck .master-foot { display: none; }
+  .skin-cosmos .device.master.stuck { padding-top: 12px; padding-bottom: 12px; }
+}
 
 /* ---------- notes ---------- */
 .notes { display: grid; gap: 12px; }
@@ -445,75 +509,78 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
       <h1>Constellation</h1>
       <p>Pulsar, Binary and Singularity: three playable pocket ribbon synths, modelled part by part from the public monotron, monotron DUO and monotron DELAY schematics and built on the Faust standard library. Nebula adds fourteen reverbs from Airwindows' open-source code.</p>
     </div>
-    <span class="status" id="status">Sound off · touch a ribbon</span>
   </header>
 
-  <div class="devices" id="devices"></div>
-
-  <section class="panel">
-    <h2>Output</h2>
-    <div class="fields">
-      <div class="field">
-        <span>Volume</span>
-        <div class="range"><input type="range" id="volume" min="0" max="1" step="0.01" value="0.7"><output id="volume-out" for="volume">70</output></div>
-      </div>
-      <div class="field">
-        <span>Look</span>
-        <div class="seg" id="seg-skin">
-          <button data-skin="classic" aria-pressed="false">Classic</button>
-          <button data-skin="cosmos" aria-pressed="true">Cosmos</button>
+  <!-- The Master unit: everything that acts on all the instruments. -->
+  <div class="master-sentinel" aria-hidden="true"></div>
+  <section class="device master skinned master-skin" id="master" aria-label="Master">
+    <div class="skin-head" aria-hidden="true"><svg viewBox="0 0 84 40"><path d="M6 30 L22 12 L40 20 L58 6 L78 26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><g fill="currentColor"><circle cx="6" cy="30" r="3"/><circle cx="22" cy="12" r="3.6"/><circle cx="40" cy="20" r="2.6"/><circle cx="58" cy="6" r="4"/><circle cx="78" cy="26" r="3"/></g></svg><span class="skin-name">MASTER</span></div>
+    <div class="controls master-controls">
+      <div class="group master-vol">
+        <div class="group-title">Volume</div>
+        <div class="group-row">
+          <div class="knob"><div class="knob-dial" id="volume" role="slider" tabindex="0" aria-label="Master volume" aria-valuemin="0" aria-valuemax="100"><div class="knob-cap"></div></div><div class="knob-value" id="volume-out">70</div></div>
+          <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </div>
       </div>
-      <div class="field">
-        <span>Listening through</span>
-        <div class="seg" id="seg-speaker">
-          <button id="out-phones" data-value="0" aria-pressed="true">Headphone jack</button>
-          <button id="out-speaker" data-value="1" aria-pressed="false">Built-in speaker</button>
+      <div class="group">
+        <div class="group-title">Look</div>
+        <div class="flip" id="seg-skin" role="radiogroup" aria-label="Look">
+          <button class="flip-icon" data-skin="classic" role="radio" aria-checked="false" title="Classic" aria-label="Classic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="6.5"/><path d="M12 13l-3-4.2"/><path d="M4.2 18.5l-1.6 1.2M19.8 18.5l1.6 1.2M3.3 10.5l-1.9-.6M20.7 10.5l1.9-.6M7.2 4.6l-1-1.7M16.8 4.6l1-1.7M12 3.2V1.3"/></svg></button>
+          <span class="flip-track" data-flip aria-hidden="true"><span class="flip-thumb"></span></span>
+          <button class="flip-icon" data-skin="cosmos" role="radio" aria-checked="true" title="Cosmos" aria-label="Cosmos"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10.5" ry="3.6" transform="rotate(-24 12 12)"/><path d="M19.5 3.2v2.6M18.2 4.5h2.6"/></svg></button>
         </div>
       </div>
-      <label class="field">
-        <span>Filter model</span>
-        <select class="pick" id="filter-model">
-          <option value="0" selected>Korg 35 + diodes (monotron)</option>
+      <div class="group">
+        <div class="group-title">Listen</div>
+        <div class="flip" id="seg-speaker" role="radiogroup" aria-label="Listening through">
+          <button class="flip-icon" id="out-phones" data-value="0" role="radio" aria-checked="true" title="Headphone jack" aria-label="Headphone jack"><svg viewBox="0 0 24 24"><path d="M4 16v-4a8 8 0 0 1 16 0v4"/><rect x="2.8" y="14" width="4.4" height="7" rx="1.6"/><rect x="16.8" y="14" width="4.4" height="7" rx="1.6"/></svg></button>
+          <span class="flip-track" data-flip aria-hidden="true"><span class="flip-thumb"></span></span>
+          <button class="flip-icon" id="out-speaker" data-value="1" role="radio" aria-checked="false" title="Built-in speaker" aria-label="Built-in speaker"><svg viewBox="0 0 24 24"><path d="M3.5 9.2h3.8L12.5 5v14l-5.2-4.2H3.5z"/><path d="M15.8 9.3a4 4 0 0 1 0 5.4M18.4 6.6a7.8 7.8 0 0 1 0 10.8"/></svg></button>
+        </div>
+      </div>
+      <div class="group master-filter">
+        <div class="group-title">Filter model</div>
+        <label class="preset filter-pick"><select id="filter-model" aria-label="Filter model">
+          <option value="0" selected>Korg 35 + diodes</option>
           <option value="1">Korg 35, plain</option>
           <option value="2">Moog ladder</option>
           <option value="3">Moog half ladder</option>
           <option value="4">Oberheim SEM</option>
-          <option value="5">TB-303 diode ladder</option>
-        </select>
-      </label>
-      <div class="field">
-        <span>MIDI keyboard</span>
-        <div class="row"><button class="btn" id="midi-connect">Connect MIDI</button></div>
-        <span class="note" id="midi-status" aria-live="polite">Plays the instrument marked "Keys". Sustain pedal holds, mod wheel sets LFO Int. (X-Mod on Binary).</span>
+          <option value="5">TB-303 ladder</option>
+        </select></label>
       </div>
-      <div class="field">
-        <span>Recording</span>
+      <div class="group">
+        <div class="group-title">MIDI</div>
+        <button class="toggle" id="midi-connect" aria-pressed="false"><span class="cap"></span><span class="led"></span><span id="midi-label">Off</span></button>
+      </div>
+      <div class="group master-rec">
+        <div class="group-title">Record</div>
         <div class="row">
-          <button class="btn rec" id="rec-btn" aria-pressed="false"><span class="rec-dot"></span><span id="rec-label">Record</span></button>
+          <button class="toggle rec" id="rec-btn" aria-pressed="false"><span class="cap"></span><span class="led"></span><span id="rec-label">Rec</span></button>
           <span class="rec-time" id="rec-time">0:00</span>
-          <button class="btn" id="rec-save" disabled>Save WAV</button>
+          <button class="algo-step save" id="rec-save" disabled>Save</button>
         </div>
-        <span class="note" id="rec-status" aria-live="polite">Records everything you hear, as a 16-bit stereo WAV.</span>
-      </div>
-      <div class="field">
-        <span>Pulsar starting points</span>
-        <div class="presets" id="ribbon35-presets"></div>
-      </div>
-      <div class="field">
-        <span>Binary starting points</span>
-        <div class="presets" id="duo-presets"></div>
-      </div>
-      <div class="field">
-        <span>Singularity starting points</span>
-        <div class="presets" id="delay-presets"></div>
-      </div>
-      <div class="field">
-        <span>Nebula starting points</span>
-        <div class="presets" id="nebula-presets"></div>
       </div>
     </div>
+    <div class="master-presets" role="group" aria-label="Presets">
+      <span class="group-title">Presets</span>
+      <label class="preset"><span>Pulsar</span><select id="ribbon35-presets"></select></label>
+      <label class="preset"><span>Binary</span><select id="duo-presets"></select></label>
+      <label class="preset"><span>Singularity</span><select id="delay-presets"></select></label>
+      <label class="preset"><span>Nebula</span><select id="nebula-presets"></select></label>
+    </div>
+    <div class="master-foot">
+      <span class="status" id="status">Sound off · touch a ribbon</span>
+      <span class="master-msg" aria-live="polite"><span id="midi-status"></span> <span id="rec-status"></span></span>
+    </div>
+  </section>
+  <div class="devices" id="devices"></div>
+
+  <section class="panel how">
+    <h2>How to play</h2>
     <p class="hint">Play either ribbon with a mouse or finger. The keys <kbd>A</kbd> to <kbd>]</kbd> (A W S E D F T G Y H U J K O L P ; ' ]) play the instrument you touched last, marked "Keys"; the space bar toggles its Hold. "To Binary" and "To Singularity" patch an instrument into another's line in, so it plays through that one's filter (and Singularity's echo); the receiving instrument must be switched on. Chain Pulsar into Binary and Binary into Singularity to use all three, and any of them "To Nebula" for reverb. A MIDI keyboard plays the same instrument once connected. Drag knobs up or down. At full Peak a filter whistles on its own, without touching the ribbon.</p>
+    <p class="hint">The Master unit at the top acts on every instrument. MIDI plays the instrument marked "Keys" (sustain pedal holds, mod wheel sets LFO Int., X-Mod on Binary); it works in Chrome, Edge and Firefox on the standalone page. Rec captures everything you hear as a 16-bit stereo WAV. Presets set an instrument's controls; the name clears once you change one.</p>
   </section>
 
   <section class="notes">
@@ -529,7 +596,7 @@ td.part { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
           <tr><td>LFO shape</td><td class="part">C10, Q3, IC3E/D</td><td>Falling ramp (icon at R64), restarted on every touch through the C9/R24 "LFO reset" pulse. The snap back up is band-limited with PolyBLEP.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Filter key tracking</td><td class="part">R42 330k, R50 68k, R75</td><td>The ribbon voltage also feeds the cutoff. Relative to the cutoff knob's 0–0.6 VCC span it adds 0.34 of the knob's range.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Filter + resonance</td><td class="part">Q12–14, C20, C21, IC4C, D1/D2</td><td>Two-pole Korg 35 low-pass. The 1SS355 diodes in IC4C's feedback sit inside the resonance loop, so self-oscillation is soft-limited.</td><td><span class="tag sch">schematic</span></td></tr>
-          <tr><td>Filter model</td><td class="part">not on the monotron</td><td>The Output panel can swap in other synths' filters from the Faust library, on all three synths: Moog ladder (four-pole, darker), Moog half ladder (two-pole), Oberheim SEM (two-pole, smooth, never self-oscillates) and TB-303 diode ladder (four-pole, squelchy). The ladders get the same diode limit in their loops, so they self-oscillate near full Peak like the Korg filter.</td><td></td></tr>
+          <tr><td>Filter model</td><td class="part">not on the monotron</td><td>The Master unit's Filter model can swap in other synths' filters from the Faust library, on all three synths: Moog ladder (four-pole, darker), Moog half ladder (two-pole), Oberheim SEM (two-pole, smooth, never self-oscillates) and TB-303 diode ladder (four-pole, squelchy). The ladders get the same diode limit in their loops, so they self-oscillate near full Peak like the Korg filter.</td><td></td></tr>
           <tr><td>Speaker path</td><td class="part">C26, R80, R77, C27, R81, C30</td><td>High-pass at 231 Hz and 72 Hz, low-pass at 5.9 kHz: the thin, bright sound of the built-in speaker.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Headphone path</td><td class="part">C25, R79, R82, C32</td><td>High-pass at 2.3 Hz, otherwise flat.</td><td><span class="tag sch">schematic</span></td></tr>
           <tr><td>Pitch knob range</td><td class="part">VR3A, R18, R20, R21</td><td>1 V/octave over 0–10 V: 5 V centre, ±5 octaves. With 0 V = C0 assumed, the bottom of the ribbon runs from 16.4 Hz to 16.7 kHz, with C5 at the centre.</td><td><span class="tag sch">hardware</span></td></tr>
@@ -787,7 +854,7 @@ const AW_LABELS = {
 // fully wet start at half.
 const WET_NAMES = ["Dry/Wet", "Wetness", "Wet", "Mix", "Amount"];
 
-// Settings on the Output panel go to every instrument.
+// Settings on the Master unit go to every instrument.
 const shared = { volume: 0.7, speaker: 0, filter_model: 0, line_in: 0 };
 
 let ctx = null, starting = null, keyTarget = null, master = null, masterAnalyser = null;
@@ -998,7 +1065,8 @@ function drawSkinArt(canvas, key, scope) {
 function setSkin(name) {
   skin = name;
   document.querySelector(".wrap").classList.toggle("skin-cosmos", name === "cosmos");
-  document.querySelectorAll("#seg-skin button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.skin === name)));
+  document.querySelectorAll("#seg-skin [data-skin]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.skin === name)));
+  document.getElementById("seg-skin").dataset.pos = name === "cosmos" ? "1" : "0";
   try { localStorage.setItem("constellation-skin", name); } catch (e) {}
   for (const sy of Object.values(window.synths || {})) if (sy.drawArt) sy.drawArt();
 }
@@ -1258,6 +1326,7 @@ class Synth {
   }
 
   setKnob(id, v) {
+    this.edited();
     v = Math.min(1, Math.max(0, v));
     this.set(id, v);
     const el = this.knobEls[id];
@@ -1268,7 +1337,14 @@ class Synth {
     this.refreshKnobs();
   }
 
+  // A control changed by hand: the Master unit's preset menu stops naming a
+  // preset (so choosing the same one again applies it again).
+  edited() {
+    if (!this.applying && this.presetSel) this.presetSel.value = "";
+  }
+
   setMode(m) {
+    this.edited();
     this.set("mode", m);
     this.thumb.style.top = (2 + m * 32) + "px";
     for (let i = 0; i < 3; i++) document.getElementById(`${this.key}-mode-${i}`).setAttribute("aria-checked", String(i === m));
@@ -1285,6 +1361,7 @@ class Synth {
   }
 
   setScale(n) {
+    this.edited();
     this.set("scale", n);
     this.scaleItems.forEach((li, i) => li.classList.toggle("on", i === n));
     this.scaleBtn.setAttribute("aria-label", `Scale: ${SCALE_NAMES[n]}. Press to change`);
@@ -1488,6 +1565,7 @@ class Effect extends Synth {
   }
 
   setMode(m) {
+    this.edited();
     this.set("mode", m);
     this.select.value = String(m);
     if (this.lineIn) updateLineIn();
@@ -1585,7 +1663,8 @@ const devicesEl = document.getElementById("devices");
 const synths = {};
 for (const [key, spec] of Object.entries(SPECS)) synths[key] = new (spec.effect ? Effect : Synth)(key, spec, devicesEl);
 window.synths = synths;
-document.querySelectorAll("#seg-skin button").forEach((b) => b.addEventListener("click", () => setSkin(b.dataset.skin)));
+document.querySelectorAll("#seg-skin [data-skin]").forEach((b) => b.addEventListener("click", () => setSkin(b.dataset.skin)));
+document.querySelector("#seg-skin [data-flip]").addEventListener("click", () => setSkin(skin === "cosmos" ? "classic" : "cosmos"));
 setSkin((() => { try { return localStorage.getItem("constellation-skin") || "cosmos"; } catch (e) { return "cosmos"; } })());
 
 /* ---------- audio ---------- */
@@ -1797,12 +1876,13 @@ midiBtn.addEventListener("click", async () => {
       const inputs = [...access.inputs.values()];
       for (const input of inputs) input.onmidimessage = (e) => handleMidi(e.data);
       midiStatus.textContent = inputs.length
-        ? "Listening to " + inputs.map((i) => i.name).join(", ") + ". Plays the instrument marked \"Keys\"."
+        ? "MIDI: " + inputs.map((i) => i.name).join(", ") + "."
         : "No MIDI keyboard found. Plug one in and it connects automatically.";
     };
     access.onstatechange = hook;
     hook();
-    midiBtn.textContent = "MIDI connected";
+    midiBtn.setAttribute("aria-pressed", "true");
+    document.getElementById("midi-label").textContent = "On";
     midiBtn.disabled = true;
   } catch (err) {
     midiStatus.textContent = inFrame
@@ -1824,7 +1904,7 @@ let downloads = null;
 if (window.claude && typeof window.claude.use === "function") {
   window.claude.use("downloads").then((d) => { downloads = d; updateSaveLabel(); }).catch(() => {});
 }
-function updateSaveLabel() { recSave.textContent = downloads ? "Save (.zip with WAV)" : "Save WAV"; }
+function updateSaveLabel() { recSave.textContent = downloads ? "Save .zip" : "Save"; }
 const fmtTime = (s) => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
 
 function onRecorded(e) {
@@ -1856,7 +1936,7 @@ function stopRecording(message) {
   recording = false;
   recNode.port.postMessage({ record: false });
   clearInterval(recTicker);
-  recBtn.setAttribute("aria-pressed", "false"); recLabel.textContent = "Record";
+  recBtn.setAttribute("aria-pressed", "false"); recLabel.textContent = "Rec";
   if (message) recStatus.textContent = message;
 }
 function finishTake() {
@@ -1940,34 +2020,82 @@ recSave.addEventListener("click", async () => {
   recStatus.textContent = "Saving isn't available in this view.";
 });
 
-/* ---------- output panel ---------- */
+/* ---------- Master unit ---------- */
 function setShared(name, value) {
   shared[name] = value;
   for (const s of Object.values(synths)) s.set(name, name === "speaker" && s.routedTo ? 0 : value);
 }
-const vol = document.getElementById("volume");
-const volOut = document.getElementById("volume-out");
-vol.addEventListener("input", () => { setShared("volume", Number(vol.value)); volOut.textContent = Math.round(vol.value * 100); });
-function segmented(id, param) {
-  const seg = document.getElementById(id);
-  seg.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
-    seg.querySelectorAll("button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
-    setShared(param, Number(b.dataset.value));
-  }));
+
+// Volume: a knob like the instruments', driven the same ways (drag, wheel, keys).
+const vol = document.getElementById("volume"), volOut = document.getElementById("volume-out");
+function setVolume(v) {
+  v = Math.min(1, Math.max(0, v));
+  setShared("volume", v);
+  for (const el of [vol, vol.firstElementChild]) el.style.setProperty("--angle", (-135 + 270 * v) + "deg");
+  vol.setAttribute("aria-valuenow", Math.round(v * 100));
+  volOut.textContent = Math.round(v * 100);
 }
-segmented("seg-speaker", "speaker");
+{
+  let startY = 0, startX = 0, startV = 0;
+  vol.addEventListener("pointerdown", (e) => { vol.setPointerCapture(e.pointerId); startY = e.clientY; startX = e.clientX; startV = shared.volume; e.preventDefault(); });
+  vol.addEventListener("pointermove", (e) => {
+    if (vol.hasPointerCapture(e.pointerId)) setVolume(startV + ((startY - e.clientY) + (e.clientX - startX)) / (e.shiftKey ? 600 : 180));
+  });
+  vol.addEventListener("wheel", (e) => { e.preventDefault(); setVolume(shared.volume - Math.sign(e.deltaY) * 0.02); }, { passive: false });
+  vol.addEventListener("keydown", (e) => {
+    const step = e.shiftKey ? 0.1 : 0.01;
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") { setVolume(shared.volume + step); e.preventDefault(); }
+    if (e.key === "ArrowDown" || e.key === "ArrowLeft") { setVolume(shared.volume - step); e.preventDefault(); }
+    if (e.key === "Home") setVolume(0);
+    if (e.key === "End") setVolume(1);
+  });
+  setVolume(shared.volume);
+}
+
+// Listening through: headphones or speaker, as a two-icon switch.
+const speakerFlip = document.getElementById("seg-speaker");
+function setSpeaker(v) {
+  speakerFlip.querySelectorAll("[data-value]").forEach((b) => b.setAttribute("aria-checked", String(Number(b.dataset.value) === v)));
+  speakerFlip.dataset.pos = String(v);
+  setShared("speaker", v);
+}
+speakerFlip.querySelectorAll("[data-value]").forEach((b) => b.addEventListener("click", () => setSpeaker(Number(b.dataset.value))));
+speakerFlip.querySelector("[data-flip]").addEventListener("click", () => setSpeaker(shared.speaker ? 0 : 1));
+speakerFlip.dataset.pos = "0";
+
 const filterModel = document.getElementById("filter-model");
 filterModel.addEventListener("change", () => setShared("filter_model", Number(filterModel.value)));
 
+// Presets: a menu per instrument. It shows the preset applied until a control
+// is changed by hand (Synth.edited), so the same one can be chosen again.
 for (const [key, synth] of Object.entries(synths)) {
-  const row = document.getElementById(`${key}-presets`);
-  for (const p of synth.spec.presets) {
-    const b = document.createElement("button");
-    b.textContent = p.name;
-    b.addEventListener("click", () => synth.applyPreset(p));
-    row.appendChild(b);
-  }
+  const sel = document.getElementById(`${key}-presets`);
+  sel.innerHTML = `<option value="">—</option>` + synth.spec.presets.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
+  sel.addEventListener("change", () => {
+    if (sel.value === "") return;
+    synth.applying = true;
+    synth.applyPreset(synth.spec.presets[Number(sel.value)]);
+    synth.applying = false;
+  });
+  synth.presetSel = sel;
 }
+
+// Level meter: the master bus's peak over the last frame, -48 to 0 dB.
+const meterLeds = [...document.querySelectorAll("#meter i")], meterBuf = new Float32Array(2048);
+function drawMeter() {
+  let peak = 0;
+  if (audioState === "on" && masterAnalyser) {
+    masterAnalyser.getFloatTimeDomainData(meterBuf);
+    for (let i = 0; i < meterBuf.length; i++) peak = Math.max(peak, Math.abs(meterBuf[i]));
+  }
+  const lit = peak > 0 ? Math.round((1 + Math.max(-48, 20 * Math.log10(peak)) / 48) * meterLeds.length) : 0;
+  meterLeds.forEach((led, i) => led.classList.toggle("on", i < lit));
+}
+
+// On computers the unit is pinned (CSS); it slims down once the page scrolls.
+const masterEl = document.getElementById("master");
+new IntersectionObserver(([e]) => masterEl.classList.toggle("stuck", !e.isIntersecting && e.boundingClientRect.top < 0))
+  .observe(document.querySelector(".master-sentinel"));
 
 /* ---------- scopes + LED ---------- */
 // Only the scopes on screen are drawn (a phone shows one or two at a time).
@@ -1978,6 +2106,7 @@ const scopeWatch = new IntersectionObserver((entries) => {
 for (const s of Object.values(synths)) scopeWatch.observe(s.canvas);
 (function frame() {
   for (const s of Object.values(synths)) if (onScreen.has(s.canvas)) s.draw();
+  drawMeter();
   requestAnimationFrame(frame);
 })();
 </script>

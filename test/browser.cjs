@@ -28,6 +28,9 @@ const shots = process.argv[2];
     p.on("pageerror", (e) => errors.push(e.message));
     p.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
     await p.goto(url);
+    // Presets are menus on the Master unit. Choosing "—" first means the same
+    // preset can be chosen again (as after editing a knob).
+    const preset = async (key, label) => { await p.selectOption(`#${key}-presets`, ""); await p.selectOption(`#${key}-presets`, { label }); };
 
     // ---- Pulsar (ribbon35) ----
     let box = await p.locator("#ribbon35-ribbon").boundingBox();
@@ -54,11 +57,11 @@ const shots = process.argv[2];
     check(`[${name}] Pulsar: release goes quiet`, released < 0.005, `(rms ${released.toFixed(4)})`);
     check(`[${name}] Pulsar: readout follows ribbon`, /\d+\.\d Hz/.test(readout), `(${readout})`);
 
-    await p.click("#ribbon35-presets button:text-is(\"Whistle\")");
+    await preset("ribbon35", "Whistle");
     await p.waitForTimeout(600);
     const whistle = await rms(p, "ribbon35");
     check(`[${name}] Pulsar: full peak whistles untouched`, whistle > 0.02, `(rms ${whistle.toFixed(3)})`);
-    await p.click("#ribbon35-presets button:text-is(\"Init\")");
+    await preset("ribbon35", "Init");
 
     // ---- Duo ----
     await p.locator("#duo-ribbon").scrollIntoViewIfNeeded();
@@ -138,11 +141,11 @@ const shots = process.argv[2];
     check(`[${name}] Singularity: Shape dims at Int. 0 and wakes when Int. is raised`, shapeIdle && shapeAwake);
     check(`[${name}] Singularity: dragging Shape changes the square LFO's width`, narrow < 0.15 && wide > 0.85, `(${narrow.toFixed(2)} -> ${wide.toFixed(2)})`);
     check(`[${name}] Singularity: Shape reads width on square, rise on triangle`, narrowText === "width 5%" && triText === "rise 95%", `(${narrowText}, ${triText})`);
-    await p.click("#delay-presets button:text-is(\"Init\")");
+    await preset("delay", "Init");
 
     // all three instruments at once
-    await p.click("#ribbon35-presets button:text-is(\"Whistle\")");
-    await p.click("#delay-presets button:text-is(\"Runaway\")");
+    await preset("ribbon35", "Whistle");
+    await preset("delay", "Runaway");
     // a short note for the runaway echoes to repeat
     await p.locator("#delay-ribbon").scrollIntoViewIfNeeded();
     const db = await p.locator("#delay-ribbon").boundingBox();
@@ -169,9 +172,9 @@ const shots = process.argv[2];
     };
     const loudest = async (fn, n = 6) => { let m = 0; for (let i = 0; i < n; i++) { m = Math.max(m, await fn()); await p.waitForTimeout(60); } return m; };
     const masterRms = () => p.evaluate(() => { const b = new Float32Array(4096); masterAnalyser.getFloatTimeDomainData(b); return Math.sqrt(b.reduce((s, v) => s + v * v, 0) / b.length); });
-    await p.click("#ribbon35-presets button:text-is(\"Init\")");
-    await p.click("#duo-presets button:text-is(\"Init\")");
-    await p.click("#delay-presets button:text-is(\"Init\")");
+    await preset("ribbon35", "Init");
+    await preset("duo", "Init");
+    await preset("delay", "Init");
 
     await p.click("#ribbon35-hold");
     await press("#ribbon35-ribbon", 0.3, 150);
@@ -246,7 +249,7 @@ const shots = process.argv[2];
     await p.waitForTimeout(300);
 
     // ---- Envelope faders: Release keeps Pulsar sounding after the touch ----
-    await p.click("#ribbon35-presets button:text-is(\"Init\")");
+    await preset("ribbon35", "Init");
     const fader = p.locator("#ribbon35-knob-release"); await fader.scrollIntoViewIfNeeded();
     const fb = await fader.boundingBox();
     await p.mouse.click(fb.x + fb.width / 2, fb.y + fb.height * 0.3);   // tap at 70%: 1.03 s
@@ -254,7 +257,7 @@ const shots = process.argv[2];
     await press("#ribbon35-ribbon", 0.4, 300);
     await p.waitForTimeout(150);
     const ringing = await rms(p, "ribbon35");
-    await p.click("#ribbon35-presets button:text-is(\"Init\")");   // presets put the envelope back
+    await preset("ribbon35", "Init");   // presets put the envelope back
     const relReset = await p.evaluate(() => synths.ribbon35.params.release);
     await press("#ribbon35-ribbon", 0.4, 300);
     await p.waitForTimeout(150);
@@ -367,7 +370,7 @@ const shots = process.argv[2];
     await p.click("#duo-send-delay"); await p.click("#ribbon35-send-duo"); await p.click("#ribbon35-hold");
 
     // ---- MIDI (synthetic messages; headless Chromium has no MIDI devices) ----
-    await p.click("#ribbon35-presets button:text-is(\"Init\")");
+    await preset("ribbon35", "Init");
     await p.click("#ribbon35-ribbon");                     // Pulsar gets the keys
     const midi = (bytes) => p.evaluate((b) => handleMidi(b), bytes);
     const readHz = (k) => p.evaluate((key) => parseFloat(synths[key].readout.textContent), k);
@@ -401,7 +404,7 @@ const shots = process.argv[2];
     const a1 = await readHz("delay");
     await midi([0x80, 33, 0]);
     check(`[${name}] MIDI: A1 plays the bottom of Singularity's ribbon (55 Hz)`, Math.abs(a1 - 55) < 0.05, `(${a1})`);
-    await p.click("#ribbon35-presets button:text-is(\"Init\")");
+    await preset("ribbon35", "Init");
 
     // ---- Recording ----
     await p.locator("#rec-btn").scrollIntoViewIfNeeded();
@@ -465,7 +468,7 @@ const shots = process.argv[2];
     check(`[${name}] Nebula's step buttons move through the list`, stepped === "Galactic2", `(${stepped})`);
     check(`[${name}] Nebula keeps each reverb's settings`, Math.abs(remembered - 0.2) < 1e-6, `(${remembered})`);
 
-    await p.click("#ribbon35-presets button:text-is(\"Init\")");
+    await preset("ribbon35", "Init");
     await p.click("#ribbon35-hold");
     await press("#ribbon35-ribbon", 0.4, 150);
     await p.click("#ribbon35-send-nebula");
@@ -504,6 +507,43 @@ const shots = process.argv[2];
     const chain3 = [await p.evaluate(() => [synths.delay.lineInText.textContent, synths.nebula.lineInText.textContent]), await loudest(() => rms(p, "nebula"))];
     check(`[${name}] chain Pulsar -> Singularity -> Nebula`, chain3[0][0] === "Line in ◂ Pulsar" && chain3[0][1] === "Line in ◂ Singularity" && chain3[1] > 0.02, `(${chain3[0]}, ${chain3[1].toFixed(3)})`);
     await p.click("#ribbon35-hold"); await p.click("#delay-send-nebula"); await p.click("#ribbon35-send-delay");
+
+    // ---- Master unit ----
+    await p.focus("#volume"); await p.keyboard.press("End");
+    const volFull = await p.evaluate(() => [shared.volume, synths.duo.params.volume, document.getElementById("volume-out").textContent]);
+    for (let i = 0; i < 3; i++) await p.keyboard.press("Shift+ArrowDown");
+    const volBack = await p.evaluate(() => +shared.volume.toFixed(2));
+    check(`[${name}] Master volume knob sets every instrument`, volFull[0] === 1 && volFull[1] === 1 && volFull[2] === "100" && volBack === 0.7, `(${volFull}, then ${volBack})`);
+
+    await p.click("#seg-skin [data-flip]");
+    const lookA = await p.evaluate(() => [skin, document.querySelector("#seg-skin [data-skin=classic]").getAttribute("aria-checked")]);
+    await p.click('#seg-skin [data-skin="cosmos"]');
+    const lookB = await p.evaluate(() => skin);
+    await p.click("#out-speaker");
+    const spk = await p.evaluate(() => [shared.speaker, synths.ribbon35.params.speaker, document.getElementById("out-speaker").getAttribute("aria-checked")]);
+    await p.click("#seg-speaker [data-flip]");
+    const spkBack = await p.evaluate(() => shared.speaker);
+    check(`[${name}] Master Look and Listen switches`, lookA[0] === "classic" && lookA[1] === "true" && lookB === "cosmos" && spk[0] === 1 && spk[1] === 1 && spk[2] === "true" && spkBack === 0, `(${lookA}, ${lookB}, ${spk}, ${spkBack})`);
+
+    await preset("ribbon35", "Wobble");
+    const shown = await p.evaluate(() => document.getElementById("ribbon35-presets").selectedOptions[0].textContent);
+    await p.focus("#ribbon35-knob-cutoff"); await p.keyboard.press("ArrowUp");
+    const afterEdit = await p.evaluate(() => document.getElementById("ribbon35-presets").value);
+    check(`[${name}] Preset menu names the preset until a knob is changed`, shown === "Wobble" && afterEdit === "", `(${shown}, then "${afterEdit}")`);
+
+    await preset("ribbon35", "Init");
+    await p.click("#ribbon35-hold");
+    await press("#ribbon35-ribbon", 0.4, 120);
+    await p.waitForTimeout(300);
+    const lit = await p.evaluate(() => document.querySelectorAll("#meter i.on").length);
+    await p.click("#ribbon35-hold");
+    check(`[${name}] Master level meter shows the output`, lit >= 4, `(${lit} of 12 lit)`);
+
+    await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await p.waitForTimeout(300);
+    const pin = await p.evaluate(() => { const m = document.getElementById("master"); return [Math.round(m.getBoundingClientRect().top), m.classList.contains("stuck")]; });
+    if (name === "desktop") check(`[desktop] Master unit stays pinned at the top, slimmed`, pin[0] >= 0 && pin[0] <= 12 && pin[1], `(top ${pin[0]}, stuck ${pin[1]})`);
+    else check(`[phone] Master unit scrolls away with the page`, pin[0] < -100, `(top ${pin[0]})`);
 
     if (shots) await p.screenshot({ path: path.join(shots, `${name}.png`), fullPage: true });
     const overflow = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);

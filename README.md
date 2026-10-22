@@ -26,7 +26,7 @@ Play it at **https://ndray904.github.io/Constellation/** (GitHub Pages, served f
 | `web/faust-runtime.js` | Small host for the compiled wasm (memory layout, params, `compute`). Runs in the worklet and in Node. |
 | `web/faust-worklet.js` | AudioWorklet processors: Faust synths, the recorder, and Nebula's reverb host (knob changes crossfade to a copy of the running reverb; instances made up front and reused; sleeps when idle). |
 | `web/index.html` | Page template. Each instrument is built from a spec (`SPECS`): knobs, switch, ribbon length, presets. |
-| (Cosmos skin) | In `web/index.html`: a space-art look for Pulsar, Binary, Singularity and Nebula, switched by "Look" on the Output panel (remembered per browser). Each panel's artwork (pulsar, binary stars, black hole, gas nebula) is drawn on a canvas around its scope, which becomes tinted glass; logos are inline SVG. |
+| (Cosmos skin) | In `web/index.html`: a space-art look for Pulsar, Binary, Singularity and Nebula, switched by the Look switch on the Master unit (remembered per browser). Each panel's artwork (pulsar, binary stars, black hole, gas nebula) is drawn on a canvas around its scope, which becomes tinted glass; logos are inline SVG. |
 | `build.mjs` | Compiles the Faust DSPs (each synth once per filter model, so only the chosen filter runs; the worklet crossfades between them), the Airwindows C++ and libm, and inlines everything into `dist/constellation.html`. |
 | `test/render.cjs` | Pulsar offline checks: tuning, 18-semitone ribbon, LFO range and aliasing, gating, self-oscillation. |
 | `test/render-duo.cjs` | Binary offline checks: scales, VCO2 offset, X-MOD depth, gating, self-oscillation. |
