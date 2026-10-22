@@ -88,9 +88,7 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
   gap: 18px;
   user-select: none;
   -webkit-user-select: none;
-  /* a vertical swipe on a panel scrolls the page; the ribbon, knob caps and
-     faders below take their touches for playing (touch-action none) */
-  touch-action: pan-y;
+  touch-action: none;
   /* no browser tap highlight: on Android it tinted the whole ribbon blue for
      as long as a finger was on it */
   -webkit-tap-highlight-color: transparent;
@@ -129,9 +127,6 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
     conic-gradient(from -135deg, transparent 0 271deg, var(--body) 271deg 360deg),
     repeating-conic-gradient(from -135.7deg, rgba(239,230,210,0.55) 0deg 1.4deg, transparent 1.4deg 27deg);
 }
-/* On a touch screen a knob turns only from a touch near its centre; the rest of
-   it, the label and the readout are a buffer that scrolls the page (touchKnob). */
-.knob-dial { touch-action: pan-y; }
 .knob-cap {
   position: absolute; inset: 6px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, var(--metal-hi), var(--metal-lo) 75%);
@@ -206,7 +201,6 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 
 /* ribbon */
 .ribbon-wrap { display: grid; gap: 6px; }
-.ribbon { touch-action: none; }   /* every touch on the ribbon plays */
 .ribbon {
   position: relative; height: 74px; border-radius: 6px; background: var(--ribbon); cursor: pointer; overflow: hidden;
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.08);
@@ -1098,21 +1092,6 @@ function setSkin(name) {
   for (const sy of Object.values(window.synths || {})) if (sy.drawArt) sy.drawArt();
 }
 
-// A knob on a touch screen: a touch that starts within 72% of its diameter of
-// the centre turns it (its touchstart is cancelled, so the page doesn't
-// scroll); one that starts further out, in the buffer, scrolls the page.
-// Returns the test, for the knob's pointerdown.
-function touchKnob(dial) {
-  const inZone = (x, y) => {
-    const r = dial.getBoundingClientRect();
-    return Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) < r.width * 0.36;
-  };
-  dial.addEventListener("touchstart", (e) => {
-    if (e.touches.length === 1 && inZone(e.touches[0].clientX, e.touches[0].clientY)) e.preventDefault();
-  }, { passive: false });
-  return inZone;
-}
-
 function base64ToBytes(b64) {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
@@ -1344,9 +1323,7 @@ class Synth {
 
     let startY = 0, startX = 0, startV = 0;
     const faderAt = (e) => { const r = dial.getBoundingClientRect(); return 1 - (e.clientY - r.top) / r.height; };
-    const inZone = fader ? () => true : touchKnob(dial);
     dial.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "touch" && !inZone(e.clientX, e.clientY)) return;   // the buffer scrolls
       dial.setPointerCapture(e.pointerId);
       if (fader && !e.shiftKey) this.setKnob(id, faderAt(e));
       startY = e.clientY; startX = e.clientX; startV = this.params[id];
@@ -2081,9 +2058,7 @@ function setVolume(v) {
 }
 {
   let startY = 0, startX = 0, startV = 0;
-  const volZone = touchKnob(vol);
   vol.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "touch" && !volZone(e.clientX, e.clientY)) return;   // the buffer scrolls, as on the instruments
     vol.setPointerCapture(e.pointerId);
     startY = e.clientY; startX = e.clientX; startV = shared.volume;
     e.preventDefault();
